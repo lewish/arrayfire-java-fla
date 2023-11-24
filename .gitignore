@@ -1,0 +1,4 @@
+node_modules
+bazel-*
+/resources.iml
+yarn-error.log
