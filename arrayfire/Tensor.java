@@ -160,7 +160,7 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
   }
 
   public void release() {
-    af.release(this);
+    ArrayFire.release(this);
   }
 
   public Tensor<T, D0, D1, D2, D3> escape() {

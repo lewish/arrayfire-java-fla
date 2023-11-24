@@ -19,8 +19,8 @@ public class Scope implements AutoCloseable {
 
   @Override
   public void close() {
-    tensors.forEach(ArrayFire.af::release);
-    hostTensors.forEach(ArrayFire.af::release);
+    tensors.forEach(ArrayFire::release);
+    hostTensors.forEach(ArrayFire::release);
   }
 
   public void track(Tensor<?, ?, ?, ?, ?> tensor) {

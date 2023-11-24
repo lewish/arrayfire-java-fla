@@ -1,7 +1,6 @@
 package arrayfire;
 
-import arrayfire.capi.AfApi;
-import arrayfire.capi2.arrayfire_h;
+import arrayfire.capi.arrayfire_h;
 import arrayfire.datatypes.*;
 import arrayfire.numbers.*;
 import fade.context.Context;
@@ -36,12 +35,27 @@ public class ArrayFire {
   public final arrayfire.dims.D2 d2 = new arrayfire.dims.D2();
   public final arrayfire.dims.D3 d3 = new arrayfire.dims.D3();
 
-  public AfApi api() {
-    return AfApi.get();
+  public static void loadNativeLibraries() {
+    var libraries = List.of("af", "afcuda", "afopencl", "afcpu");
+    for (var library : libraries) {
+      try {
+        System.loadLibrary(library);
+        return;
+      } catch (Throwable ignored) {
+      }
+    }
+    throw new RuntimeException("Failed to load ArrayFire native libraries, make sure it is installed.");
   }
 
-  private ArrayFire() {
-    AfApi.loadNativeLibraries();
+  protected ArrayFire() {
+    loadNativeLibraries();
+    scope(() -> {
+      var version = version();
+      if (version.major() < 3 || (version.major() == 3 && version.minor() < 8)) {
+        throw new IllegalStateException(String.format("Unsupported ArrayFire version, must be >= 3.8.0: %s",
+            version));
+      }
+    });
     if (availableBackends().contains(DEFAULT_BACKEND.get())) {
       setBackend(DEFAULT_BACKEND.get());
     }
@@ -256,7 +270,7 @@ public class ArrayFire {
   }
 
   public void sync() {
-    api().sync.invoke(deviceId());
+    handleStatus(arrayfire_h.af_sync(deviceId()));
   }
 
   public AfIndex seq(int begin, int endInclusive, int step) {
@@ -439,11 +453,11 @@ public class ArrayFire {
 
   public long[] getDims(MemorySegment a) {
     var dims = allocator().allocateArray(ValueLayout.JAVA_LONG, 4);
-    api().getDims.invoke(dims.asSlice(0),
+    handleStatus(arrayfire_h.af_get_dims(dims.asSlice(0),
         dims.asSlice(8),
         dims.asSlice(16),
         dims.asSlice(24),
-        a.getAtIndex(ValueLayout.ADDRESS, 0));
+        a.getAtIndex(ValueLayout.ADDRESS, 0)));
     return dims.toArray(ValueLayout.JAVA_LONG);
   }
 
@@ -583,7 +597,7 @@ public class ArrayFire {
     return af.deviceTensor(result, tensor.type(), newShape);
   }
 
-  public void release(Tensor<?, ?, ?, ?, ?> tensor) {
+  public static void release(Tensor<?, ?, ?, ?, ?> tensor) {
     if (tensor.segment().scope().isAlive()) {
       arrayfire_h.af_release_array(tensor.dereference());
 // TODO: Track the allocator and close it.
@@ -594,7 +608,8 @@ public class ArrayFire {
     }
   }
 
-  public void release(HostTensor<?, ?, ?, ?, ?> tensor) {
+
+  public static void release(HostTensor<?, ?, ?, ?, ?> tensor) {
     // TODO: Fix release
 //    if (tensor.segment().session().isAlive()) {
 //      tensor.segment().session().close();
@@ -616,7 +631,7 @@ public class ArrayFire {
 
   public <T extends AfDataType<?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> eval(
       Tensor<T, D0, D1, D2, D3> tensor) {
-    af.api().eval.invoke(tensor.dereference());
+    handleStatus(arrayfire_h.af_eval(tensor.dereference()));
     return tensor;
   }
 
@@ -624,7 +639,7 @@ public class ArrayFire {
       Tensor<T, D0, D1, D2, D3> tensor,
       TensorLike<T, ?, ?, ?, ?> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().mul.invoke(result, tensor.dereference(), rhs.tensor().dereference(), true);
+    handleStatus(arrayfire_h.af_mul(result, tensor.dereference(), rhs.tensor().dereference(), true));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -632,7 +647,7 @@ public class ArrayFire {
       TensorLike<T, D0, D1, D2, D3> tensor,
       TensorLike<T, ?, ?, ?, ?> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().div.invoke(result, tensor.tensor().dereference(), rhs.tensor().dereference(), true);
+    handleStatus(arrayfire_h.af_div(result, tensor.tensor().dereference(), rhs.tensor().dereference(), true));
     return af.deviceTensor(result, tensor.tensor().type(), tensor.tensor().shape());
   }
 
@@ -640,7 +655,7 @@ public class ArrayFire {
       Tensor<T, D0, D1, D2, D3> tensor,
       TensorLike<T, D0, D1, D2, D3> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().add.invoke(result, tensor.dereference(), rhs.tensor().dereference(), true);
+    handleStatus(arrayfire_h.af_add(result, tensor.dereference(), rhs.tensor().dereference(), true));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -648,7 +663,7 @@ public class ArrayFire {
       Tensor<T, D0, D1, D2, D3> tensor,
       TensorLike<T, D0, D1, D2, D3> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().sub.invoke(result, tensor.dereference(), rhs.tensor().dereference(), true);
+    handleStatus(arrayfire_h.af_sub(result, tensor.dereference(), rhs.tensor().dereference(), true));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -656,7 +671,7 @@ public class ArrayFire {
       Tensor<T, D0, D1, D2, D3> tensor,
       TensorLike<T, D0, D1, D2, D3> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().ge.invoke(result, tensor.dereference(), rhs.tensor().dereference(), true);
+    handleStatus(arrayfire_h.af_ge(result, tensor.dereference(), rhs.tensor().dereference(), true));
     return af.deviceTensor(result, AfDataType.B8, tensor.shape());
   }
 
@@ -664,7 +679,7 @@ public class ArrayFire {
       Tensor<T, D0, D1, D2, D3> tensor,
       TensorLike<T, D0, D1, D2, D3> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().maxof.invoke(result, tensor.dereference(), rhs.tensor().dereference(), true);
+    handleStatus(arrayfire_h.af_maxof(result, tensor.dereference(), rhs.tensor().dereference(), true));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -682,7 +697,7 @@ public class ArrayFire {
       Tensor<T, ?, D1, D2, D3> lhs,
       TensorLike<T, ?, D1, D2, D3> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().join.invoke(result, 0, lhs.dereference(), rhs.tensor().dereference());
+    handleStatus(arrayfire_h.af_join(result, 0, lhs.dereference(), rhs.tensor().dereference()));
     return af.deviceTensor(result,
         lhs.type(),
         af.shape(af.n(lhs.shape().d0().intValue() + rhs.tensor().shape().d0().intValue()),
@@ -701,7 +716,7 @@ public class ArrayFire {
         lhs.shape(),
         rhs.tensor().shape());
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().join.invoke(result, 1, lhs.dereference(), rhs.tensor().dereference());
+    handleStatus(arrayfire_h.af_join(result, 1, lhs.dereference(), rhs.tensor().dereference()));
     return af.deviceTensor(result, lhs.type(), af.shape(lhs.shape().d0(),
         af.n(lhs.shape().d1().intValue() + rhs.tensor().shape().d1().intValue()),
         lhs.shape().d2(),
@@ -782,7 +797,7 @@ public class ArrayFire {
     var allocator = allocator();
     var result = allocator.allocate(ValueLayout.ADDRESS);
     var resultIdx = allocator.allocate(ValueLayout.ADDRESS);
-    af.api().imax.invoke(result, resultIdx, tensor.dereference(), 0);
+    handleStatus(arrayfire_h.af_imax(result, resultIdx, tensor.dereference(), 0));
     return af.deviceTensor(resultIdx,
         AfDataType.U32,
         shape(IntNumber.U, tensor.shape().d1(), tensor.shape().d2(), tensor.shape().d3()));
@@ -794,7 +809,7 @@ public class ArrayFire {
     var allocator = allocator();
     var result = allocator.allocate(ValueLayout.ADDRESS);
     var resultIdx = allocator.allocate(ValueLayout.ADDRESS);
-    af.api().topk.invoke(result, resultIdx, tensor.dereference(), k.intValue(), 0, 0);
+    handleStatus(arrayfire_h.af_topk(result, resultIdx, tensor.dereference(), k.intValue(), 0, 0));
     return new TopKResult<>(
         af.deviceTensor(result, tensor.type(), shape(k, tensor.shape().d1(), tensor.shape().d2(), tensor.shape().d3())),
         af.deviceTensor(resultIdx,
@@ -807,7 +822,7 @@ public class ArrayFire {
       Tensor<T, D0, U, D2, D3> tensor) {
     var allocator = allocator();
     var result = allocator.allocate(ValueLayout.ADDRESS);
-    af.api().diagCreate.invoke(result, tensor.dereference(), 0);
+    handleStatus(arrayfire_h.af_diag_create(result, tensor.dereference(), 0));
     return af.deviceTensor(result,
         tensor.type(),
         shape(tensor.shape().d0(), tensor.shape().d0(), tensor.shape().d2(), tensor.shape().d3()));
@@ -821,7 +836,7 @@ public class ArrayFire {
     assert tensor.shape().d1().intValue() == rhs.shape().d0().intValue() : String.format("Misaligned shapes for matmul, left: %s right: %s",
         tensor.shape(),
         rhs.shape());
-    af.api().matmul.invoke(result, tensor.dereference(), rhs.dereference(), 0, 0);
+    handleStatus(arrayfire_h.af_matmul(result, tensor.dereference(), rhs.dereference(), 0, 0));
     return af.deviceTensor(result,
         tensor.type(),
         shape(tensor.shape().d0(), rhs.shape().d1(), tensor.shape().d2(), tensor.shape().d3()));
@@ -832,7 +847,7 @@ public class ArrayFire {
       Tensor<T, ?, ?, ?, ?> lo,
       Tensor<T, ?, ?, ?, ?> hi) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().clamp.invoke(result, tensor.dereference(), lo.dereference(), hi.dereference(), true);
+    handleStatus(arrayfire_h.af_clamp(result, tensor.dereference(), lo.dereference(), hi.dereference(), true));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -845,7 +860,7 @@ public class ArrayFire {
       Tensor<T, D0, D1, D2, D3> tensor,
       Tensor<T, ?, ?, ?, ?> rhs) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().eq.invoke(result, tensor.dereference(), rhs.dereference(), true);
+    handleStatus(arrayfire_h.af_eq(result, tensor.dereference(), rhs.dereference(), true));
     return af.deviceTensor(result, AfDataType.B8, tensor.shape());
   }
 
@@ -858,28 +873,28 @@ public class ArrayFire {
   public <T extends AfDataType<?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> exp(
       Tensor<T, D0, D1, D2, D3> tensor) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().exp.invoke(result, tensor.dereference());
+    handleStatus(arrayfire_h.af_exp(result, tensor.dereference()));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
   public <T extends AfDataType<?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> log(
       Tensor<T, D0, D1, D2, D3> tensor) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().log.invoke(result, tensor.dereference());
+    handleStatus(arrayfire_h.af_log(result, tensor.dereference()));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
   public <T extends AfDataType<?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> abs(
       Tensor<T, D0, D1, D2, D3> tensor) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().abs.invoke(result, tensor.dereference());
+    handleStatus(arrayfire_h.af_abs(result, tensor.dereference()));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
   public <T extends AfDataType<?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> sqrt(
       Tensor<T, D0, D1, D2, D3> tensor) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().sqrt.invoke(result, tensor.dereference());
+    handleStatus(arrayfire_h.af_sqrt(result, tensor.dereference()));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -910,7 +925,7 @@ public class ArrayFire {
       Tensor<T, D0, D1, D2, D3> tensor,
       AfStorage storage) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().sparseFromDense.invoke(result, tensor.dereference(), storage.code());
+    handleStatus(arrayfire_h.af_create_sparse_array_from_dense(result, tensor.dereference(), storage.code()));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -962,15 +977,15 @@ public class ArrayFire {
           AfIndex.LAYOUT.byteSize()));
     }
     var result = allocator.allocate(ValueLayout.ADDRESS);
-    af.api().indexGen.invoke(result, tensor.dereference(), indexes.length, nativeIndexes);
+    handleStatus(arrayfire_h.af_index_gen(result, tensor.dereference(), indexes.length, nativeIndexes));
 
     // We don't obviously know the new shape, so compute it.
     var dims = allocator.allocateArray(ValueLayout.JAVA_LONG, 4);
-    af.api().getDims.invoke(dims.asSlice(0),
+    handleStatus(arrayfire_h.af_get_dims(dims.asSlice(0),
         dims.asSlice(8),
         dims.asSlice(16),
         dims.asSlice(24),
-        result.get(ValueLayout.ADDRESS, 0));
+        result.get(ValueLayout.ADDRESS, 0)));
     var d0 = (int) dims.getAtIndex(ValueLayout.JAVA_LONG, 0);
     var d1 = (int) dims.getAtIndex(ValueLayout.JAVA_LONG, 1);
     var d2 = (int) dims.getAtIndex(ValueLayout.JAVA_LONG, 2);
@@ -1050,7 +1065,7 @@ public class ArrayFire {
     int d1ratio = newShape.d1().intValue() / tensor.shape().d1().intValue();
     int d2ratio = newShape.d2().intValue() / tensor.shape().d2().intValue();
     int d3ratio = newShape.d3().intValue() / tensor.shape().d3().intValue();
-    af.api().tile.invoke(result, tensor.dereference(), d0ratio, d1ratio, d2ratio, d3ratio);
+    handleStatus(arrayfire_h.af_tile(result, tensor.dereference(), d0ratio, d1ratio, d2ratio, d3ratio));
     return af.deviceTensor(result, tensor.type(), newShape);
   }
 
@@ -1074,7 +1089,7 @@ public class ArrayFire {
   public <T extends AfDataType<?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> flip(
       Tensor<T, D0, D1, D2, D3> tensor) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().flip.invoke(result, tensor.dereference(), 0);
+    handleStatus(arrayfire_h.af_flip(result, tensor.dereference(), 0));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -1200,7 +1215,7 @@ public class ArrayFire {
 
   public <T extends AfDataType<?>, D extends Number> Tensor<T, D, D, U, U> inverse(TensorLike<T, D, D, U, U> tensor) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().inverse.invoke(result, tensor.tensor().dereference(), 0);
+    handleStatus(arrayfire_h.af_inverse(result, tensor.tensor().dereference(), 0));
     return af.deviceTensor(result, tensor.tensor().type(), tensor.shape());
   }
 
@@ -1209,7 +1224,7 @@ public class ArrayFire {
                                                                                                         float angle,
                                                                                                         InterpolationType interpolationType) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().rotate.invoke(result, tensor.dereference(), angle, true, interpolationType.code());
+    handleStatus(arrayfire_h.af_rotate(result, tensor.dereference(), angle, true, interpolationType.code()));
     return af.deviceTensor(result, tensor.type(), tensor.shape());
   }
 
@@ -1219,13 +1234,13 @@ public class ArrayFire {
       ND1 nd1,
       InterpolationType interpolationType) {
     var result = af.allocator().allocate(ValueLayout.ADDRESS);
-    af.api().scale.invoke(result,
+    handleStatus(arrayfire_h.af_scale(result,
         tensor.dereference(),
         nd0.floatValue() / tensor.d0().floatValue(),
         nd1.floatValue() / tensor.d1().floatValue(),
         nd0.longValue(),
         nd1.longValue(),
-        interpolationType.code());
+        interpolationType.code()));
     return af.deviceTensor(result, tensor.type(), shape(nd0, nd1, tensor.shape().d2(), tensor.shape().d3()));
   }
 
@@ -1238,10 +1253,10 @@ public class ArrayFire {
     var allocBuffers = allocator.allocateArray(ValueLayout.JAVA_LONG, 1);
     var lockBytes = allocator.allocateArray(ValueLayout.JAVA_LONG, 1);
     var lockBuffers = allocator.allocateArray(ValueLayout.JAVA_LONG, 1);
-    af.api().deviceMemInfo.invoke(allocBytes,
+    handleStatus(arrayfire_h.af_device_mem_info(allocBytes,
         allocBuffers,
         lockBytes,
-        lockBuffers);
+        lockBuffers));
     return new DeviceMemInfo(allocBytes.getAtIndex(ValueLayout.JAVA_LONG, 0),
         allocBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0),
         lockBytes.getAtIndex(ValueLayout.JAVA_LONG, 0),
@@ -1250,11 +1265,11 @@ public class ArrayFire {
 
   public void printMeminfo() {
     var chars = af.allocator().allocateArray(ValueLayout.JAVA_BYTE, 1);
-    af.api().printMemInfo.invoke(chars, -1);
+    handleStatus(arrayfire_h.af_print_mem_info(chars, -1));
   }
 
   public void deviceGc() {
-    af.api().deviceGc.invoke();
+    handleStatus(arrayfire_h.af_device_gc());
   }
 
   public N n(int value) {
@@ -1322,11 +1337,11 @@ public class ArrayFire {
 
   private long[] nativeDims(Tensor<?, ?, ?, ?, ?> tensor) {
     var dims = af.allocator().allocateArray(ValueLayout.JAVA_LONG, 4);
-    af.api().getDims.invoke(dims,
+    handleStatus(arrayfire_h.af_get_dims(dims,
         dims.asSlice(8),
         dims.asSlice(16),
         dims.asSlice(24),
-        tensor.dereference());
+        tensor.dereference()));
     return dims.toArray(ValueLayout.JAVA_LONG);
   }
 

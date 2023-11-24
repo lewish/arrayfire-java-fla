@@ -20,9 +20,9 @@ genrule(
       $(location @arrayfire//:include/arrayfire.h) \
       -I $$(dirname $$HEADER) \
       --define-macro AF_API_VERSION=39 \
-      -t arrayfire.capi2 \
+      -t arrayfire.capi \
       ; \
-      jar cf $(location arrayfire-capi.jar) arrayfire/capi2/*;
+      jar cf $(location arrayfire-capi.jar) arrayfire/capi/*;
     """,
 )
 
