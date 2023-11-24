@@ -6,8 +6,6 @@ import arrayfire.numbers.*;
 import fade.context.Context;
 import fade.context.Contextual;
 import fade.contextuals.Contextuals;
-import fade.flags.Flag;
-import fade.flags.Flags;
 import fade.functional.Functions;
 
 import java.lang.foreign.*;
@@ -20,11 +18,8 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class ArrayFire {
-  public static final Flag<AfBackend> DEFAULT_BACKEND_FLAG = Flags.enumFlag("default_backend",
-      AfBackend.values(),
-      AfBackend.OPENCL);
-  public static final Contextual<AfBackend> DEFAULT_BACKEND = Contextual.named("default_backend",
-      DEFAULT_BACKEND_FLAG.get());
+
+  public static final Contextual<AfBackend> DEFAULT_BACKEND = Contextual.named("default_backend", AfBackend.DEFAULT);
   public static final Contextual<Boolean> EAGER = Contextual.named("arrayfire_eager", false);
   public static final Contextual<Boolean> CHECK_NANS = Contextual.named("arrayfire_check_nans", false);
 

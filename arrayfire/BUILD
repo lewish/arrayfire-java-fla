@@ -1,4 +1,4 @@
-load("//bazel:java.bzl", "java_binary_auto", "java_library_auto", "java_test_auto")
+load("//bazel:java.bzl", "java_library_auto", "java_test_auto")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -39,7 +39,6 @@ java_library_auto(
         ":capi",
         "//fade/context",
         "//fade/contextuals",
-        "//fade/flags",
         "//fade/functional",
     ],
 )
@@ -50,5 +49,3 @@ java_test_auto(
         "//fade/context",
     ],
 )
-
-java_binary_auto()

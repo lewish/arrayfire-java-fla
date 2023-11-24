@@ -2,8 +2,6 @@ package fade.contextuals;
 
 import fade.context.Context;
 import fade.context.Contextual;
-import fade.flags.Flag;
-import fade.flags.Flags;
 
 import java.util.Random;
 
@@ -33,9 +31,7 @@ public class Contextuals {
   }
 
 
-  public static final Flag<Long> SEED_FLAG = Flags.longFlag("seed", 0L);
-
-  public static final Contextual<Seed> SEED = Contextual.named("seed", memoize(() -> Seed.create(SEED_FLAG.get())));
+  public static final Contextual<Seed> SEED = Contextual.named("seed", memoize(() -> Seed.create(0)));
 
   public static Seed seed() {
     return SEED.get();

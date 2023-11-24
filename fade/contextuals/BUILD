@@ -5,8 +5,7 @@ package(default_visibility = ["//visibility:public"])
 java_library_auto(
     deps = [
         "//fade/common",
-        "//fade/context",
-        "//fade/flags",
+        "//fade/context"
     ],
 )
 
