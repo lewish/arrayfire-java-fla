@@ -1,4 +1,4 @@
-package fade.context;
+package arrayfire.utils;
 
 import org.junit.Assert;
 import org.junit.Test;

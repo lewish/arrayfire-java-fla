@@ -37,15 +37,9 @@ java_library_auto(
     recursive = True,
     deps = [
         ":capi",
-        "//fade/context",
-        "//fade/contextuals",
-        "//fade/functional",
     ],
 )
 
 java_test_auto(
     recursive = True,
-    deps = [
-        "//fade/context",
-    ],
 )

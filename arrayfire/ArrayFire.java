@@ -3,10 +3,10 @@ package arrayfire;
 import arrayfire.capi.arrayfire_h;
 import arrayfire.datatypes.*;
 import arrayfire.numbers.*;
-import fade.context.Context;
-import fade.context.Contextual;
-import fade.contextuals.Contextuals;
-import fade.functional.Functions;
+import arrayfire.utils.Context;
+import arrayfire.utils.Contextual;
+import arrayfire.utils.Contextuals;
+import arrayfire.utils.Functions;
 
 import java.lang.foreign.*;
 import java.util.ArrayList;

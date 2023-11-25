@@ -1,4 +1,4 @@
-package fade.context;
+package arrayfire.utils;
 
 import java.util.Optional;
 import java.util.function.Supplier;

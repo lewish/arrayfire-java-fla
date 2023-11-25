@@ -1,6 +1,6 @@
 package arrayfire;
 
-import fade.context.Contextual;
+import arrayfire.utils.Contextual;
 
 import java.util.HashSet;
 import java.util.Set;

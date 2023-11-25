@@ -1,4 +1,4 @@
-package fade.functional;
+package arrayfire.utils;
 
 public class Functions {
 

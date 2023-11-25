@@ -1,11 +1,8 @@
-package fade.contextuals;
-
-import fade.context.Context;
-import fade.context.Contextual;
+package arrayfire.utils;
 
 import java.util.Random;
 
-import static fade.common.Memoizer.memoize;
+import static arrayfire.utils.Memoizer.memoize;
 
 public class Contextuals {
   public static class Seed {
