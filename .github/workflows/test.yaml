@@ -23,3 +23,5 @@ jobs:
 
       - name: Build & test
         uses: docker://ghcr.io/lewish/lewish-builder:latest
+        with:
+          args: bash -c "bazel test --build_tests_only ..."
