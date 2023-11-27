@@ -32,7 +32,7 @@ public class ArrayFireTest {
     af.scope(() -> {
       var arr = af.hostTensor(new float[]{1, 2, 3}, af.shape(3)).push();
       var squared = af.mul(arr, arr);
-      var squaredData = af.dataf32(squared);
+      var squaredData = squared.data();
       Assert.assertArrayEquals(new float[]{1, 4, 9}, squaredData, 1E-5f);
     });
   }

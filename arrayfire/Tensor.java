@@ -1,5 +1,7 @@
 package arrayfire;
 
+import arrayfire.containers.TypedArray;
+import arrayfire.containers.U32Array;
 import arrayfire.datatypes.AfDataType;
 import arrayfire.datatypes.B8;
 import arrayfire.datatypes.U32;
@@ -7,6 +9,7 @@ import arrayfire.numbers.N;
 import arrayfire.numbers.U;
 
 import java.lang.foreign.AddressLayout;
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
@@ -15,44 +18,22 @@ import java.util.function.Function;
 
 import static arrayfire.ArrayFire.af;
 
-public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> implements TensorLike<T, D0, D1, D2, D3> {
+public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> implements TensorLike<T, D0, D1, D2, D3>, MemoryContainer {
 
   // Contains a single device pointer.
   public static final AddressLayout LAYOUT = ValueLayout.ADDRESS;
 
-  private Scope scope;
+  private final Arena arena;
   private final MemorySegment segment;
   private final T type;
   private final Shape<D0, D1, D2, D3> shape;
-  private HostTensor<T, D0, D1, D2, D3> data;
 
-  Tensor(Scope scope, MemorySegment segment, T type, Shape<D0, D1, D2, D3> shape) {
-    this.scope = scope;
-    this.segment = segment;
+  Tensor(T type, Shape<D0, D1, D2, D3> shape) {
+    this.arena = Arena.ofShared();
+    this.segment = arena.allocate(LAYOUT);
     this.type = type;
     this.shape = shape;
-    this.scope.track(this);
-    if (ArrayFire.EAGER.get()) {
-      assert Arrays.equals(af.getDims(segment), shape.dims()) : "Tensor shape mismatch";
-      this.data = af.data(this);
-    } else {
-      this.data = null;
-    }
-    if (ArrayFire.CHECK_NANS.get()) {
-      if (type == AfDataType.F32 || type == AfDataType.F64) {
-        af.nancheck(this);
-      }
-    }
-  }
 
-  public void setScope(Scope scope) {
-    this.scope.untrack(this);
-    scope.track(this);
-    if (data != null) {
-      this.scope.untrack(data);
-      scope.track(data);
-    }
-    this.scope = scope;
   }
 
   public MemorySegment segment() {
@@ -63,7 +44,6 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
    * @return the wrapped void* pointer of the C af_array.
    */
   public MemorySegment dereference() {
-    //    return MemorySegment.ofAddress(segment.get(LAYOUT,0L));
     return segment.get(LAYOUT, 0L);
   }
 
@@ -99,11 +79,6 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
   public String toString() {
     return "AfTensor{" + "type=" + type + ", shape=" + shape + '}';
   }
-
-  public Scope scope() {
-    return scope;
-  }
-
 
   public Tensor<T, D1, D0, D2, D3> transpose() {
     return af.transpose(this);
@@ -163,28 +138,10 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
     ArrayFire.release(this);
   }
 
-  public Tensor<T, D0, D1, D2, D3> escape() {
-    return af.escape(this);
-  }
 
-  public Tensor<T, D0, D1, D2, D3> escape(Scope scope) {
-    return af.escape(this, scope);
-  }
 
   public Tensor<T, D0, D1, D2, D3> eval() {
     return af.eval(this);
-  }
-
-  public Tensor<T, U, D1, D2, D3> sum() {
-    return af.sum(this);
-  }
-
-  public Tensor<T, D0, U, D2, D3> sum(arrayfire.dims.D1 dim) {
-    return af.sum(this, dim);
-  }
-
-  public Tensor<B8, U, D1, D2, D3> sumB8() {
-    return af.sumB8(this);
   }
 
   public Tensor<T, U, D1, D2, D3> mean() {
@@ -215,10 +172,6 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
     return af.min(this);
   }
 
-  public Tensor<U32, U, D1, D2, D3> imax() {
-    return af.imax(this);
-  }
-
   public Tensor<T, D0, D1, D2, D3> clamp(Tensor<T, ?, ?, ?, ?> lo, Tensor<T, ?, ?, ?, ?> hi) {
     return af.clamp(this, lo, hi);
   }
@@ -247,7 +200,7 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
     return af.softmax(this);
   }
 
-  public Tensor<T, D0, D1, D2, D3> softmax(double temperature) {
+  public Tensor<T, D0, D1, D2, D3> softmax(float temperature) {
     return af.softmax(this, temperature);
   }
 
@@ -316,32 +269,13 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
 
   }
 
-  private long[] nativeDims() {
-    return af.nativeDims(shape()).toArray(ValueLayout.JAVA_LONG);
-  }
-
-  private Shape<?, ?, ?, ?> nativeShape() {
-    var dims = nativeDims();
-    return af.shape((int) dims[0], (int) dims[1], (int) dims[2], (int) dims[3]);
-  }
-
-  public <TN extends AfDataType<?>> Tensor<TN, D0, D1, D2, D3> cast(TN t) {
+  public <TN extends AfDataType<?, ?>> Tensor<TN, D0, D1, D2, D3> cast(TN t) {
     return af.cast(this, t);
-  }
-
-  /**
-   * L2 norm.
-   */
-  public Tensor<T, U, D1, D2, D3> norm() {
-    return af.norm(this);
   }
 
   /**
    * Normalize by dividing by the L2 norm.
    */
-  public Tensor<T, D0, D1, D2, D3> normalize() {
-    return af.normalize(this);
-  }
 
   public Tensor<T, D0, D1, D2, D3> center() {
     return af.center(this);
@@ -352,14 +286,8 @@ public class Tensor<T extends AfDataType<?>, D0 extends Number, D1 extends Numbe
     return this;
   }
 
-  public HostTensor<T, D0, D1, D2, D3> data() {
-    return data(false);
-  }
-
-  public HostTensor<T, D0, D1, D2, D3> data(boolean pull) {
-    if (pull && data == null) {
-      data = af.data(this);
-    }
-    return data;
+  @Override
+  public Arena arena() {
+    return arena;
   }
 }

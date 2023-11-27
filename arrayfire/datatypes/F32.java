@@ -1,14 +1,12 @@
 package arrayfire.datatypes;
 
+import arrayfire.containers.F16Array;
+import arrayfire.containers.F32Array;
+
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
-public class F32 implements AfDataType<Float> {
-
-  @Override
-  public ValueLayout.OfFloat layout() {
-    return ValueLayout.JAVA_FLOAT;
-  }
+public class F32 implements AfDataType<F32Array, F32> {
 
   @Override
   public int code() {
@@ -16,17 +14,13 @@ public class F32 implements AfDataType<Float> {
   }
 
   @Override
-  public Float get(MemorySegment segment, int index) {
-    return segment.getAtIndex(layout(), index);
+  public arrayfire.datatypes.F32 sumType() {
+    return AfDataType.F32;
   }
 
   @Override
-  public void set(MemorySegment segment, int index, Float value) {
-    segment.setAtIndex(layout(), index, value);
-  }
-
-  @Override
-  public Accessor<Float> accessor(MemorySegment segment) {
-    return new Accessor<>(this, segment);
+  public F32Array create(int length) {
+    return new F32Array(length);
   }
 }
+

@@ -1,31 +1,22 @@
 package arrayfire.datatypes;
 
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
+import arrayfire.containers.U64Array;
 
-public class U64 implements AfDataType<Long> {
+public class U64 implements AfDataType<U64Array, U64> {
 
-  @Override
-  public ValueLayout.OfLong layout() {
-    return ValueLayout.JAVA_LONG;
-  }
+    @Override
+    public int code() {
+        return AfDataTypeEnum.F32.code();
+    }
 
-  @Override
-  public int code() {
-    return AfDataTypeEnum.U64.code();
-  }
+    @Override
+    public U64 sumType() {
+        return AfDataType.U64;
+    }
 
-  @Override
-  public Long get(MemorySegment segment, int index) {
-    return segment.getAtIndex(layout(), index);
-  }
-
-  @Override
-  public void set(MemorySegment segment, int index, Long value) {
-    segment.setAtIndex(layout(), index, value);
-  }
-
-  public Accessor<Long> accessor(MemorySegment segment) {
-    return new Accessor<>(this, segment);
-  }
+    @Override
+    public U64Array create(int length) {
+        return new U64Array(length);
+    }
 }
+

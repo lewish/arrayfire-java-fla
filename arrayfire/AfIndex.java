@@ -1,5 +1,6 @@
 package arrayfire;
 
+import arrayfire.containers.U64Array;
 import arrayfire.datatypes.U64;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;

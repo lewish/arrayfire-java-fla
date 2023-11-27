@@ -1,27 +1,8 @@
 package arrayfire.datatypes;
 
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
+import arrayfire.containers.F16Array;
 
-public class F16 implements AfDataType<Float> {
-
-  private static short encode(float value) {
-    int fltInt32 = Float.floatToRawIntBits(value);
-    int fltInt16;
-
-    fltInt16 = (fltInt32 >>> 31) << 5;
-    int tmp = (fltInt32 >>> 23) & 0xff;
-    tmp = (tmp - 0x70) & ((0x70 - tmp) >> 4 >>> 27);
-    fltInt16 = (fltInt16 | tmp) << 10;
-    fltInt16 |= (fltInt32 >> 13) & 0x3ff;
-    return (short) fltInt16;
-  }
-
-  @Override
-  public MemoryLayout layout() {
-    return ValueLayout.JAVA_SHORT;
-  }
+public class F16 implements AfDataType<F16Array, F16> {
 
   @Override
   public int code() {
@@ -29,17 +10,13 @@ public class F16 implements AfDataType<Float> {
   }
 
   @Override
-  public Float get(MemorySegment segment, int index) {
-    throw new UnsupportedOperationException();
+  public F16 sumType() {
+    return AfDataType.F16;
   }
 
   @Override
-  public void set(MemorySegment segment, int index, Float value) {
-    throw new UnsupportedOperationException();
+  public F16Array create(int length) {
+    return new F16Array(length);
   }
 
-  @Override
-  public Accessor<Float> accessor(MemorySegment segment) {
-    return new Accessor<>(this, segment);
-  }
 }
