@@ -1,12 +1,14 @@
 package arrayfire.containers;
 
 import arrayfire.MemoryContainer;
+import arrayfire.Scope;
 import arrayfire.datatypes.AfDataType;
-import arrayfire.datatypes.AfDataTypeEnum;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+
+import static arrayfire.ArrayFire.af;
 
 public abstract class TypedArray<DataType extends AfDataType<?, ?>, JavaType, JavaArrayType> implements MemoryContainer {
 
@@ -18,9 +20,9 @@ public abstract class TypedArray<DataType extends AfDataType<?, ?>, JavaType, Ja
     TypedArray(DataType type, int length) {
         this.type = type;
         this.length = length;
-        // TODO: Track this arena, allow GC based arena.
         this.arena = Arena.ofShared();
         this.segment = arena.allocateArray(layout(), length);
+        af.currentScope().track(this);
     }
 
     public Arena arena() {
@@ -50,4 +52,11 @@ public abstract class TypedArray<DataType extends AfDataType<?, ?>, JavaType, Ja
     public abstract void set(int index, JavaType value);
 
     abstract JavaArrayType toHeap();
+
+    @Override
+    public void dispose() {
+        if (arena.scope().isAlive()) {
+            arena.close();
+        }
+    }
 }

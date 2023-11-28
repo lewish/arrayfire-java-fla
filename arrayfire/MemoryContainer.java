@@ -1,10 +1,12 @@
 package arrayfire;
 
-import java.lang.foreign.Arena;
-
 /**
- * Indicates this object is backed by a foreign memory segment that must be memory managed.
+ * Indicates this object contains foreign memory that must be manually managed.
  */
 public interface MemoryContainer {
-    Arena arena();
+
+    /**
+     * Free the memory associated with this object.
+     */
+    void dispose();
 }

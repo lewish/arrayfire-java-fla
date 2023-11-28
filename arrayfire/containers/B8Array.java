@@ -35,12 +35,4 @@ public class B8Array extends TypedArray<B8, Boolean, boolean[]> {
         }
         return array;
     }
-
-    public static B8Array fromHeap(boolean[] array) {
-        var result = new B8Array(array.length);
-        for (int i = 0; i < array.length; i++) {
-            result.set(i, array[i]);
-        }
-        return result;
-    }
 }

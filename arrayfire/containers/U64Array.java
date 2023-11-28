@@ -34,12 +34,4 @@ public class U64Array extends TypedArray<U64, Long, long[]> {
         }
         return array;
     }
-
-    public static U64Array fromHeap(long[] array) {
-        var u32Array = new U64Array(array.length);
-        for (int i = 0; i < array.length; i++) {
-            u32Array.set(i, array[i]);
-        }
-        return u32Array;
-    }
 }

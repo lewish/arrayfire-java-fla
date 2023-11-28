@@ -12,6 +12,13 @@ import static arrayfire.ArrayFire.af;
 public class NewTest {
 
     @Test
+    public void createFromArray() {
+        var a = af.create(AfDataType.U64, new long[]{1, 2});
+        var data = af.data(a);
+        Assert.assertArrayEquals(new long[]{1, 2}, data.toHeap());
+    }
+
+    @Test
     public void add() {
         var a = af.create(0.0f, 1.0f);
         var b = af.create(1.0f, 2.0f);

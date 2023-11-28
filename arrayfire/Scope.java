@@ -2,40 +2,32 @@ package arrayfire;
 
 import arrayfire.utils.Contextual;
 
+import java.lang.foreign.Arena;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Scope implements AutoCloseable {
+public class Scope {
 
-  public static final Contextual<Scope> CONTEXTUAL = Contextual.named("arrayfire_memory_scope");
+    private final Set<MemoryContainer> memoryContainers = new HashSet<>();
 
-  public final Scope parent;
-  private final Set<Tensor<?, ?, ?, ?, ?>> tensors = new HashSet<>();
-  private final Set<HostTensor<?, ?, ?, ?, ?>> hostTensors = new HashSet<>();
+    public Arena managedArena(MemoryContainer memoryContainer) {
+        if (memoryContainers.contains(memoryContainer)) {
+            throw new IllegalStateException("Memory container already tracked in this scope: " + memoryContainer);
+        }
+        memoryContainers.add(memoryContainer);
+        return Arena.ofShared();
+    }
 
-  public Scope(Scope parent) {
-    this.parent = parent;
-  }
+    public void track(MemoryContainer memoryContainer) {
+        memoryContainers.add(memoryContainer);
+    }
 
-  @Override
-  public void close() {
-    tensors.forEach(ArrayFire::release);
-    hostTensors.forEach(ArrayFire::release);
-  }
+    public void untrack(MemoryContainer memoryContainer) {
+        memoryContainers.remove(memoryContainer);
+    }
 
-  public void track(Tensor<?, ?, ?, ?, ?> tensor) {
-    this.tensors.add(tensor);
-  }
-
-  public void track(HostTensor<?, ?, ?, ?, ?> hostTensor) {
-    this.hostTensors.add(hostTensor);
-  }
-
-  public void untrack(Tensor<?, ?, ?, ?, ?> tensor) {
-    this.tensors.remove(tensor);
-  }
-
-  public void untrack(HostTensor<?, ?, ?, ?, ?> hostTensor) {
-    this.hostTensors.remove(hostTensor);
-  }
+    public void dispose() {
+        memoryContainers.forEach(MemoryContainer::dispose);
+        memoryContainers.clear();
+    }
 }

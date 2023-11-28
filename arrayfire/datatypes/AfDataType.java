@@ -14,6 +14,8 @@ public interface AfDataType<Container extends TypedArray<?, ?, ?>, SumType exten
     F64 F64 = new F64();
     B8 B8 = new B8();
 
+    S32 S32 = new S32();
+
     int code();
 
     SumType sumType();

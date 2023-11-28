@@ -34,12 +34,4 @@ public class F16Array extends TypedArray<F16, Float, float[]> {
         }
         return array;
     }
-
-    public static F16Array fromHeap(float[] array) {
-        var f16Array = new F16Array(array.length);
-        for (int i = 0; i < array.length; i++) {
-            f16Array.set(i, array[i]);
-        }
-        return f16Array;
-    }
 }

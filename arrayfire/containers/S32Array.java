@@ -1,16 +1,14 @@
 package arrayfire.containers;
 
 import arrayfire.datatypes.AfDataType;
-import arrayfire.datatypes.AfDataTypeEnum;
-import arrayfire.datatypes.F16;
-import arrayfire.datatypes.U32;
+import arrayfire.datatypes.S32;
 
 import java.lang.foreign.ValueLayout;
 
-public class U32Array extends TypedArray<U32, Integer, int[]> {
+public class S32Array extends TypedArray<S32, Integer, int[]> {
 
-    public U32Array(int length) {
-        super(AfDataType.U32, length);
+    public S32Array(int length) {
+        super(AfDataType.S32, length);
     }
 
     @Override

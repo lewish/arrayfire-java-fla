@@ -33,7 +33,7 @@ public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Nu
     this.segment = arena.allocate(LAYOUT);
     this.type = type;
     this.shape = shape;
-
+    af.currentScope().track(this);
   }
 
   public MemorySegment segment() {
@@ -107,14 +107,25 @@ public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Nu
     return af.castshape(this, d0, d1, d2, d3);
   }
 
+  public Tensor<T, N, U, U, U> reshape(int d0) {
+    return af.reshape(this, af.shape(d0));
+  }
+
   public <OD0 extends Number> Tensor<T, OD0, U, U, U> reshape(OD0 d0) {
     return af.reshape(this, af.shape(d0));
+  }
+
+  public  Tensor<T, N, N, U, U> reshape(int d0, int d1) {
+    return af.reshape(this, af.shape(d0, d1));
   }
 
   public <OD0 extends Number, OD1 extends Number> Tensor<T, OD0, OD1, U, U> reshape(OD0 d0, OD1 d1) {
     return af.reshape(this, af.shape(d0, d1));
   }
 
+  public  Tensor<T, N, N, N, U> reshape(int d0, int d1, int d2) {
+    return af.reshape(this, af.shape(d0, d1, d2));
+  }
   public <OD0 extends Number, OD1 extends Number, OD2 extends Number> Tensor<T, OD0, OD1, OD2, U> reshape(OD0 d0,
       OD1 d1,
       OD2 d2) {
@@ -194,14 +205,6 @@ public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Nu
 
   public Tensor<T, D0, D1, D2, D3> sqrt() {
     return af.sqrt(this);
-  }
-
-  public Tensor<T, D0, D1, D2, D3> softmax() {
-    return af.softmax(this);
-  }
-
-  public Tensor<T, D0, D1, D2, D3> softmax(float temperature) {
-    return af.softmax(this, temperature);
   }
 
   public Tensor<T, D0, D1, D2, D3> sigmoid() {
@@ -287,7 +290,8 @@ public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Nu
   }
 
   @Override
-  public Arena arena() {
-    return arena;
+  public void dispose() {
+    ArrayFire.release(this);
+    arena.close();
   }
 }

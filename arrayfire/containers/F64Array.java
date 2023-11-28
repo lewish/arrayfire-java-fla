@@ -1,35 +1,35 @@
 package arrayfire.containers;
 
 import arrayfire.datatypes.AfDataType;
-import arrayfire.datatypes.AfDataTypeEnum;
 import arrayfire.datatypes.F32;
+import arrayfire.datatypes.F64;
 
 import java.lang.foreign.ValueLayout;
 
-public class F32Array extends TypedArray<F32, Float, float[]> {
+public class F64Array extends TypedArray<F64, Double, double[]> {
 
-    public F32Array(int length) {
-        super(AfDataType.F32, length);
+    public F64Array(int length) {
+        super(AfDataType.F64, length);
     }
 
     @Override
-    public ValueLayout.OfFloat layout() {
-        return ValueLayout.JAVA_FLOAT;
+    public ValueLayout.OfDouble layout() {
+        return ValueLayout.JAVA_DOUBLE;
     }
 
     @Override
-    public Float get(int index) {
+    public Double get(int index) {
         return segment.getAtIndex(layout(), index);
     }
 
     @Override
-    public void set(int index, Float value) {
+    public void set(int index, Double value) {
         segment.setAtIndex(layout(), index, value);
     }
 
     @Override
-    public float[] toHeap() {
-        var array = new float[length];
+    public double[] toHeap() {
+        var array = new double[length];
         for (int i = 0; i < array.length; i++) {
             array[i] = get(i);
         }
