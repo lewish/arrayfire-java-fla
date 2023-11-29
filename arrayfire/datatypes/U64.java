@@ -6,7 +6,7 @@ public class U64 implements AfDataType<U64Array, U64> {
 
     @Override
     public int code() {
-        return AfDataTypeEnum.F32.code();
+        return AfDataTypeEnum.U64.code();
     }
 
     @Override

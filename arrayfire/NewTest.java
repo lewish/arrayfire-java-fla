@@ -13,25 +13,31 @@ public class NewTest {
 
     @Test
     public void createFromArray() {
-        var a = af.create(AfDataType.U64, new long[]{1, 2});
-        var data = af.data(a);
-        Assert.assertArrayEquals(new long[]{1, 2}, data.toHeap());
+        af.tidy(() -> {
+            var a = af.create(AfDataType.U64, new long[]{1, 2});
+            var data = af.data(a);
+            Assert.assertArrayEquals(new long[]{1, 2}, data.toHeap());
+        });
     }
 
     @Test
     public void add() {
-        var a = af.create(0.0f, 1.0f);
-        var b = af.create(1.0f, 2.0f);
-        var c = af.add(a, b);
-        var data = af.data(c);
-        Assert.assertArrayEquals(new float[]{1.0f, 3.0f}, data.toHeap(), 0.0f);
+        af.tidy(() -> {
+            var a = af.create(0.0f, 1.0f);
+            var b = af.create(1.0f, 2.0f);
+            var c = af.add(a, b);
+            var data = af.data(c);
+            Assert.assertArrayEquals(new float[]{1.0f, 3.0f}, data.toHeap(), 0.0f);
+        });
     }
 
     @Test
     public void sumB8() {
-        var a = af.create(AfDataType.B8, true, false, true, true).reshape(2, 2);
-        var sum = af.sum(a);
-        var data = af.data(sum);
-        Assert.assertArrayEquals(new int[]{1, 2}, data.toHeap());
+        af.tidy(() -> {
+            var a = af.create(AfDataType.B8, true, false, true, true).reshape(2, 2);
+            var sum = af.sum(a);
+            var data = af.data(sum);
+            Assert.assertArrayEquals(new int[]{1, 2}, data.toHeap());
+        });
     }
 }

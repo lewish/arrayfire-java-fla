@@ -214,6 +214,10 @@ public class ArrayFire {
         return create(AfDataType.F32, values);
     }
 
+    public Tensor<F64, N, U, U, U> create(double... values) {
+        return create(AfDataType.F64, values);
+    }
+
     public Tensor<S32, N, U, U, U> create(int... values) {
         return create(AfDataType.S32, values);
     }
@@ -769,7 +773,6 @@ public class ArrayFire {
     public <T extends AfDataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, ?, ?, ?, ?> index(
             Tensor<T, D0, D1, D2, D3> tensor, AfIndex... indexes) {
         try (Arena arena = Arena.ofConfined()) {
-            System.out.println(AfIndex.LAYOUT.byteSize());
             var layout = MemoryLayout.sequenceLayout(indexes.length, AfIndex.LAYOUT);
             var nativeIndexes = arena.allocateArray(AfIndex.LAYOUT, indexes.length);
             for (int i = 0; i < indexes.length; i++) {
