@@ -2,14 +2,14 @@ package arrayfire;
 
 public class ArrayFireException extends RuntimeException {
 
-  private final AfStatus status;
+  private final Status status;
 
-  public ArrayFireException(AfStatus status) {
+  public ArrayFireException(Status status) {
     super(String.format("ArrayFireException: %S", status.name()));
     this.status = status;
   }
 
-  public AfStatus status() {
+  public Status status() {
     return status;
   }
 }

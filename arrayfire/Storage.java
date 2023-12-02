@@ -5,19 +5,19 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public enum AfStorage {
+public enum Storage {
   DENSE(0), CSR(1), CSC(2), COO(3);
 
-  private static final Map<Integer, AfStorage> codeMap = Arrays.stream(AfStorage.values())
-      .collect(Collectors.toMap(AfStorage::code, Function.identity()));
+  private static final Map<Integer, Storage> codeMap = Arrays.stream(Storage.values())
+      .collect(Collectors.toMap(Storage::code, Function.identity()));
 
   private final int code;
 
-  AfStorage(int code) {
+  Storage(int code) {
     this.code = code;
   }
 
-  public static AfStorage fromCode(int code) {
+  public static Storage fromCode(int code) {
     return codeMap.get(code);
   }
 

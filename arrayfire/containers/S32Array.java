@@ -1,14 +1,14 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.AfDataType;
+import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.S32;
 
 import java.lang.foreign.ValueLayout;
 
-public class S32Array extends TypedArray<S32, Integer, int[]> {
+public class S32Array extends NativeArray<S32, Integer, int[]> {
 
     public S32Array(int length) {
-        super(AfDataType.S32, length);
+        super(DataType.S32, length);
     }
 
     @Override

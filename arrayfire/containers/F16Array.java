@@ -1,15 +1,14 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.AfDataType;
-import arrayfire.datatypes.AfDataTypeEnum;
+import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F16;
 
 import java.lang.foreign.ValueLayout;
 
-public class F16Array extends TypedArray<F16, Float, float[]> {
+public class F16Array extends NativeArray<F16, Float, float[]> {
 
     public F16Array(int length) {
-        super(AfDataType.F16, length);
+        super(DataType.F16, length);
     }
     @Override
     public ValueLayout.OfShort layout() {

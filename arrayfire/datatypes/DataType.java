@@ -1,11 +1,8 @@
 package arrayfire.datatypes;
 
-import arrayfire.containers.TypedArray;
+import arrayfire.containers.NativeArray;
 
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-
-public interface AfDataType<Container extends TypedArray<?, ?, ?>, SumType extends AfDataType<? ,?>> {
+public interface DataType<Container extends NativeArray<?, ?, ?>, SumType extends DataType<? ,?>> {
 
     U64 U64 = new U64();
     U32 U32 = new U32();
@@ -13,7 +10,6 @@ public interface AfDataType<Container extends TypedArray<?, ?, ?>, SumType exten
     F16 F16 = new F16();
     F64 F64 = new F64();
     B8 B8 = new B8();
-
     S32 S32 = new S32();
 
     int code();

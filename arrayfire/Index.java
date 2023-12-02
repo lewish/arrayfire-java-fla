@@ -1,6 +1,5 @@
 package arrayfire;
 
-import arrayfire.containers.U64Array;
 import arrayfire.datatypes.U64;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
@@ -10,22 +9,22 @@ import java.lang.foreign.ValueLayout;
 /*
  * https://arrayfire.org/docs/index_8h_source.htm
  */
-public class AfIndex {
+public class Index {
   static MemoryLayout LAYOUT = MemoryLayout.structLayout(
-      MemoryLayout.unionLayout(ValueLayout.ADDRESS.withName("arr"), AfSeq.LAYOUT.withName("seq")).withName("union"),
+      MemoryLayout.unionLayout(ValueLayout.ADDRESS.withName("arr"), Seq.LAYOUT.withName("seq")).withName("union"),
       ValueLayout.JAVA_BOOLEAN.withName("isSeq"),
       ValueLayout.JAVA_BOOLEAN.withName("isBatch"),
       MemoryLayout.paddingLayout(6));
 
   private final Tensor<U64, ?, ?, ?, ?> arr;
-  private final AfSeq seq;
+  private final Seq seq;
 
-  AfIndex(Tensor<U64, ?, ?, ?, ?> arr) {
+  Index(Tensor<U64, ?, ?, ?, ?> arr) {
     this.arr = arr;
     this.seq = null;
   }
 
-  AfIndex(AfSeq seq) {
+  Index(Seq seq) {
     this.arr = null;
     this.seq = seq;
   }

@@ -1,6 +1,6 @@
 package arrayfire;
 
-import arrayfire.datatypes.AfDataType;
+import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F32;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;
@@ -18,7 +18,7 @@ public class ArrayFireTest {
 
     @BeforeClass
     public static void setUp() {
-        af.setBackend(AfBackend.CPU);
+        af.setBackend(Backend.CPU);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class ArrayFireTest {
     @Test
     public void index() {
         af.tidy(() -> {
-            var indexArray = af.create(AfDataType.U64, new long[]{1, 0}).reshape(2);
+            var indexArray = af.create(DataType.U64, new long[]{1, 0}).reshape(2);
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var resultRows = data.index(af.seq(indexArray), af.seq(0, 1));
             Assert.assertArrayEquals(new float[]{2, 1, 4, 3}, af.data(resultRows).toHeap(), 1E-5f);

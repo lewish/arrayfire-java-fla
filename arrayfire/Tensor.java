@@ -1,10 +1,6 @@
 package arrayfire;
 
-import arrayfire.containers.TypedArray;
-import arrayfire.containers.U32Array;
-import arrayfire.datatypes.AfDataType;
-import arrayfire.datatypes.B8;
-import arrayfire.datatypes.U32;
+import arrayfire.datatypes.DataType;
 import arrayfire.numbers.N;
 import arrayfire.numbers.U;
 
@@ -12,13 +8,12 @@ import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
 import static arrayfire.ArrayFire.af;
 
-public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> implements TensorLike<T, D0, D1, D2, D3>, MemoryContainer {
+public class Tensor<T extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> implements TensorLike<T, D0, D1, D2, D3>, MemoryContainer {
 
   // Contains a single device pointer.
   public static final AddressLayout LAYOUT = ValueLayout.ADDRESS;
@@ -211,32 +206,32 @@ public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Nu
     return af.sigmoid(this);
   }
 
-  public Tensor<T, D0, D1, D2, D3> sparse(AfStorage storage) {
+  public Tensor<T, D0, D1, D2, D3> sparse(Storage storage) {
     return af.sparse(this, storage);
   }
 
-  public Tensor<T, N, U, U, U> index(AfIndex index) {
+  public Tensor<T, N, U, U, U> index(Index index) {
     return af.index(this, index);
   }
 
-  public Tensor<T, N, N, U, U> index(AfIndex i0, AfIndex i1) {
+  public Tensor<T, N, N, U, U> index(Index i0, Index i1) {
     return af.index(this, i0, i1);
   }
 
-  public Tensor<T, D0, N, U, U> index(AfIndex i0, AfSpan span) {
+  public Tensor<T, D0, N, U, U> index(Index i0, Span span) {
     return af.index(this, i0, span);
   }
 
-  public Tensor<T, D0, N, U, U> index(AfSpan span, AfIndex i1) {
+  public Tensor<T, D0, N, U, U> index(Span span, Index i1) {
     return af.index(this, span, i1);
   }
 
-  public Tensor<T, D0, D1, N, U> index(AfSpan span0, AfSpan span1, AfIndex i2) {
+  public Tensor<T, D0, D1, N, U> index(Span span0, Span span1, Index i2) {
     return af.index(this, span0, span1, i2);
   }
 
 
-  public Tensor<T, ?, ?, ?, ?> index(AfIndex... indexes) {
+  public Tensor<T, ?, ?, ?, ?> index(Index... indexes) {
     return af.index(this, indexes);
   }
 
@@ -272,7 +267,7 @@ public class Tensor<T extends AfDataType<?, ?>, D0 extends Number, D1 extends Nu
 
   }
 
-  public <TN extends AfDataType<?, ?>> Tensor<TN, D0, D1, D2, D3> cast(TN t) {
+  public <TN extends DataType<?, ?>> Tensor<TN, D0, D1, D2, D3> cast(TN t) {
     return af.cast(this, t);
   }
 

@@ -1,15 +1,14 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.AfDataType;
-import arrayfire.datatypes.F32;
+import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F64;
 
 import java.lang.foreign.ValueLayout;
 
-public class F64Array extends TypedArray<F64, Double, double[]> {
+public class F64Array extends NativeArray<F64, Double, double[]> {
 
     public F64Array(int length) {
-        super(AfDataType.F64, length);
+        super(DataType.F64, length);
     }
 
     @Override

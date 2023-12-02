@@ -1,12 +1,10 @@
 package arrayfire;
 
-import arrayfire.utils.Contextual;
-
 import java.lang.foreign.Arena;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Scope {
+public class MemoryScope {
 
     private final Set<MemoryContainer> memoryContainers = new HashSet<>();
 

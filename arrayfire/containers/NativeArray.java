@@ -1,8 +1,7 @@
 package arrayfire.containers;
 
 import arrayfire.MemoryContainer;
-import arrayfire.Scope;
-import arrayfire.datatypes.AfDataType;
+import arrayfire.datatypes.DataType;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -10,14 +9,20 @@ import java.lang.foreign.ValueLayout;
 
 import static arrayfire.ArrayFire.af;
 
-public abstract class TypedArray<DataType extends AfDataType<?, ?>, JavaType, JavaArrayType> implements MemoryContainer {
+/**
+ *
+ * @param <DT> Data type
+ * @param <JT> Java type
+ * @param <JAT> Java array type
+ */
+public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements MemoryContainer {
 
-    final DataType type;
+    final DT type;
     final int length;
     final Arena arena;
     final MemorySegment segment;
 
-    TypedArray(DataType type, int length) {
+    NativeArray(DT type, int length) {
         this.type = type;
         this.length = length;
         this.arena = Arena.ofShared();
@@ -41,17 +46,17 @@ public abstract class TypedArray<DataType extends AfDataType<?, ?>, JavaType, Ja
         return type.code();
     }
 
-    public DataType type() {
+    public DT type() {
         return type;
     }
 
     abstract ValueLayout layout();
 
-    abstract JavaType get(int index);
+    abstract JT get(int index);
 
-    public abstract void set(int index, JavaType value);
+    public abstract void set(int index, JT value);
 
-    abstract JavaArrayType toHeap();
+    abstract JAT toHeap();
 
     @Override
     public void dispose() {

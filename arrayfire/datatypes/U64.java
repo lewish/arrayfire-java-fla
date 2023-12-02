@@ -2,16 +2,16 @@ package arrayfire.datatypes;
 
 import arrayfire.containers.U64Array;
 
-public class U64 implements AfDataType<U64Array, U64> {
+public class U64 implements DataType<U64Array, U64> {
 
     @Override
     public int code() {
-        return AfDataTypeEnum.U64.code();
+        return DataTypeEnum.U64.code();
     }
 
     @Override
     public U64 sumType() {
-        return AfDataType.U64;
+        return DataType.U64;
     }
 
     @Override

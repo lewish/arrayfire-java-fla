@@ -1,4 +1,4 @@
 package arrayfire;
 
-public class AfSpan {
+public class Span {
 }

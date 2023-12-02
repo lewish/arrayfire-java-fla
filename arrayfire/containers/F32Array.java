@@ -1,15 +1,14 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.AfDataType;
-import arrayfire.datatypes.AfDataTypeEnum;
+import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F32;
 
 import java.lang.foreign.ValueLayout;
 
-public class F32Array extends TypedArray<F32, Float, float[]> {
+public class F32Array extends NativeArray<F32, Float, float[]> {
 
     public F32Array(int length) {
-        super(AfDataType.F32, length);
+        super(DataType.F32, length);
     }
 
     @Override

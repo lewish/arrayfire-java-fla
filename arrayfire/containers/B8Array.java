@@ -1,15 +1,14 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.AfDataType;
+import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.B8;
-import arrayfire.datatypes.U32;
 
 import java.lang.foreign.ValueLayout;
 
-public class B8Array extends TypedArray<B8, Boolean, boolean[]> {
+public class B8Array extends NativeArray<B8, Boolean, boolean[]> {
 
     public B8Array(int length) {
-        super(AfDataType.B8, length);
+        super(DataType.B8, length);
     }
 
     @Override

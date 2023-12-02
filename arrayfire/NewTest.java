@@ -1,6 +1,6 @@
 package arrayfire;
 
-import arrayfire.datatypes.AfDataType;
+import arrayfire.datatypes.DataType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,7 +14,7 @@ public class NewTest {
     @Test
     public void createFromArray() {
         af.tidy(() -> {
-            var a = af.create(AfDataType.U64, new long[]{1, 2});
+            var a = af.create(DataType.U64, new long[]{1, 2});
             var data = af.data(a);
             Assert.assertArrayEquals(new long[]{1, 2}, data.toHeap());
         });
@@ -34,7 +34,7 @@ public class NewTest {
     @Test
     public void sumB8() {
         af.tidy(() -> {
-            var a = af.create(AfDataType.B8, true, false, true, true).reshape(2, 2);
+            var a = af.create(DataType.B8, true, false, true, true).reshape(2, 2);
             var sum = af.sum(a);
             var data = af.data(sum);
             Assert.assertArrayEquals(new int[]{1, 2}, data.toHeap());

@@ -5,7 +5,7 @@ import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
-public record AfSeq(double begin, double end, double step) {
+public record Seq(double begin, double end, double step) {
 
   public static MemoryLayout LAYOUT = MemoryLayout.structLayout(
       ValueLayout.JAVA_DOUBLE.withName("begin"),

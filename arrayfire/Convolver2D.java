@@ -1,6 +1,6 @@
 package arrayfire;
 
-import arrayfire.datatypes.AfDataType;
+import arrayfire.datatypes.DataType;
 import arrayfire.numbers.N;
 import arrayfire.numbers.U;
 
@@ -27,7 +27,7 @@ public record Convolver2D<D0 extends Number, D1 extends Number, D2 extends Numbe
     this(input, filters, af.shape(1, 1));
   }
 
-  public <T extends AfDataType<?, ?>,  D3 extends Number> Tensor<T, N, N, FD3, D3> convolve(
+  public <T extends DataType<?, ?>,  D3 extends Number> Tensor<T, N, N, FD3, D3> convolve(
       Tensor<T, D0, D1, D2, D3> input,
       Tensor<T, ?, ?, D2, FD3> filters) {
     return af.convolve2(input, filters, stride, padding, dilation);

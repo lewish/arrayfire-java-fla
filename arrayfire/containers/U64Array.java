@@ -1,14 +1,14 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.AfDataType;
+import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.U64;
 
 import java.lang.foreign.ValueLayout;
 
-public class U64Array extends TypedArray<U64, Long, long[]> {
+public class U64Array extends NativeArray<U64, Long, long[]> {
 
     public U64Array(int length) {
-        super(AfDataType.U64, length);
+        super(DataType.U64, length);
     }
 
     @Override
