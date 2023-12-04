@@ -8,10 +8,12 @@ import arrayfire.numbers.*;
 import arrayfire.utils.Functions;
 import arrayfire.utils.Reference;
 
-import java.lang.foreign.*;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -84,10 +86,6 @@ public class ArrayFire {
 
     public MemoryScope currentScope() {
         return threadScope.get();
-    }
-
-    public SegmentAllocator allocator() {
-        return Arena.ofConfined();
     }
 
     /**
@@ -168,41 +166,41 @@ public class ArrayFire {
     }
 
     public <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>> Tensor<DT, N, U, U, U> create(AT array) {
-        var shape = af.shape(af.n(array.length()));
-        var result = new Tensor<>(array.type(), shape);
-        handleStatus(arrayfire_h.af_create_array(result.segment(), array.segment(), 1, nativeDims(shape),
-                array.type().code()));
-        return result;
+        try (Arena arena = Arena.ofConfined()) {
+
+
+            var shape = af.shape(af.n(array.length()));
+            var result = new Tensor<>(array.type(), shape);
+            handleStatus(arrayfire_h.af_create_array(result.segment(), array.segment(), 1, nativeDims(arena, shape),
+                    array.type().code()));
+            return result;
+        }
     }
 
 
     @SafeVarargs
     public final <JT, AT extends NativeArray<DT, JT, ?>, DT extends DataType<AT, ?>> Tensor<DT, N, U, U, U> create(
             DT type, JT... values) {
-        var array = type.create(values.length);
-        try {
+        return tidy(() -> {
+            var array = type.create(values.length);
             for (int i = 0; i < values.length; i++) {
                 array.set(i, values[i]);
             }
             return create(array);
-        } finally {
-            array.arena().close();
-        }
+        });
     }
 
     @SuppressWarnings("unchecked")
     public final <JT, JTA, AT extends NativeArray<DT, JT, JTA>, DT extends DataType<AT, ?>> Tensor<DT, N, U, U, U> create(
             DT type, JTA values) {
-        var length = Array.getLength(values);
-        var array = type.create(length);
-        try {
+        return tidy(() -> {
+            var length = Array.getLength(values);
+            var array = type.create(length);
             for (int i = 0; i < length; i++) {
                 array.set(i, (JT) Array.get(values, i));
             }
             return create(array);
-        } finally {
-            array.arena().close();
-        }
+        });
     }
 
     public Tensor<F32, N, U, U, U> create(float... values) {
@@ -227,10 +225,13 @@ public class ArrayFire {
 
     public final <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> constant(
             DT type, Shape<D0, D1, D2, D3> shape, double value) {
-        var result = new Tensor<>(type, shape);
-        handleStatus(
-                arrayfire_h.af_constant(result.segment(), value, shape.dims().length, nativeDims(shape), type.code()));
-        return result;
+        try (Arena arena = Arena.ofConfined()) {
+            var result = new Tensor<>(type, shape);
+            handleStatus(
+                    arrayfire_h.af_constant(result.segment(), value, shape.dims().length, nativeDims(arena, shape),
+                            type.code()));
+            return result;
+        }
     }
 
     public void sync() {
@@ -362,29 +363,39 @@ public class ArrayFire {
 
     public <T extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> randu(
             T type, Shape<D0, D1, D2, D3> shape) {
-        return createFromOperation(type, shape, ptr -> arrayfire_h.af_randu(ptr, shape.dims().length, nativeDims(shape),
-                type.code()));
+        try (Arena arena = Arena.ofConfined()) {
+            return createFromOperation(type, shape,
+                    ptr -> arrayfire_h.af_randu(ptr, shape.dims().length, nativeDims(arena, shape),
+                            type.code()));
+        }
     }
 
     public <T extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> randn(
             T type, Shape<D0, D1, D2, D3> shape) {
-        return createFromOperation(type, shape, ptr -> arrayfire_h.af_randn(ptr, shape.dims().length, nativeDims(shape),
-                type.code()));
+        try (Arena arena = Arena.ofConfined()) {
+            return createFromOperation(type, shape,
+                    ptr -> arrayfire_h.af_randn(ptr, shape.dims().length, nativeDims(arena, shape),
+                            type.code()));
+        }
     }
 
     public Tensor<U32, N, U, U, U> range(int n) {
-        var shape = af.shape(n);
-        return createFromOperation(DataType.U32, shape,
-                ptr -> arrayfire_h.af_range(ptr, shape.dims().length, nativeDims(shape), 0,
-                        DataType.U32.code()));
+        try (Arena arena = Arena.ofConfined()) {
+            var shape = af.shape(n);
+            return createFromOperation(DataType.U32, shape,
+                    ptr -> arrayfire_h.af_range(ptr, shape.dims().length, nativeDims(arena, shape), 0,
+                            DataType.U32.code()));
+        }
     }
 
     public <T extends DataType<?, ?>> Tensor<T, N, U, U, U> range(
             T type, int n) {
-        var shape = af.shape(af.n(n));
-        return createFromOperation(type, shape,
-                ptr -> arrayfire_h.af_range(ptr, shape.dims().length, nativeDims(shape), 0,
-                        type.code()));
+        try (Arena arena = Arena.ofConfined()) {
+            var shape = af.shape(af.n(n));
+            return createFromOperation(type, shape,
+                    ptr -> arrayfire_h.af_range(ptr, shape.dims().length, nativeDims(arena, shape), 0,
+                            type.code()));
+        }
     }
 
     public void setSeed(long seed) {
@@ -401,25 +412,22 @@ public class ArrayFire {
         return result;
     }
 
-    public long[] getDims(Tensor<?, ?, ?, ?, ?> a) {
-        var dims = allocator().allocateArray(ValueLayout.JAVA_LONG, 4);
-        handleStatus(arrayfire_h.af_get_dims(dims.asSlice(0), dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
-                a.dereference()));
-        return dims.toArray(ValueLayout.JAVA_LONG);
-    }
-
     public long[] getDims(MemorySegment a) {
-        var dims = allocator().allocateArray(ValueLayout.JAVA_LONG, 4);
-        handleStatus(arrayfire_h.af_get_dims(dims.asSlice(0), dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
-                a.getAtIndex(ValueLayout.ADDRESS, 0)));
-        return dims.toArray(ValueLayout.JAVA_LONG);
+        try (Arena arena = Arena.ofConfined()) {
+            var dims = arena.allocateArray(ValueLayout.JAVA_LONG, 4);
+            handleStatus(arrayfire_h.af_get_dims(dims.asSlice(0), dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
+                    a.getAtIndex(ValueLayout.ADDRESS, 0)));
+            return dims.toArray(ValueLayout.JAVA_LONG);
+        }
     }
 
     public Version version() {
-        var result = allocator().allocateArray(ValueLayout.JAVA_INT, 3);
-        handleStatus(arrayfire_h.af_get_version(result, result.asSlice(4), result.asSlice(8)));
-        var arr = result.toArray(ValueLayout.JAVA_INT);
-        return new Version(arr[0], arr[1], arr[2]);
+        try (Arena arena = Arena.ofConfined()) {
+            var result = arena.allocateArray(ValueLayout.JAVA_INT, 3);
+            handleStatus(arrayfire_h.af_get_version(result, result.asSlice(4), result.asSlice(8)));
+            var arr = result.toArray(ValueLayout.JAVA_INT);
+            return new Version(arr[0], arr[1], arr[2]);
+        }
     }
 
 //  public String lastError() {
@@ -439,15 +447,19 @@ public class ArrayFire {
 //  }
 
     public Set<Backend> availableBackends() {
-        var result = allocator().allocate(ValueLayout.JAVA_INT);
-        handleStatus(arrayfire_h.af_get_available_backends(result));
-        return Backend.fromBitmask(result.get(ValueLayout.JAVA_INT, 0));
+        try (Arena arena = Arena.ofConfined()) {
+            var result = arena.allocate(ValueLayout.JAVA_INT);
+            handleStatus(arrayfire_h.af_get_available_backends(result));
+            return Backend.fromBitmask(result.get(ValueLayout.JAVA_INT, 0));
+        }
     }
 
     public Backend backend() {
-        var result = allocator().allocate(ValueLayout.JAVA_INT);
-        handleStatus(arrayfire_h.af_get_active_backend(result));
-        return Backend.fromCode(result.get(ValueLayout.JAVA_INT, 0));
+        try (Arena arena = Arena.ofConfined()) {
+            var result = arena.allocate(ValueLayout.JAVA_INT);
+            handleStatus(arrayfire_h.af_get_active_backend(result));
+            return Backend.fromCode(result.get(ValueLayout.JAVA_INT, 0));
+        }
     }
 
     public void setBackend(Backend backend) {
@@ -455,9 +467,11 @@ public class ArrayFire {
     }
 
     public int deviceId() {
-        var result = allocator().allocate(ValueLayout.JAVA_INT);
-        handleStatus(arrayfire_h.af_get_device(result));
-        return result.get(ValueLayout.JAVA_INT, 0);
+        try (Arena arena = Arena.ofConfined()) {
+            var result = arena.allocate(ValueLayout.JAVA_INT);
+            handleStatus(arrayfire_h.af_get_device(result));
+            return result.get(ValueLayout.JAVA_INT, 0);
+        }
     }
 
     public void setDeviceId(int device) {
@@ -465,25 +479,27 @@ public class ArrayFire {
     }
 
     public int deviceCount() {
-        var result = allocator().allocate(ValueLayout.JAVA_INT);
-        handleStatus(arrayfire_h.af_get_device_count(result));
-        return result.get(ValueLayout.JAVA_INT, 0);
+        try (Arena arena = Arena.ofConfined()) {
+            var result = arena.allocate(ValueLayout.JAVA_INT);
+            handleStatus(arrayfire_h.af_get_device_count(result));
+            return result.get(ValueLayout.JAVA_INT, 0);
+        }
     }
 
     public DeviceInfo deviceInfo() {
-        var allocator = allocator();
-        var name = allocator.allocateArray(ValueLayout.JAVA_CHAR, 64);
-        var platform = allocator.allocateArray(ValueLayout.JAVA_CHAR, 64);
-        var toolkit = allocator.allocateArray(ValueLayout.JAVA_CHAR, 64);
-        var compute = allocator.allocateArray(ValueLayout.JAVA_CHAR, 64);
-        handleStatus(arrayfire_h.af_device_info(name, platform, toolkit, compute));
-        return new DeviceInfo(name.getUtf8String(0), platform.getUtf8String(0), toolkit.getUtf8String(0),
-                compute.getUtf8String(0));
+        try (Arena arena = Arena.ofConfined()) {
+            var name = arena.allocateArray(ValueLayout.JAVA_CHAR, 64);
+            var platform = arena.allocateArray(ValueLayout.JAVA_CHAR, 64);
+            var toolkit = arena.allocateArray(ValueLayout.JAVA_CHAR, 64);
+            var compute = arena.allocateArray(ValueLayout.JAVA_CHAR, 64);
+            handleStatus(arrayfire_h.af_device_info(name, platform, toolkit, compute));
+            return new DeviceInfo(name.getUtf8String(0), platform.getUtf8String(0), toolkit.getUtf8String(0),
+                    compute.getUtf8String(0));
+        }
     }
 
-    public MemorySegment nativeDims(Shape<?, ?, ?, ?> shape) {
-        // TODO: These never get cleaned up.
-        return allocator().allocateArray(ValueLayout.JAVA_LONG, shape.dims());
+    public MemorySegment nativeDims(Arena arena, Shape<?, ?, ?, ?> shape) {
+        return arena.allocateArray(ValueLayout.JAVA_LONG, shape.dims());
     }
 
     private <T extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> createFromOperation(
@@ -535,9 +551,11 @@ public class ArrayFire {
             Tensor<T, ?, ?, ?, ?> tensor, Shape<OD0, OD1, OD2, OD3> newShape) {
         assert tensor.shape().capacity() == newShape.capacity() : String.format(
                 "New shape %s doesn't have same capacity as original shape %s", newShape, tensor.shape());
-        return createFromOperation(tensor.type(), newShape,
-                ptr -> arrayfire_h.af_moddims(ptr, tensor.dereference(), newShape.dims().length,
-                        af.nativeDims(newShape)));
+        try (Arena arena = Arena.ofConfined()) {
+            return createFromOperation(tensor.type(), newShape,
+                    ptr -> arrayfire_h.af_moddims(ptr, tensor.dereference(), newShape.dims().length,
+                            af.nativeDims(arena, newShape)));
+        }
     }
 
     public static void release(Tensor<?, ?, ?, ?, ?> tensor) {
@@ -942,7 +960,8 @@ public class ArrayFire {
             // TODO(https://github.com/arrayfire/arrayfire/issues/3402): Convolutions look like they may allocate memory outside of ArrayFire's scope, so sometimes we need to GC first.
             retryWithGc(() -> handleStatus(
                     arrayfire_h.af_convolve2_nn(result, tensor.dereference(), filters.dereference(), 2,
-                            af.nativeDims(stride), 2, af.nativeDims(padding), 2, af.nativeDims(dilation))));
+                            af.nativeDims(arena, stride), 2, af.nativeDims(arena, padding), 2,
+                            af.nativeDims(arena, dilation))));
             var computedDims = af.getDims(result);
             var resultTensor = new Tensor<>(tensor.type(),
                     shape(n((int) computedDims[0]), n((int) computedDims[1]), filters.shape().d3(),
@@ -1032,20 +1051,23 @@ public class ArrayFire {
     }
 
     public DeviceMemInfo deviceMemInfo() {
-        var allocator = af.allocator();
-        var allocBytes = allocator.allocateArray(ValueLayout.JAVA_LONG, 1);
-        var allocBuffers = allocator.allocateArray(ValueLayout.JAVA_LONG, 1);
-        var lockBytes = allocator.allocateArray(ValueLayout.JAVA_LONG, 1);
-        var lockBuffers = allocator.allocateArray(ValueLayout.JAVA_LONG, 1);
-        handleStatus(arrayfire_h.af_device_mem_info(allocBytes, allocBuffers, lockBytes, lockBuffers));
-        return new DeviceMemInfo(allocBytes.getAtIndex(ValueLayout.JAVA_LONG, 0),
-                allocBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0), lockBytes.getAtIndex(ValueLayout.JAVA_LONG, 0),
-                lockBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0));
+        try (Arena arena = Arena.ofConfined()) {
+            var allocBytes = arena.allocateArray(ValueLayout.JAVA_LONG, 1);
+            var allocBuffers = arena.allocateArray(ValueLayout.JAVA_LONG, 1);
+            var lockBytes = arena.allocateArray(ValueLayout.JAVA_LONG, 1);
+            var lockBuffers = arena.allocateArray(ValueLayout.JAVA_LONG, 1);
+            handleStatus(arrayfire_h.af_device_mem_info(allocBytes, allocBuffers, lockBytes, lockBuffers));
+            return new DeviceMemInfo(allocBytes.getAtIndex(ValueLayout.JAVA_LONG, 0),
+                    allocBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0), lockBytes.getAtIndex(ValueLayout.JAVA_LONG, 0),
+                    lockBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0));
+        }
     }
 
     public void printMeminfo() {
-        var chars = af.allocator().allocateArray(ValueLayout.JAVA_BYTE, 1);
-        handleStatus(arrayfire_h.af_print_mem_info(chars, -1));
+        try (Arena arena = Arena.ofConfined()) {
+            var chars = arena.allocateArray(ValueLayout.JAVA_BYTE, 1);
+            handleStatus(arrayfire_h.af_print_mem_info(chars, -1));
+        }
     }
 
     public void deviceGc() {
@@ -1097,18 +1119,6 @@ public class ArrayFire {
                 throw e;
             }
         }
-    }
-
-    private long[] nativeDims(Tensor<?, ?, ?, ?, ?> tensor) {
-        var dims = af.allocator().allocateArray(ValueLayout.JAVA_LONG, 4);
-        handleStatus(arrayfire_h.af_get_dims(dims, dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
-                tensor.dereference()));
-        return dims.toArray(ValueLayout.JAVA_LONG);
-    }
-
-    private Shape<?, ?, ?, ?> nativeShape(Tensor<?, ?, ?, ?, ?> tensor) {
-        var dims = nativeDims(tensor);
-        return af.shape((int) dims[0], (int) dims[1], (int) dims[2], (int) dims[3]);
     }
 
     static void handleStatus(Object res) {

@@ -64,6 +64,15 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void rangeF32() {
+        af.tidy(() -> {
+            var arr = af.range(DataType.F32, 4);
+            var data = af.data(arr);
+            Assert.assertArrayEquals(new float[]{0, 1, 2, 3}, data.toHeap(), 1E-5f);
+        });
+    }
+
+    @Test
     public void sortIndex() {
         af.tidy(() -> {
             var arr = af.create(new float[]{4, 44, 3, 33, 2, 22, 1, 11}).reshape(2, 4);
