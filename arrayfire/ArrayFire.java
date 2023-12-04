@@ -3,14 +3,15 @@ package arrayfire;
 import arrayfire.capi.arrayfire_h;
 import arrayfire.containers.NativeArray;
 import arrayfire.datatypes.*;
+import arrayfire.dims.Dim;
 import arrayfire.numbers.*;
-
 import arrayfire.utils.Functions;
 import arrayfire.utils.Reference;
 
 import java.lang.foreign.*;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -96,41 +97,6 @@ public class ArrayFire {
         return shape(u());
     }
 
-    // TODO: Replace these with af_randu and af_randn and a seed.
-//  public <D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> HostTensor<F32, D0, D1, D2, D3> randgF32(
-//      Shape<D0, D1, D2, D3> shape) {
-//    return randgF32(shape, Contextuals.seed().random().nextLong());
-//  }
-//
-//  public <D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> HostTensor<F32, D0, D1, D2, D3> randgF32(
-//      Shape<D0, D1, D2, D3> shape,
-//      long seed) {
-//    var segment = allocator().allocateArray(AfDataType.F32.layout(), shape.capacity());
-//    var tensor = af.hostTensor(segment, AfDataType.F32, shape);
-//    var random = new Random(seed);
-//    for (int i = 0; i < tensor.capacity(); i++) {
-//      tensor.type().set(segment, i, (float) random.nextGaussian());
-//    }
-//    return tensor;
-//  }
-
-
-    // TODO: Use AF_RANGE
-//    public <D0 extends Number> HostTensor<U64, D0, U, U, U> range(D0 d0) {
-//        var tensor = af.hostTensor(AfDataType.U64, shape(d0));
-//        for (long i = 0; i < tensor.capacity(); i++) {
-//            set(tensor, (int) i, i);
-//        }
-//        return tensor;
-//    }
-
-    // TODO: Delete this??
-//  public <DT extends TypedArray<? ,? ,?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> HostTensor<DT, D0, D1, D2, D3> copy(
-//      HostTensor<DT, D0, D1, D2, D3> tensor) {
-//    var newTensor = af.hostTensor(tensor.type(), tensor.shape());
-//    newTensor.segment().copyFrom(tensor.segment());
-//    return newTensor;
-//  }
 
 //  public <JT, DT extends AfDataType<JT>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> HostTensor<DT, D0, D1, D2, D3> shuffle(
 //      HostTensor<DT, D0, D1, D2, D3> tensor) {
@@ -151,20 +117,55 @@ public class ArrayFire {
 //    return copy;
 //  }
 
-//  public <D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> HostTensor<F32, D0, D1, D2, D3> randomMask(
-//      Shape<D0, D1, D2, D3> shape,
-//      long seed,
-//      double probability) {
-//
-//    var segment = allocator().allocateArray(AfDataType.F32.layout(), shape.capacity());
-//    var tensor = hostTensor(segment, AfDataType.F32, shape);
-//    var random = new Random(seed);
-//    for (int i = 0; i < tensor.capacity(); i++) {
-//      tensor.set(tensor.type(), i, random.nextFloat() < probability ? 1.0f : 0.0f);
-//    }
-//    return tensor;
-//  }
 
+    public <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> sort(
+            Tensor<DT, D0, D1, D2, D3> tensor) {
+        return sort(tensor, d0, true);
+    }
+
+    public <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> sort(
+            Tensor<DT, D0, D1, D2, D3> tensor, Dim dim) {
+        return sort(tensor, dim, true);
+    }
+
+    public <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> sort(
+            Tensor<DT, D0, D1, D2, D3> tensor, Dim dim, boolean ascending) {
+        return createFromOperation(tensor.type(), tensor.shape(),
+                ptr -> arrayfire_h.af_sort(ptr, tensor.dereference(), dim.index(), ascending));
+    }
+
+    public <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
+            Tensor<DT, D0, D1, D2, D3> tensor) {
+        return sortIndex(tensor, d0, true);
+    }
+
+    public <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
+            Tensor<DT, D0, D1, D2, D3> tensor, Dim dim) {
+        return sortIndex(tensor, dim, true);
+    }
+
+    public <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
+            Tensor<DT, D0, D1, D2, D3> tensor, Dim dim, boolean ascending) {
+        var values = new Tensor<>(tensor.type(), tensor.shape());
+        var indices = new Tensor<>(DataType.U32, tensor.shape());
+        handleStatus(arrayfire_h.af_sort_index(values.segment(), indices.segment(), tensor.dereference(), dim.index(),
+                ascending));
+        return new SortIndexResult<>(values, indices);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> shuffle(
+            Tensor<DT, D0, D1, D2, D3> tensor, Dim dim) {
+        return tidy(() -> {
+            var tmp = randu(DataType.U32, af.shape(af.n((int) tensor.shape().dims()[dim.index()])));
+            var indices = sortIndex(tmp).indices();
+            var args = new Index[4];
+            for (int i = 0; i < args.length; i++) {
+                args[i] = i == dim.index() ? seq(indices) : af.seq(tensor.shape().dims()[i]);
+            }
+            return (Tensor<DT, D0, D1, D2, D3>) index(tensor, args);
+        });
+    }
 
     public <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>> Tensor<DT, N, U, U, U> create(AT array) {
         var shape = af.shape(af.n(array.length()));
@@ -244,7 +245,7 @@ public class ArrayFire {
         return new Index(new Seq(begin, endInclusive, 1));
     }
 
-    public <D0 extends Number> Index seq(Tensor<U64, D0, U, U, U> index) {
+    public <DT extends DataType<?, ?>, D0 extends Number> Index seq(Tensor<DT, D0, U, U, U> index) {
         return new Index(index);
     }
 
@@ -357,6 +358,41 @@ public class ArrayFire {
     public <T extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> zeros(
             T type, Shape<D0, D1, D2, D3> shape) {
         return af.constant(type, 0).tileAs(shape);
+    }
+
+    public <T extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> randu(
+            T type, Shape<D0, D1, D2, D3> shape) {
+        return createFromOperation(type, shape, ptr -> arrayfire_h.af_randu(ptr, shape.dims().length, nativeDims(shape),
+                type.code()));
+    }
+
+    public <T extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<T, D0, D1, D2, D3> randn(
+            T type, Shape<D0, D1, D2, D3> shape) {
+        return createFromOperation(type, shape, ptr -> arrayfire_h.af_randn(ptr, shape.dims().length, nativeDims(shape),
+                type.code()));
+    }
+
+    public Tensor<U32, N, U, U, U> range(int n) {
+        var shape = af.shape(n);
+        return createFromOperation(DataType.U32, shape,
+                ptr -> arrayfire_h.af_range(ptr, shape.dims().length, nativeDims(shape), 0,
+                        DataType.U32.code()));
+    }
+
+    public <T extends DataType<?, ?>> Tensor<T, N, U, U, U> range(
+            T type, int n) {
+        var shape = af.shape(af.n(n));
+        return createFromOperation(type, shape,
+                ptr -> arrayfire_h.af_range(ptr, shape.dims().length, nativeDims(shape), 0,
+                        type.code()));
+    }
+
+    public void setSeed(long seed) {
+        handleStatus(arrayfire_h.af_set_seed(seed));
+    }
+
+    public void setRandomEngineType(int type) {
+        handleStatus(arrayfire_h.af_set_default_random_engine_type(type));
     }
 
     public <AT extends NativeArray<?, ?, ?>, T extends DataType<AT, ?>> AT data(Tensor<T, ?, ?, ?, ?> a) {

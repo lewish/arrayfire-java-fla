@@ -16,10 +16,10 @@ public class Index {
       ValueLayout.JAVA_BOOLEAN.withName("isBatch"),
       MemoryLayout.paddingLayout(6));
 
-  private final Tensor<U64, ?, ?, ?, ?> arr;
+  private final Tensor<?, ?, ?, ?, ?> arr;
   private final Seq seq;
 
-  Index(Tensor<U64, ?, ?, ?, ?> arr) {
+  Index(Tensor<?, ?, ?, ?, ?> arr) {
     this.arr = arr;
     this.seq = null;
   }

@@ -6,7 +6,7 @@ public class U32 implements DataType<U32Array, U32> {
 
     @Override
     public int code() {
-        return DataTypeEnum.F32.code();
+        return DataTypeEnum.U32.code();
     }
 
     @Override

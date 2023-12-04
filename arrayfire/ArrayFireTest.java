@@ -6,10 +6,13 @@ import arrayfire.numbers.B;
 import arrayfire.numbers.C;
 import arrayfire.numbers.U;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Arrays;
 
 import static arrayfire.ArrayFire.af;
 
@@ -19,6 +22,55 @@ public class ArrayFireTest {
     @BeforeClass
     public static void setUp() {
         af.setBackend(Backend.CPU);
+    }
+
+    @Before
+    public void setUpTest() {
+        af.setSeed(0);
+    }
+
+    @Test
+    public void randu() {
+        af.tidy(() -> {
+            var arr = af.randu(DataType.F64, af.shape(4));
+            var data = af.data(arr);
+            Assert.assertArrayEquals(
+                    new double[]{0.6009535291510355, 0.027758798477684365, 0.9805505775568435, 0.2126322292221926},
+                    data.toHeap(), 0);
+
+        });
+    }
+
+    @Test
+    public void randn() {
+        af.tidy(() -> {
+            var arr = af.randn(DataType.F64, af.shape(4));
+            var data = af.data(arr);
+            System.out.println(Arrays.toString(data.toHeap()));
+            Assert.assertArrayEquals(
+                    new double[]{0.46430344880342067, -0.6310730997345986, -1.056124304288019, 0.1600451392361099},
+                    data.toHeap(), 0);
+
+        });
+    }
+
+    @Test
+    public void range() {
+        af.tidy(() -> {
+            var arr = af.range(4);
+            var data = af.data(arr);
+            Assert.assertArrayEquals(new int[]{0, 1, 2, 3}, data.toHeap());
+        });
+    }
+
+    @Test
+    public void shuffle() {
+        af.tidy(() -> {
+            var arr = af.create(1, 2, 3, 4, 5, 6, 7, 8).reshape(2, 4);
+            var shuffled = af.shuffle(arr, af.d1);
+            var data = af.data(shuffled);
+            Assert.assertArrayEquals(new int[]{5, 6, 1, 2, 7, 8, 3, 4}, data.toHeap());
+        });
     }
 
     @Test
@@ -175,8 +227,7 @@ public class ArrayFireTest {
             var filters = af.create(new float[]{4, 3, 2, 1, 8, 6, 4, 2}).reshape(2, 2, 1, 2);
             var convolved = af.convolve2(input, filters);
             Assert.assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2},
-                    af.data(convolved).toHeap(),
-                    1E-5f);
+                    af.data(convolved).toHeap(), 1E-5f);
         });
     }
 
@@ -195,8 +246,7 @@ public class ArrayFireTest {
             var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var scaled = af.scale(input, 3, 3, InterpolationType.BILINEAR);
             Assert.assertArrayEquals(new float[]{1, 5 / 3f, 2, 7 / 3f, 3f, 10 / 3f, 3, 11 / 3f, 4},
-                    af.data(scaled).toHeap(),
-                    1E-5f);
+                    af.data(scaled).toHeap(), 1E-5f);
         });
     }
 
