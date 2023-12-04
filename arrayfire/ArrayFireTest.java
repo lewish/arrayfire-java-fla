@@ -64,6 +64,19 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void sortIndex() {
+        af.tidy(() -> {
+            var arr = af.create(new float[]{4, 44, 3, 33, 2, 22, 1, 11}).reshape(2, 4);
+            var sorted = af.sortIndex(arr, af.d1);
+            var values = af.data(sorted.values());
+            var indices = af.data(sorted.indices());
+            Assert.assertArrayEquals(new float[]{1.0f, 11.0f, 2.0f, 22.0f, 3.0f, 33.0f, 4.0f, 44.0f}, values.toHeap(),
+                    1E-5f);
+            Assert.assertArrayEquals(new int[]{3, 3, 2, 2, 1, 1, 0, 0}, indices.toHeap());
+        });
+    }
+
+    @Test
     public void shuffle() {
         af.tidy(() -> {
             var arr = af.create(1, 2, 3, 4, 5, 6, 7, 8).reshape(2, 4);
