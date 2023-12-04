@@ -1,14 +1,15 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F32;
 
 import java.lang.foreign.ValueLayout;
 
+import static arrayfire.af.F32;
+
 public class F32Array extends NativeArray<F32, Float, float[]> {
 
     public F32Array(int length) {
-        super(DataType.F32, length);
+        super(F32, length);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class F32Array extends NativeArray<F32, Float, float[]> {
     }
 
     @Override
-    public float[] toHeap() {
+    public float[] java() {
         var array = new float[length];
         for (int i = 0; i < array.length; i++) {
             array[i] = get(i);

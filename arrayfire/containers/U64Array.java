@@ -1,14 +1,15 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.U64;
 
 import java.lang.foreign.ValueLayout;
 
+import static arrayfire.af.U64;
+
 public class U64Array extends NativeArray<U64, Long, long[]> {
 
     public U64Array(int length) {
-        super(DataType.U64, length);
+        super(U64, length);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class U64Array extends NativeArray<U64, Long, long[]> {
     }
 
     @Override
-    public long[] toHeap() {
+    public long[] java() {
         var array = new long[length];
         for (int i = 0; i < array.length; i++) {
             array[i] = get(i);

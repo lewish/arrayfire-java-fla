@@ -1,14 +1,15 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.S32;
 
 import java.lang.foreign.ValueLayout;
 
+import static arrayfire.af.S32;
+
 public class S32Array extends NativeArray<S32, Integer, int[]> {
 
     public S32Array(int length) {
-        super(DataType.S32, length);
+        super(S32, length);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class S32Array extends NativeArray<S32, Integer, int[]> {
     }
 
     @Override
-    public int[] toHeap() {
+    public int[] java() {
         var array = new int[length];
         for (int i = 0; i < array.length; i++) {
             array[i] = get(i);

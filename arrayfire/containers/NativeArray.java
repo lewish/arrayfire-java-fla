@@ -1,18 +1,16 @@
 package arrayfire.containers;
 
 import arrayfire.MemoryContainer;
+import arrayfire.af;
 import arrayfire.datatypes.DataType;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
-import static arrayfire.ArrayFire.af;
-
 /**
- *
- * @param <DT> Data type
- * @param <JT> Java type
+ * @param <DT>  Data type
+ * @param <JT>  Java type
  * @param <JAT> Java array type
  */
 public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements MemoryContainer {
@@ -56,7 +54,7 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
 
     public abstract void set(int index, JT value);
 
-    abstract JAT toHeap();
+    abstract JAT java();
 
     @Override
     public void dispose() {

@@ -1,6 +1,5 @@
 package arrayfire;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F32;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;
@@ -13,8 +12,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
-
-import static arrayfire.ArrayFire.af;
 
 @RunWith(JUnit4.class)
 public class ArrayFireTest {
@@ -32,11 +29,11 @@ public class ArrayFireTest {
     @Test
     public void randu() {
         af.tidy(() -> {
-            var arr = af.randu(DataType.F64, af.shape(4));
+            var arr = af.randu(af.F64, af.shape(4));
             var data = af.data(arr);
             Assert.assertArrayEquals(
                     new double[]{0.6009535291510355, 0.027758798477684365, 0.9805505775568435, 0.2126322292221926},
-                    data.toHeap(), 0);
+                    data.java(), 0);
 
         });
     }
@@ -44,12 +41,12 @@ public class ArrayFireTest {
     @Test
     public void randn() {
         af.tidy(() -> {
-            var arr = af.randn(DataType.F64, af.shape(4));
+            var arr = af.randn(af.F64, af.shape(4));
             var data = af.data(arr);
-            System.out.println(Arrays.toString(data.toHeap()));
+            System.out.println(Arrays.toString(data.java()));
             Assert.assertArrayEquals(
                     new double[]{0.46430344880342067, -0.6310730997345986, -1.056124304288019, 0.1600451392361099},
-                    data.toHeap(), 0);
+                    data.java(), 0);
 
         });
     }
@@ -59,16 +56,16 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.range(4);
             var data = af.data(arr);
-            Assert.assertArrayEquals(new int[]{0, 1, 2, 3}, data.toHeap());
+            Assert.assertArrayEquals(new int[]{0, 1, 2, 3}, data.java());
         });
     }
 
     @Test
     public void rangeF32() {
         af.tidy(() -> {
-            var arr = af.range(DataType.F32, 4);
+            var arr = af.range(af.F32, 4);
             var data = af.data(arr);
-            Assert.assertArrayEquals(new float[]{0, 1, 2, 3}, data.toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{0, 1, 2, 3}, data.java(), 1E-5f);
         });
     }
 
@@ -76,12 +73,12 @@ public class ArrayFireTest {
     public void sortIndex() {
         af.tidy(() -> {
             var arr = af.create(new float[]{4, 44, 3, 33, 2, 22, 1, 11}).reshape(2, 4);
-            var sorted = af.sortIndex(arr, af.d1);
+            var sorted = af.sortIndex(arr, af.D1);
             var values = af.data(sorted.values());
             var indices = af.data(sorted.indices());
-            Assert.assertArrayEquals(new float[]{1.0f, 11.0f, 2.0f, 22.0f, 3.0f, 33.0f, 4.0f, 44.0f}, values.toHeap(),
+            Assert.assertArrayEquals(new float[]{1.0f, 11.0f, 2.0f, 22.0f, 3.0f, 33.0f, 4.0f, 44.0f}, values.java(),
                     1E-5f);
-            Assert.assertArrayEquals(new int[]{3, 3, 2, 2, 1, 1, 0, 0}, indices.toHeap());
+            Assert.assertArrayEquals(new int[]{3, 3, 2, 2, 1, 1, 0, 0}, indices.java());
         });
     }
 
@@ -89,9 +86,9 @@ public class ArrayFireTest {
     public void shuffle() {
         af.tidy(() -> {
             var arr = af.create(1, 2, 3, 4, 5, 6, 7, 8).reshape(2, 4);
-            var shuffled = af.shuffle(arr, af.d1);
+            var shuffled = af.shuffle(arr, af.D1);
             var data = af.data(shuffled);
-            Assert.assertArrayEquals(new int[]{5, 6, 1, 2, 7, 8, 3, 4}, data.toHeap());
+            Assert.assertArrayEquals(new int[]{5, 6, 1, 2, 7, 8, 3, 4}, data.java());
         });
     }
 
@@ -100,7 +97,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var transpose = arr.transpose();
-            Assert.assertArrayEquals(new float[]{1, 3, 2, 4}, af.data(transpose).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{1, 3, 2, 4}, af.data(transpose).java(), 1E-5f);
         });
     }
 
@@ -110,7 +107,7 @@ public class ArrayFireTest {
             var arr = af.create(new float[]{1, 2, 3});
             var squared = af.mul(arr, arr);
             var squaredData = af.data(squared);
-            Assert.assertArrayEquals(new float[]{1, 4, 9}, squaredData.toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{1, 4, 9}, squaredData.java(), 1E-5f);
         });
     }
 
@@ -120,7 +117,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{92, 80, 60, 30, 100, 70}).reshape(2, 3);
             var cov = af.cov(arr);
-            Assert.assertArrayEquals(new float[]{448, 520, 520, 700}, af.data(cov).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{448, 520, 520, 700}, af.data(cov).java(), 1E-5f);
         });
     }
 
@@ -129,7 +126,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var inverse = af.inverse(arr);
-            Assert.assertArrayEquals(new float[]{-2, 1, 1.5f, -0.5f}, af.data(inverse).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{-2, 1, 1.5f, -0.5f}, af.data(inverse).java(), 1E-5f);
         });
     }
 
@@ -139,7 +136,7 @@ public class ArrayFireTest {
             var left = af.create(new float[]{1, 2, 3, 4}).reshape(af.a(2), af.b(2));
             var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(af.a(2), af.c(3));
             Tensor<F32, B, C, U, U> result = af.matmul(left.transpose(), right);
-            Assert.assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, af.data(result).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, af.data(result).java(), 1E-5f);
         });
     }
 
@@ -149,7 +146,7 @@ public class ArrayFireTest {
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var tile = af.create(new float[]{1, 2});
             var result = af.mul(data, tile);
-            Assert.assertArrayEquals(new float[]{1, 4, 3, 8}, af.data(result).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{1, 4, 3, 8}, af.data(result).java(), 1E-5f);
         });
     }
 
@@ -158,7 +155,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
             var result = af.mul(data, af.constant(2));
-            Assert.assertArrayEquals(new float[]{2, 4, 6, 8}, af.data(result).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{2, 4, 6, 8}, af.data(result).java(), 1E-5f);
         });
     }
 
@@ -176,7 +173,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{-5, 12, 0, 1});
             var result = data.min();
-            Assert.assertArrayEquals(new float[]{-5}, af.data(result).toHeap(), 1e-5f);
+            Assert.assertArrayEquals(new float[]{-5}, af.data(result).java(), 1e-5f);
         });
     }
 
@@ -185,7 +182,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{-5, 12, 0, 1});
             var result = af.imax(data).indices();
-            Assert.assertArrayEquals(new int[]{1}, af.data(result).toHeap());
+            Assert.assertArrayEquals(new int[]{1}, af.data(result).java());
         });
     }
 
@@ -194,7 +191,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 4, 3}).reshape(2, 2);
             var result = af.imax(data).indices();
-            Assert.assertArrayEquals(new int[]{1, 0}, af.data(result).toHeap());
+            Assert.assertArrayEquals(new int[]{1, 0}, af.data(result).java());
         });
     }
 
@@ -203,7 +200,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8}).reshape(4, 2);
             var result = af.sum(data);
-            Assert.assertArrayEquals(new float[]{10, 26}, af.data(result).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{10, 26}, af.data(result).java(), 1E-5f);
         });
     }
 
@@ -212,23 +209,23 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var rowResult = data.index(af.seq(0, 1), af.seq(1, 1));
-            Assert.assertArrayEquals(new float[]{3, 4}, af.data(rowResult).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{3, 4}, af.data(rowResult).java(), 1E-5f);
             var columnResult = data.index(af.seq(0, 0), af.seq(0, 1));
-            Assert.assertArrayEquals(new float[]{1, 3}, af.data(columnResult).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{1, 3}, af.data(columnResult).java(), 1E-5f);
             var reverseResult = data.index(af.seq(1, 0, -1), af.seq(1, 0, -1));
-            Assert.assertArrayEquals(new float[]{4, 3, 2, 1}, af.data(reverseResult).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{4, 3, 2, 1}, af.data(reverseResult).java(), 1E-5f);
         });
     }
 
     @Test
     public void index() {
         af.tidy(() -> {
-            var indexArray = af.create(DataType.U64, new long[]{1, 0}).reshape(2);
+            var indexArray = af.create(af.U64, new long[]{1, 0}).reshape(2);
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var resultRows = data.index(af.seq(indexArray), af.seq(0, 1));
-            Assert.assertArrayEquals(new float[]{2, 1, 4, 3}, af.data(resultRows).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{2, 1, 4, 3}, af.data(resultRows).java(), 1E-5f);
             var resultCols = data.index(af.seq(0, 1), af.seq(indexArray));
-            Assert.assertArrayEquals(new float[]{3, 4, 1, 2}, af.data(resultCols).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{3, 4, 1, 2}, af.data(resultCols).java(), 1E-5f);
         });
     }
 
@@ -237,8 +234,8 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4, 5}).reshape(1, 5);
             var batches = af.batch(data, 2);
-            Assert.assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0)).toHeap(), 1E-5f);
-            Assert.assertArrayEquals(new float[]{5}, af.data(batches.get(2)).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0)).java(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{5}, af.data(batches.get(2)).java(), 1E-5f);
         });
     }
 
@@ -249,7 +246,7 @@ public class ArrayFireTest {
             var filters = af.create(new float[]{4, 3, 2, 1, 8, 6, 4, 2}).reshape(2, 2, 1, 2);
             var convolved = af.convolve2(input, filters);
             Assert.assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2},
-                    af.data(convolved).toHeap(), 1E-5f);
+                    af.data(convolved).java(), 1E-5f);
         });
     }
 
@@ -258,7 +255,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var rotated = af.rotate(input, (float) Math.PI / 2.0f, InterpolationType.NEAREST);
-            Assert.assertArrayEquals(new float[]{3, 1, 4, 2}, af.data(rotated).toHeap(), 1E-5f);
+            Assert.assertArrayEquals(new float[]{3, 1, 4, 2}, af.data(rotated).java(), 1E-5f);
         });
     }
 
@@ -268,7 +265,7 @@ public class ArrayFireTest {
             var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var scaled = af.scale(input, 3, 3, InterpolationType.BILINEAR);
             Assert.assertArrayEquals(new float[]{1, 5 / 3f, 2, 7 / 3f, 3f, 10 / 3f, 3, 11 / 3f, 4},
-                    af.data(scaled).toHeap(), 1E-5f);
+                    af.data(scaled).java(), 1E-5f);
         });
     }
 
@@ -299,7 +296,7 @@ public class ArrayFireTest {
                 var arr2 = af.create(new float[]{1, 2, 3}).reshape(3);
                 var squared = af.mul(arr1, arr2);
                 var squaredData = af.data(squared);
-                Assert.assertArrayEquals(new float[]{1, 4, 9}, squaredData.toHeap(), 1E-5f);
+                Assert.assertArrayEquals(new float[]{1, 4, 9}, squaredData.java(), 1E-5f);
             });
         });
     }

@@ -1,14 +1,15 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.B8;
 
 import java.lang.foreign.ValueLayout;
 
+import static arrayfire.af.B8;
+
 public class B8Array extends NativeArray<B8, Boolean, boolean[]> {
 
     public B8Array(int length) {
-        super(DataType.B8, length);
+        super(B8, length);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class B8Array extends NativeArray<B8, Boolean, boolean[]> {
     }
 
     @Override
-    public boolean[] toHeap() {
+    public boolean[] java() {
         var array = new boolean[length];
         for (int i = 0; i < array.length; i++) {
             array[i] = get(i);

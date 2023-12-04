@@ -1,14 +1,15 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F64;
 
 import java.lang.foreign.ValueLayout;
 
+import static arrayfire.af.F64;
+
 public class F64Array extends NativeArray<F64, Double, double[]> {
 
     public F64Array(int length) {
-        super(DataType.F64, length);
+        super(F64, length);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class F64Array extends NativeArray<F64, Double, double[]> {
     }
 
     @Override
-    public double[] toHeap() {
+    public double[] java() {
         var array = new double[length];
         for (int i = 0; i < array.length; i++) {
             array[i] = get(i);

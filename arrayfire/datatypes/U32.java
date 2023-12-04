@@ -2,6 +2,8 @@ package arrayfire.datatypes;
 
 import arrayfire.containers.U32Array;
 
+import static arrayfire.af.U32;
+
 public class U32 implements DataType<U32Array, U32> {
 
     @Override
@@ -11,7 +13,7 @@ public class U32 implements DataType<U32Array, U32> {
 
     @Override
     public U32 sumType() {
-        return DataType.U32;
+        return U32;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package arrayfire.datatypes;
 
 import arrayfire.containers.F16Array;
+import static arrayfire.af.F16;
 
 public class F16 implements DataType<F16Array, F16> {
 
@@ -11,7 +12,7 @@ public class F16 implements DataType<F16Array, F16> {
 
   @Override
   public F16 sumType() {
-    return DataType.F16;
+    return F16;
   }
 
   @Override

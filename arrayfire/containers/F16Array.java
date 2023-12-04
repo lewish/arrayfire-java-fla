@@ -1,15 +1,17 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.datatypes.F16;
 
 import java.lang.foreign.ValueLayout;
 
+import static arrayfire.af.F16;
+
 public class F16Array extends NativeArray<F16, Float, float[]> {
 
     public F16Array(int length) {
-        super(DataType.F16, length);
+        super(F16, length);
     }
+
     @Override
     public ValueLayout.OfShort layout() {
         return ValueLayout.JAVA_SHORT;
@@ -26,7 +28,7 @@ public class F16Array extends NativeArray<F16, Float, float[]> {
     }
 
     @Override
-    public float[] toHeap() {
+    public float[] java() {
         var array = new float[length];
         for (int i = 0; i < array.length; i++) {
             array[i] = get(i);
