@@ -26,7 +26,7 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Number, D1 extends Numb
         this.segment = arena.allocate(LAYOUT);
         this.type = type;
         this.shape = shape;
-        af.currentScope().track(this);
+        af.memoryScope().track(this);
     }
 
     public MemorySegment segment() {

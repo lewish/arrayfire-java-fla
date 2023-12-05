@@ -25,7 +25,7 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
         this.length = length;
         this.arena = Arena.ofShared();
         this.segment = arena.allocateArray(layout(), length);
-        af.currentScope().track(this);
+        af.memoryScope().track(this);
     }
 
     public Arena arena() {

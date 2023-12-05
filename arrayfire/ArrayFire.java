@@ -37,7 +37,7 @@ public class ArrayFire {
 
     private static boolean successfullyLoadedLibraries = false;
 
-    public static void loadNativeLibraries() {
+    private static void maybeLoadNativeLibraries() {
         if (successfullyLoadedLibraries) {
             return;
         }
@@ -66,15 +66,15 @@ public class ArrayFire {
     }
 
     /**
-     * Executes the given function in a new scope, and disposes of all memory allocated in that scope afterward.
+     * Executes the given function in a new memory scope, and disposes of all memory allocated in that scope afterward.
      */
     public static void tidy(Runnable fn) {
         var previousScope = threadScope.get();
         try {
             threadScope.set(new MemoryScope());
             fn.run();
-            threadScope.get().dispose();
         } finally {
+            threadScope.get().dispose();
             threadScope.set(previousScope);
         }
     }
@@ -83,26 +83,26 @@ public class ArrayFire {
      * Executes the given function in a new scope, and disposes of all memory allocated in that scope except the value returned by the function if it is manually managed memory container.
      */
     public static <T> T tidy(Supplier<T> fn) {
-        var parentScope = currentScope();
+        var parentScope = memoryScope();
         var resultReference = new Reference<T>();
         tidy(() -> {
             var result = (T) fn.get();
             if (result instanceof MemoryContainer mc) {
                 parentScope.track(mc);
-                currentScope().untrack(mc);
+                memoryScope().untrack(mc);
             }
             resultReference.set(result);
         });
         return resultReference.get();
     }
 
-    public static MemoryScope currentScope() {
+    public static MemoryScope memoryScope() {
         return threadScope.get();
     }
 
     public static <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> sort(
             Tensor<DT, D0, D1, D2, D3> tensor) {
-        return sort(tensor, D0, true);
+        return sort(tensor, D0);
     }
 
     public static <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> sort(
@@ -118,7 +118,7 @@ public class ArrayFire {
 
     public static <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
             Tensor<DT, D0, D1, D2, D3> tensor) {
-        return sortIndex(tensor, D0, true);
+        return sortIndex(tensor, D0);
     }
 
     public static <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
@@ -136,7 +136,6 @@ public class ArrayFire {
         return new SortIndexResult<>(values, indices);
     }
 
-    @SuppressWarnings("unchecked")
     public static <DT extends DataType<?, ?>, D0 extends Number, D1 extends Number, D2 extends Number, D3 extends Number> Tensor<DT, D0, D1, D2, D3> shuffle(
             Tensor<DT, D0, D1, D2, D3> tensor, Dim dim) {
         return tidy(() -> {
@@ -146,7 +145,7 @@ public class ArrayFire {
             for (int i = 0; i < args.length; i++) {
                 args[i] = i == dim.index() ? seq(indices) : seq(tensor.shape().dims()[i]);
             }
-            return (Tensor<DT, D0, D1, D2, D3>) index(tensor, args);
+            return index(tensor, args).reshape(tensor.shape());
         });
     }
 
@@ -378,8 +377,8 @@ public class ArrayFire {
         handleStatus(() -> arrayfire_h.af_set_seed(seed));
     }
 
-    public static void setRandomEngineType(int type) {
-        handleStatus(() -> arrayfire_h.af_set_default_random_engine_type(type));
+    public static void setRandomEngineType(RandomEngineType type) {
+        handleStatus(() -> arrayfire_h.af_set_default_random_engine_type(type.code()));
     }
 
     public static <AT extends NativeArray<?, ?, ?>, T extends DataType<AT, ?>> AT data(Tensor<T, ?, ?, ?, ?> a) {
@@ -475,7 +474,7 @@ public class ArrayFire {
         }
     }
 
-    public static MemorySegment nativeDims(Arena arena, Shape<?, ?, ?, ?> shape) {
+    private static MemorySegment nativeDims(Arena arena, Shape<?, ?, ?, ?> shape) {
         return arena.allocateArray(ValueLayout.JAVA_LONG, shape.dims());
     }
 
@@ -1091,7 +1090,7 @@ public class ArrayFire {
     }
 
     private static void handleStatus(Supplier<Object> res) {
-        loadNativeLibraries();
+        maybeLoadNativeLibraries();
         var result = Status.fromCode((int) res.get());
         if (!Status.AF_SUCCESS.equals(result)) {
             throw new ArrayFireException(result);
