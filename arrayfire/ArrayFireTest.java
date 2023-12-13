@@ -1,8 +1,12 @@
 package arrayfire;
 
+import arrayfire.datatypes.F32;
+import arrayfire.numbers.A;
+import arrayfire.numbers.B;
+import arrayfire.numbers.C;
+import arrayfire.numbers.D;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -10,18 +14,15 @@ import org.junit.runners.JUnit4;
 import java.util.Arrays;
 
 import static arrayfire.ArrayFire.*;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
 public class ArrayFireTest {
 
-    @BeforeClass
-    public static void setUp() {
-        af.setBackend(Backend.CPU);
-    }
-
     @Before
     public void setUpTest() {
+        af.setBackend(Backend.CPU);
+        af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_PHILOX_4X32_10);
         af.setSeed(0);
     }
 
@@ -75,6 +76,7 @@ public class ArrayFireTest {
             af.sync();
         });
     }
+
     @Test
     public void createWithType() {
         af.tidy(() -> {
@@ -285,6 +287,126 @@ public class ArrayFireTest {
             assertArrayEquals(new float[]{2, 1, 4, 3}, af.data(resultRows).java(), 1E-5f);
             var resultCols = af.index(data, af.seq(0, 1), af.seq(indexArray));
             assertArrayEquals(new float[]{3, 4, 1, 2}, af.data(resultCols).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void index4D() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}).reshape(2, 2, 2,
+                    2);
+            Tensor<F32, A, B, C, D> result = af.index(data, af.seq(af.create(0).castshape(af::a)),
+                    af.seq(af.create(1).castshape(af::b)), af.seq(af.create(0).castshape(
+                            af::c)), af.seq(af.create(1).castshape(af::d)));
+            assertArrayEquals(new float[]{11}, af.data(result).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void indexSpan() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8}).reshape(2, 2, 2);
+            var result = af.index(data, af.span(), af.seq(0, 0), af.seq(0, 0));
+            assertArrayEquals(new float[]{1, 2}, af.data(result).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void zeros() {
+        af.tidy(() -> {
+            var data = af.zeros(F32, af.shape(2, 2));
+            assertArrayEquals(new float[]{0, 0, 0, 0}, af.data(data).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void setRandomEngineType() {
+        af.tidy(() -> {
+            af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_MERSENNE_GP11213);
+            var data = af.randu(af.F64, af.shape(1));
+            assertArrayEquals(new double[]{0.4446248512515619}, af.data(data).java(), 0);
+        });
+        af.tidy(() -> {
+            af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_THREEFRY_2X32_16);
+            var data = af.randu(af.F64, af.shape(1));
+            assertArrayEquals(new double[]{0.21128287646002053}, af.data(data).java(), 0);
+        });
+    }
+
+    @Test
+    public void backends() {
+        af.tidy(() -> {
+            var backends = af.availableBackends();
+            assertTrue(backends.contains(Backend.CPU));
+            af.setBackend(Backend.CPU);
+            assertEquals(Backend.CPU, af.backend());
+        });
+    }
+
+    @Test
+    public void devices() {
+        af.tidy(() -> {
+            var originalDevice = af.deviceId();
+            try {
+                for (int i = 0; i < af.deviceCount(); i++) {
+                    af.setDeviceId(i);
+                    assertEquals(af.deviceId(), i);
+                    var deviceInfo = af.deviceInfo();
+                    assertFalse(deviceInfo.compute().isEmpty());
+                    assertFalse(deviceInfo.platform().isEmpty());
+                    assertFalse(deviceInfo.toolkit().isEmpty());
+                    af.deviceGc();
+                }
+            } finally {
+                af.setDeviceId(originalDevice);
+            }
+        });
+    }
+
+    @Test
+    public void ge() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2, 3, 4});
+            var result = af.ge(data, af.constant(2).tileAs(data.shape()));
+            assertArrayEquals(new boolean[]{false, true, true, true}, af.data(result).java());
+        });
+    }
+
+    @Test
+    public void maxof() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2, 3, 4});
+            var result = af.maxof(data, af.constant(2).tileAs(data.shape()));
+            assertArrayEquals(new float[]{2, 2, 3, 4}, af.data(result).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void minof() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2, 3, 4});
+            var result = af.minof(data, af.constant(2).tileAs(data.shape()));
+            assertArrayEquals(new float[]{1, 2, 2, 2}, af.data(result).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void join() {
+        af.tidy(() -> {
+            var data1 = af.create(1).reshape(1, 1, 1, 1);
+            var data2 = af.create(2).reshape(1, 1, 1, 1);
+            var join0 = af.join(data1, data2);
+            assertEquals(join0.shape(), af.shape(2, 1, 1, 1));
+            assertArrayEquals(new int[]{1, 2}, af.data(join0).java());
+            var join1 = af.join(data1, data2, af.D1);
+            assertEquals(join1.shape(), af.shape(1, 2, 1, 1));
+            assertArrayEquals(new int[]{1, 2}, af.data(join1).java());
+            var join2 = af.join(data1, data2, af.D2);
+            assertEquals(join2.shape(), af.shape(1, 1, 2, 1));
+            assertArrayEquals(new int[]{1, 2}, af.data(join2).java());
+            var join3 = af.join(data1, data2, af.D3);
+            assertEquals(join3.shape(), af.shape(1, 1, 1, 2));
+            assertArrayEquals(new int[]{1, 2}, af.data(join3).java());
         });
     }
 

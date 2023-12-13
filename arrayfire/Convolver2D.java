@@ -23,7 +23,7 @@ public record Convolver2D<D0 extends IntNumber<D0>, D1 extends IntNumber<D1>, D2
         this(input, filters, af.shape(1, 1));
     }
 
-    public <T extends DataType<?, ?>, D3 extends IntNumber> Tensor<T, N, N, FD3, D3> convolve(
+    public <T extends DataType<?, ?>, D3 extends IntNumber<?>> Tensor<T, N, N, FD3, D3> convolve(
             Tensor<T, D0, D1, D2, D3> input, Tensor<T, ?, ?, D2, FD3> filters) {
         return af.convolve2(input, filters, stride, padding, dilation);
     }
