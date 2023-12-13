@@ -1,15 +1,18 @@
 package arrayfire;
 
 import arrayfire.datatypes.U64;
+import arrayfire.numbers.IntNumber;
+
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.util.function.Function;
 
 /*
  * https://arrayfire.org/docs/index_8h_source.htm
  */
-public class Index {
+public class Index<D extends IntNumber> {
   static MemoryLayout LAYOUT = MemoryLayout.structLayout(
       MemoryLayout.unionLayout(ValueLayout.ADDRESS.withName("arr"), Seq.LAYOUT.withName("seq")).withName("union"),
       ValueLayout.JAVA_BOOLEAN.withName("isSeq"),
@@ -19,15 +22,23 @@ public class Index {
   private final Tensor<?, ?, ?, ?, ?> arr;
   private final Seq seq;
 
-  Index(Tensor<?, ?, ?, ?, ?> arr) {
+  private final Function<Integer, D> generator;
+
+  Index(Tensor<?, ?, ?, ?, ?> arr, Function<Integer, D> generator) {
     this.arr = arr;
     this.seq = null;
+    this.generator = generator;
   }
 
-  Index(Seq seq) {
+  Index(Seq seq, Function<Integer, D> generator) {
     this.arr = null;
     this.seq = seq;
+    this.generator = generator;
   }
+
+    public D createDim(int size) {
+      return generator.apply(size);
+    }
 
   void emigrate(MemorySegment segment) {
     if (arr != null) {

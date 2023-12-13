@@ -1,10 +1,5 @@
 package arrayfire;
 
-import arrayfire.datatypes.F32;
-import arrayfire.datatypes.S32;
-import arrayfire.numbers.B;
-import arrayfire.numbers.C;
-import arrayfire.numbers.U;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -74,14 +69,45 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void sync() {
+        af.tidy(() -> {
+            af.create(F32, 1f, 2f);
+            af.sync();
+        });
+    }
+    @Test
+    public void createWithType() {
+        af.tidy(() -> {
+            var arr = af.create(F32, 1f, 2f);
+            assertArrayEquals(new float[]{1, 2}, af.data(arr).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void createDouble() {
+        af.tidy(() -> {
+            var arr = af.create(1.0, 2.0);
+            assertArrayEquals(new double[]{1, 2}, af.data(arr).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void sort() {
+        af.tidy(() -> {
+            var arr = af.create(new float[]{4, 2, 1, 3});
+            var sorted = af.sort(arr);
+            assertArrayEquals(new float[]{1, 2, 3, 4}, af.data(sorted).java(), 1E-5f);
+        });
+    }
+
+    @Test
     public void sortIndex() {
         af.tidy(() -> {
             var arr = af.create(new float[]{4, 44, 3, 33, 2, 22, 1, 11}).reshape(2, 4);
             var sorted = af.sortIndex(arr, af.D1);
             var values = af.data(sorted.values());
             var indices = af.data(sorted.indices());
-            assertArrayEquals(new float[]{1.0f, 11.0f, 2.0f, 22.0f, 3.0f, 33.0f, 4.0f, 44.0f}, values.java(),
-                    1E-5f);
+            assertArrayEquals(new float[]{1.0f, 11.0f, 2.0f, 22.0f, 3.0f, 33.0f, 4.0f, 44.0f}, values.java(), 1E-5f);
             assertArrayEquals(new int[]{3, 3, 2, 2, 1, 1, 0, 0}, indices.java());
         });
     }
@@ -102,16 +128,6 @@ public class ArrayFireTest {
             var arr = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var transpose = arr.transpose();
             assertArrayEquals(new float[]{1, 3, 2, 4}, af.data(transpose).java(), 1E-5f);
-        });
-    }
-
-    @Test
-    public void mul() {
-        af.tidy(() -> {
-            var arr = af.create(new float[]{1, 2, 3});
-            var squared = af.mul(arr, arr);
-            var squaredData = af.data(squared);
-            assertArrayEquals(new float[]{1, 4, 9}, squaredData.java(), 1E-5f);
         });
     }
 
@@ -155,20 +171,49 @@ public class ArrayFireTest {
     }
 
     @Test
-    public void mulBroadcast() {
+    public void mul() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2});
+            var tile = af.create(new float[]{1, 2});
+            var result = af.mul(data, tile);
+            assertArrayEquals(new float[]{1, 4}, af.data(result).java(), 1E-5f);
+        });
+    }
+
+    @Test(expected = ArrayFireException.class)
+    public void mulMismatched() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2});
+            var tile = af.create(new float[]{1, 2, 3, 4});
+            af.mul(data, tile);
+        });
+    }
+
+    @Test
+    public void mulTileable() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var tile = af.create(new float[]{1, 2});
-            var result = af.mul(data, tile);
+            var result = af.mul(data, tile.tile());
             assertArrayEquals(new float[]{1, 4, 3, 8}, af.data(result).java(), 1E-5f);
         });
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void mulTileableExpansion() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2});
+            var tile = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
+            af.mul(data, tile.tile());
+        });
+    }
+
 
     @Test
     public void mulScalar() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.mul(data, af.constant(2));
+            var result = af.mul(data, af.constant(2).tile());
             assertArrayEquals(new float[]{2, 4, 6, 8}, af.data(result).java(), 1E-5f);
         });
     }
@@ -222,11 +267,11 @@ public class ArrayFireTest {
     public void slice() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
-            var rowResult = data.index(af.seq(0, 1), af.seq(1, 1));
+            var rowResult = af.index(data, af.seq(0, 1), af.seq(1, 1));
             assertArrayEquals(new float[]{3, 4}, af.data(rowResult).java(), 1E-5f);
-            var columnResult = data.index(af.seq(0, 0), af.seq(0, 1));
+            var columnResult = af.index(data, af.seq(0, 0), af.seq(0, 1));
             assertArrayEquals(new float[]{1, 3}, af.data(columnResult).java(), 1E-5f);
-            var reverseResult = data.index(af.seq(1, 0, -1), af.seq(1, 0, -1));
+            var reverseResult = af.index(data, af.seq(1, 0, -1), af.seq(1, 0, -1));
             assertArrayEquals(new float[]{4, 3, 2, 1}, af.data(reverseResult).java(), 1E-5f);
         });
     }
@@ -236,9 +281,9 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var indexArray = af.create(af.U64, new long[]{1, 0}).reshape(2);
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
-            var resultRows = data.index(af.seq(indexArray), af.seq(0, 1));
+            var resultRows = af.index(data, af.seq(indexArray), af.seq(0, 1));
             assertArrayEquals(new float[]{2, 1, 4, 3}, af.data(resultRows).java(), 1E-5f);
-            var resultCols = data.index(af.seq(0, 1), af.seq(indexArray));
+            var resultCols = af.index(data, af.seq(0, 1), af.seq(indexArray));
             assertArrayEquals(new float[]{3, 4, 1, 2}, af.data(resultCols).java(), 1E-5f);
         });
     }
@@ -259,8 +304,8 @@ public class ArrayFireTest {
             var input = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9}).reshape(3, 3, 1, 1);
             var filters = af.create(new float[]{4, 3, 2, 1, 8, 6, 4, 2}).reshape(2, 2, 1, 2);
             var convolved = af.convolve2(input, filters);
-            assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2},
-                    af.data(convolved).java(), 1E-5f);
+            assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2}, af.data(convolved).java(),
+                    1E-5f);
         });
     }
 
@@ -277,9 +322,9 @@ public class ArrayFireTest {
     public void scale() {
         af.tidy(() -> {
             var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
-            var scaled = af.scale(input, 3, 3, InterpolationType.BILINEAR);
-            assertArrayEquals(new float[]{1, 5 / 3f, 2, 7 / 3f, 3f, 10 / 3f, 3, 11 / 3f, 4},
-                    af.data(scaled).java(), 1E-5f);
+            var scaled = af.scale(input, af.n(3), af.n(3), InterpolationType.BILINEAR);
+            assertArrayEquals(new float[]{1, 5 / 3f, 2, 7 / 3f, 3f, 10 / 3f, 3, 11 / 3f, 4}, af.data(scaled).java(),
+                    1E-5f);
         });
     }
 

@@ -1,7 +1,8 @@
 package arrayfire.numbers;
 
-public class A extends IntNumber {
-  public A(int size) {
-    super(size);
-  }
+public record A(int size) implements IntNumber<A> {
+    @Override
+    public A create(int size) {
+        return new A(size);
+    }
 }
