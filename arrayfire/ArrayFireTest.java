@@ -173,6 +173,22 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void svd() {
+        af.tidy(() -> {
+            var a = af.a(2);
+            var b = af.b(3);
+            var matrix = af.create(F32, new float[]{1, 2, 3, 4, 5, 6}).reshape(a, b);
+            var svd = af.svd(matrix);
+            var u = svd.u(); // Tensor<F32, A, A, U, U>
+            var s = svd.s(); // Tensor<F32, A, U, U, U>
+            var vt = svd.vt(); // Tensor<F32, B, B, U, U>
+            // Recreate the matrix from the SVD.
+            var recreated = af.matmul(u, af.diag(s), af.index(vt, af.seq(a))); // Tensor<F32, A, B, U, U>
+            assertArrayEquals(new float[]{1, 2, 3, 4, 5, 6}, data(recreated).java(), 1E-5f);
+        });
+    }
+
+    @Test
     public void mul() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2});
@@ -220,15 +236,6 @@ public class ArrayFireTest {
         });
     }
 
-    //  @Test
-    //  public void sum() {
-    //    af.tidy(() -> {
-    //      var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2)));
-    //      var result = data.flatten().sum();
-    //      Assert.assertArrayEquals(new float[]{10}, af.data(result),.toHeap() 1E-5f);
-    //    });
-    //  }
-
     @Test
     public void min() {
         af.tidy(() -> {
@@ -257,13 +264,40 @@ public class ArrayFireTest {
     }
 
     @Test
-    public void sumMatrix() {
+    public void sum() {
         af.tidy(() -> {
-            var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8}).reshape(4, 2);
-            var result = af.sum(data);
-            assertArrayEquals(new float[]{10, 26}, af.data(result).java(), 1E-5f);
+            var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}).reshape(2, 2, 2,
+                    2);
+            assertArrayEquals(new float[]{3, 7, 11, 15, 19, 23, 27, 31}, af.data(af.sum(data)).java(), 1E-5f);
+            assertArrayEquals(new float[]{4, 6, 12, 14, 20, 22, 28, 30}, af.data(af.sum(data, af.D1)).java(), 1E-5f);
+            assertArrayEquals(new float[]{6, 8, 10, 12, 22, 24, 26, 28}, af.data(af.sum(data, af.D2)).java(), 1E-5f);
+            assertArrayEquals(new float[]{10, 12, 14, 16, 18, 20, 22, 24}, af.data(af.sum(data, af.D3)).java(), 1E-5f);
         });
     }
+
+    @Test
+    public void sumB8() {
+        af.tidy(() -> {
+            var data = af.create(U8, new byte[]{1, 2, 3, 4}).reshape(2, 2);
+            var sum = af.sum(data);
+            assertArrayEquals(new int[]{3, 7}, af.data(sum).java());
+        });
+    }
+
+    @Test
+    public void mean() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}).reshape(2, 2, 2,
+                    2);
+
+            assertArrayEquals(new float[]{1.5f, 3.5f, 5.5f, 7.5f, 9.5f, 11.5f, 13.5f, 15.5f},
+                    af.data(af.mean(data)).java(), 1E-5f);
+            assertArrayEquals(new float[]{2, 3, 6, 7, 10, 11, 14, 15}, af.data(af.mean(data, af.D1)).java(), 1E-5f);
+            assertArrayEquals(new float[]{3, 4, 5, 6, 11, 12, 13, 14}, af.data(af.mean(data, af.D2)).java(), 1E-5f);
+            assertArrayEquals(new float[]{5, 6, 7, 8, 9, 10, 11, 12}, af.data(af.mean(data, af.D3)).java(), 1E-5f);
+        });
+    }
+
 
     @Test
     public void slice() {
@@ -299,6 +333,19 @@ public class ArrayFireTest {
                     af.seq(af.create(1).castshape(af::b)), af.seq(af.create(0).castshape(
                             af::c)), af.seq(af.create(1).castshape(af::d)));
             assertArrayEquals(new float[]{11}, af.data(result).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void index3D() {
+        af.tidy(() -> {
+            var a = af.a(2);
+            var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8}).reshape(a, a, a);
+            var result = af.index(data,
+                    af.span(),
+                    af.seq(0, 0),
+                    af.seq(af.create(U32, new int[]{1})));
+            assertArrayEquals(new float[]{5, 6}, af.data(result).java(), 1E-5f);
         });
     }
 
@@ -449,25 +496,6 @@ public class ArrayFireTest {
                     1E-5f);
         });
     }
-
-    //  @Test
-    //  public void allBackends() {
-    //    af.tidy(() -> {
-    //      var originalBackend = af.backend();
-    //      try {
-    //        for (var backend : af.availableBackends()) {
-    //          af.setBackend(backend);
-    //          System.out.println(af.deviceInfo());
-    //          convolve2();
-    //          mulBroadcast();
-    //          matmul();
-    //          convolve2();
-    //        }
-    //      } finally {
-    //        af.setBackend(originalBackend);
-    //      }
-    //    });
-    //  }
 
     @Test
     public void useAcrossScopes() {

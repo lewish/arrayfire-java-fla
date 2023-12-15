@@ -14,6 +14,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -21,6 +22,8 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class ArrayFire {
+
+    public static final U8 U8 = new U8();
     public static final U64 U64 = new U64();
     public static final U32 U32 = new U32();
     public static final F32 F32 = new F32();
@@ -386,6 +389,18 @@ public class ArrayFire {
         var result = a.type().create(a.capacity());
         handleStatus(() -> arrayfire_h.af_get_data_ptr(result.segment(), a.dereference()));
         return result;
+    }
+
+    public static void checkDims(Tensor<?, ?, ?, ?, ?> tensor) {
+        var trueDims = getDims(tensor.segment());
+        var expectedDims = tensor.shape().dims();
+        for (int i = 0; i < trueDims.length; i++) {
+            if (trueDims[i] != expectedDims[i]) {
+                throw new IllegalStateException(
+                        String.format("Expected dimensions %s but got %s", Arrays.toString(expectedDims),
+                                Arrays.toString(trueDims)));
+            }
+        }
     }
 
     public static long[] getDims(MemorySegment a) {
@@ -804,6 +819,18 @@ public class ArrayFire {
                 ptr -> arrayfire_h.af_matmul(ptr, tensor.dereference(), rhs.dereference(), 0, 0));
     }
 
+    public static <T extends DataType<?, ?>, AD0 extends IntNumber<?>, AD1 extends IntNumber<?>, BD1 extends IntNumber<?>, CD1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, AD0, CD1, D2, D3> matmul(
+            Tensor<T, AD0, AD1, D2, D3> a, Tensor<T, AD1, BD1, D2, D3> b, Tensor<T, BD1, CD1, D2, D3> c) {
+        return tidy(() -> {
+            // Determine the optimal order of operations.
+            if (a.d0().size() * b.d1().size() < b.d0().size() * c.d1().size()) {
+                return matmul(matmul(a, b), c);
+            } else {
+                return matmul(a, matmul(b, c));
+            }
+        });
+    }
+
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> clamp(
             Tensor<T, D0, D1, D2, D3> tensor, Tensor<T, ?, ?, ?, ?> lo, Tensor<T, ?, ?, ?, ?> hi) {
         // TODO: Batch parameter.
@@ -1096,18 +1123,23 @@ public class ArrayFire {
     // svd
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>> SvdResult<T, D0, D1> svd(
             Tensor<T, D0, D1, U, U> tensor) {
-        var u = new Tensor<>(tensor.type(), shape(tensor.shape().d1(), tensor.shape().d1()));
-        var s = new Tensor<>(tensor.type(), shape(tensor.shape().d1()));
-        var v = new Tensor<>(tensor.type(), shape(tensor.shape().d0(), tensor.shape().d0()));
+        var u = new Tensor<>(tensor.type(), shape(tensor.shape().d0(), tensor.shape().d0()));
+        var s = new Tensor<>(tensor.type(), shape(tensor.shape().d0()));
+        var v = new Tensor<>(tensor.type(), shape(tensor.shape().d1(), tensor.shape().d1()));
         handleStatus(() -> arrayfire_h.af_svd(u.segment(), s.segment(), v.segment(), tensor.dereference()));
+        checkDims(u);
+        checkDims(s);
+        checkDims(v);
         return new SvdResult<>(u, s, v);
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>> Tensor<T, D0, D0, U, U> cov(
             Tensor<T, D0, D1, U, U> tensor) {
-        var subMean = sub(tensor, mean(tensor, D1).tileAs(tensor));
-        var matrix = matmul(subMean, subMean.transpose());
-        return div(matrix, constant(matrix.type(), matrix.shape(), tensor.shape().d1().size() - 1.0f));
+        return tidy(() -> {
+            var subMean = sub(tensor, mean(tensor, D1).tileAs(tensor));
+            var matrix = matmul(subMean, subMean.transpose());
+            return div(matrix, constant(matrix.type(), matrix.shape(), tensor.shape().d1().size() - 1.0f));
+        });
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>> Tensor<T, D0, D0, U, U> zcaMatrix(
@@ -1179,6 +1211,18 @@ public class ArrayFire {
 
     public static K k(int value) {
         return new K(value);
+    }
+
+    public static X x(int value) {
+        return new X(value);
+    }
+
+    public static Y y(int value) {
+        return new Y(value);
+    }
+
+    public static Z z(int value) {
+        return new Z(value);
     }
 
     public static final U U = new U(1);

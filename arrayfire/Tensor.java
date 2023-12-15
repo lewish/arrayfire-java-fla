@@ -9,7 +9,6 @@ import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.util.List;
 import java.util.function.Function;
 
 public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> implements TensorLike<T, D0, D1, D2, D3>, MemoryContainer {
@@ -82,8 +81,9 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
         return af.castshape(this, d0);
     }
 
-    public <OD0 extends IntNumber<?>, OD1 extends IntNumber<?>> Tensor<T, OD0, OD1, D2, D3> castshape(Function<Integer, OD0> d0,
-                                                                                          Function<Integer, OD1> d1) {
+    public <OD0 extends IntNumber<?>, OD1 extends IntNumber<?>> Tensor<T, OD0, OD1, D2, D3> castshape(
+            Function<Integer, OD0> d0,
+            Function<Integer, OD1> d1) {
         return af.castshape(this, d0, d1);
     }
 
@@ -123,9 +123,10 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
     }
 
 
-    public <OD0 extends IntNumber<?>, OD1 extends IntNumber<?>, OD2 extends IntNumber<?>> Tensor<T, OD0, OD1, OD2, U> reshape(OD0 d0,
-                                                                                                            OD1 d1,
-                                                                                                            OD2 d2) {
+    public <OD0 extends IntNumber<?>, OD1 extends IntNumber<?>, OD2 extends IntNumber<?>> Tensor<T, OD0, OD1, OD2, U> reshape(
+            OD0 d0,
+            OD1 d1,
+            OD2 d2) {
         return af.reshape(this, af.shape(d0, d1, d2));
     }
 
