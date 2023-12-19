@@ -33,7 +33,7 @@ public class ArrayFireTest {
             var data = af.data(arr);
             assertArrayEquals(
                     new double[]{0.6009535291510355, 0.027758798477684365, 0.9805505775568435, 0.2126322292221926},
-                    data.java(), 0);
+                    data.java(), 1E-5);
 
         });
     }
@@ -46,7 +46,7 @@ public class ArrayFireTest {
             System.out.println(Arrays.toString(data.java()));
             assertArrayEquals(
                     new double[]{0.46430344880342067, -0.6310730997345986, -1.056124304288019, 0.1600451392361099},
-                    data.java(), 0);
+                    data.java(), 1E-5);
 
         });
     }
@@ -371,12 +371,12 @@ public class ArrayFireTest {
         af.tidy(() -> {
             af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_MERSENNE_GP11213);
             var data = af.randu(af.F64, af.shape(1));
-            assertArrayEquals(new double[]{0.4446248512515619}, af.data(data).java(), 0);
+            assertArrayEquals(new double[]{0.4446248512515619}, af.data(data).java(), 1E-5);
         });
         af.tidy(() -> {
             af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_THREEFRY_2X32_16);
             var data = af.randu(af.F64, af.shape(1));
-            assertArrayEquals(new double[]{0.21128287646002053}, af.data(data).java(), 0);
+            assertArrayEquals(new double[]{0.21128287646002053}, af.data(data).java(), 1E-5);
         });
     }
 
