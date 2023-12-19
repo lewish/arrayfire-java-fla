@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import static arrayfire.ArrayFire.*;
 import static org.junit.Assert.*;
@@ -497,6 +498,49 @@ public class ArrayFireTest {
         });
     }
 
+    @Test
+    public void graph() {
+        af.tidy(() -> {
+            var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
+            var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
+            var leftT = left.transpose();
+            var matmul = af.matmul(leftT, right);
+            var softmax = af.softmax(matmul);
+            var sum = af.sum(matmul);
+            var graph = af.memoryScope().graph();
+            assertEquals(Set.of(left), graph.dependencies(leftT));
+            assertEquals(Set.of(leftT, right), graph.dependencies(matmul));
+            assertEquals(Set.of(matmul), graph.dependencies(softmax));
+            assertEquals(Set.of(matmul), graph.dependencies(sum));
+
+            assertEquals(Set.of(leftT), graph.dependents(left));
+            assertEquals(Set.of(softmax, sum), graph.dependents(matmul));
+        });
+    }
+
+    @Test
+    public void graphPrune() {
+        af.tidy(() -> {
+            var start = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
+            var ignored = af.sum(start);
+            var ignored2 = af.sum(ignored);
+            var loss = af.sum(start);
+            var graph = af.memoryScope().graph();
+            var pruned = graph.prune(loss, start);
+            assertEquals(Set.of(start, loss), pruned);
+        });
+    }
+
+    @Test
+    public void graphGradientsSimple() {
+        af.tidy(() -> {
+            var start = af.create(1.0f, 1.0f);
+            var negated = af.negate(start);
+            var loss = af.sum(negated);
+            var startGrads = af.memoryScope().graph().grads(loss, start);
+            assertArrayEquals(new float[] { -1, -1 }, af.data(startGrads).java(), 0);
+        });
+    }
     @Test
     public void useAcrossScopes() {
         af.tidy(() -> {

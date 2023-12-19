@@ -54,7 +54,7 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
 
     public abstract void set(int index, JT value);
 
-    abstract JAT java();
+    public abstract JAT java();
 
     @Override
     public void dispose() {

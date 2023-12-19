@@ -1,11 +1,14 @@
 package arrayfire;
 
+import arrayfire.autograd.Graph;
+
 import java.lang.foreign.Arena;
 import java.util.HashSet;
 import java.util.Set;
 
 public class MemoryScope {
 
+    private final Graph graph = new Graph();
     private final Set<MemoryContainer> memoryContainers = new HashSet<>();
 
     public Arena managedArena(MemoryContainer memoryContainer) {
@@ -14,6 +17,10 @@ public class MemoryScope {
         }
         memoryContainers.add(memoryContainer);
         return Arena.ofShared();
+    }
+
+    public Graph graph() {
+        return graph;
     }
 
     public void track(MemoryContainer memoryContainer) {
