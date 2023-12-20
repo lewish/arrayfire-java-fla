@@ -5,9 +5,14 @@ import arrayfire.numbers.A;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;
 import arrayfire.numbers.D;
+import arrayfire.utils.Reference;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -19,7 +24,12 @@ import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
 public class ArrayFireTest {
-
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
     @Before
     public void setUpTest() {
         af.setBackend(Backend.CPU);
@@ -227,6 +237,27 @@ public class ArrayFireTest {
         });
     }
 
+    @Test
+    public void exp() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{0, 1});
+            var result = af.exp(data);
+            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(result).java(), 1E-5f);
+            var gradient = af.memoryScope().graph().grads(result, data);
+            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(gradient).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void abs() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{-1, 2});
+            var result = af.abs(data);
+            assertArrayEquals(new float[]{1, 2}, af.data(result).java(), 1E-5f);
+            var gradient = af.memoryScope().graph().grads(result, data);
+            assertArrayEquals(new float[]{-1, 1}, af.data(gradient).java(), 1E-5f);
+        });
+    }
 
     @Test
     public void mulScalar() {
@@ -538,7 +569,7 @@ public class ArrayFireTest {
             var negated = af.negate(start);
             var loss = af.sum(negated);
             var startGrads = af.memoryScope().graph().grads(loss, start);
-            assertArrayEquals(new float[] { -1, -1 }, af.data(startGrads).java(), 0);
+            assertArrayEquals(new float[]{-1, -1}, af.data(startGrads).java(), 0);
         });
     }
 
@@ -549,7 +580,31 @@ public class ArrayFireTest {
             var negated = af.negate(start);
             var added = af.add(start, negated);
             var startGrads = af.memoryScope().graph().grads(added, start);
-            assertArrayEquals(new float[] { 0, 0 }, af.data(startGrads).java(), 0);
+            assertArrayEquals(new float[]{0, 0}, af.data(startGrads).java(), 0);
+        });
+    }
+
+    @Test
+    public void gradientDescentSimple() {
+        af.tidy(() -> {
+            var outerScope = af.memoryScope();
+            var a = af.params(af.randu(F32, shape(n(5))));
+            var b = af.randu(F32, shape(n(5)));
+            var trackedLoss = new Reference<>(Float.POSITIVE_INFINITY);
+            for (int i = 0; i < 50; i++) {
+                af.tidy(() -> {
+                    var mul = af.mul(a.get(), b);
+                    var diff = af.sub(af.sum(mul), af.constant(5));
+                    var loss = af.mul(diff, diff);
+                    trackedLoss.set(af.data(loss).java()[0]);
+                    var aGrad = af.memoryScope().graph().grads(loss, a.get());
+                    // TODO: This sucks, swapping params in another scope should be easy.
+                    var newA = af.add(a.get(), af.mul(aGrad, af.constant(-0.1f).tileAs(aGrad.shape())));
+                    af.moveScope(newA, af.memoryScope(), outerScope);
+                    a.swap(newA);
+                });
+            }
+            assertEquals(0, trackedLoss.get(), 1E-5f);
         });
     }
 

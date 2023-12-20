@@ -1,7 +1,6 @@
 package arrayfire;
 
 import arrayfire.autograd.GradFunction;
-import arrayfire.autograd.Graph;
 import arrayfire.capi.arrayfire_h;
 import arrayfire.containers.NativeArray;
 import arrayfire.datatypes.*;
@@ -345,11 +344,15 @@ public class ArrayFire {
     }
 
 
+    @SuppressWarnings("unchecked")
     public static <T extends DataType<?, ?>, OT extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<OT, D0, D1, D2, D3> cast(
-            Tensor<T, D0, D1, D2, D3> a, OT arrayType) {
-        return fromOperation(arrayType, a.shape(),
-                ptr -> arrayfire_h.af_cast(ptr, a.dereference(), arrayType.code()))
-                .withName("cast").withInput(a).withGradFunction((result, grads) -> grads.cast(a.type()));
+            Tensor<T, D0, D1, D2, D3> input, OT type) {
+        if (input.type().equals(type)) {
+            return (Tensor<OT, D0, D1, D2, D3>) input;
+        }
+        return fromOperation(type, input.shape(),
+                ptr -> arrayfire_h.af_cast(ptr, input.dereference(), type.code()))
+                .withName("cast").withInput(input).withGradFunction((result, grads) -> grads.cast(input.type()));
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> ones(
@@ -531,10 +534,14 @@ public class ArrayFire {
     private static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> TensorBuilder<T, D0, D1, D2, D3> fromOperation(
             T type, Shape<D0, D1, D2, D3> shape,
             Function<MemorySegment, Integer> method) {
-        var tb = new TensorBuilder<T, D0, D1, D2, D3>();
-        tb.tensor = new Tensor<>(type, shape);
-        handleStatus(() -> method.apply(tb.tensor.segment()));
-        return tb;
+        try (Arena arena = Arena.ofConfined()) {
+            var tb = new TensorBuilder<T, D0, D1, D2, D3>();
+            var segment = arena.allocate(Tensor.LAYOUT);
+            handleStatus(() -> method.apply(segment));
+            tb.tensor = new Tensor<>(type, shape);
+            tb.tensor.segment().copyFrom(segment);
+            return tb;
+        }
     }
 
     private static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> TensorBuilder<T, D0, D1, D2, D3> fromTidy(
@@ -682,6 +689,20 @@ public class ArrayFire {
 
     public static void release(Tensor<?, ?, ?, ?, ?> tensor) {
         handleStatus(() -> arrayfire_h.af_release_array(tensor.dereference()));
+    }
+
+    public static int refCount(Tensor<?, ?, ?, ?, ?> tensor) {
+        try (Arena arena = Arena.ofConfined()) {
+            var result = arena.allocate(ValueLayout.JAVA_INT);
+            handleStatus(() -> arrayfire_h.af_get_data_ref_count(result, tensor.dereference()));
+            return result.get(ValueLayout.JAVA_INT, 0);
+        }
+    }
+
+    // wraps a tensor in Params
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Params<T, D0, D1, D2, D3> params(
+            Tensor<T, D0, D1, D2, D3> tensor) {
+        return new Params<>(tensor);
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> eval(
@@ -1052,12 +1073,17 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, AD0 extends IntNumber<?>, AD1 extends IntNumber<?>, BD1 extends IntNumber<?>, CD1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, AD0, CD1, D2, D3> matmul(
             Tensor<T, AD0, AD1, D2, D3> a, Tensor<T, AD1, BD1, D2, D3> b, Tensor<T, BD1, CD1, D2, D3> c) {
-        // TODO: Release the intermediate result after the second matmul.
         // Determine the optimal order of operations.
         if (a.d0().size() * b.d1().size() < b.d0().size() * c.d1().size()) {
-            return matmul(matmul(a, b), c);
+            var tmp = matmul(a, b);
+            var result = matmul(tmp, c);
+            tmp.release();
+            return result;
         } else {
-            return matmul(a, matmul(b, c));
+            var tmp = matmul(b, c);
+            var result = matmul(a, tmp);
+            tmp.release();
+            return result;
         }
     }
 
@@ -1107,13 +1133,27 @@ public class ArrayFire {
 
     }
 
-    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> sign(
+    /**
+     * Returns 1 for negative numbers and 0 for positive numbers.
+     */
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> signbit(
             Tensor<T, D0, D1, D2, D3> tensor) {
         return fromOperation(tensor.type(), tensor.shape(), ptr -> arrayfire_h.af_sign(ptr, tensor.dereference()))
                 .withName("sign")
                 .withInput(tensor)
                 .withoutGradFunction();
+    }
 
+    /**
+     * Returns -1 for negative numbers and 1 for positive numbers.
+     */
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> signum(
+            Tensor<T, D0, D1, D2, D3> tensor) {
+        return fromTidy(() -> sub(af.constant(tensor.type(), tensor.shape(), 1),
+                mul(af.constant(tensor.type(), tensor.shape(), 2), signbit(tensor))))
+                .withName("signum")
+                .withInput(tensor)
+                .withoutGradFunction();
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> log(
@@ -1129,7 +1169,7 @@ public class ArrayFire {
         return fromOperation(input.type(), input.shape(), ptr -> arrayfire_h.af_abs(ptr, input.dereference()))
                 .withName("abs")
                 .withInput(input)
-                .withGradFunction((result, grads) -> mul(grads, sign(input)));
+                .withGradFunction((result, grads) -> mul(grads, signum(input)));
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> sqrt(

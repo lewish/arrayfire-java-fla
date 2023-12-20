@@ -1,7 +1,5 @@
 package arrayfire;
 
-import arrayfire.autograd.Graph;
-
 import java.lang.foreign.Arena;
 import java.util.HashSet;
 import java.util.Set;

@@ -1,8 +1,6 @@
-package arrayfire.autograd;
+package arrayfire;
 
-import arrayfire.ArrayFire;
-import arrayfire.Tensor;
-import arrayfire.af;
+import arrayfire.autograd.GradFunction;
 import arrayfire.utils.IdentityHashSet;
 
 import java.util.*;
@@ -57,13 +55,12 @@ public class Graph {
         return nodesByOutput.values().stream().collect(Collectors.toCollection(IdentityHashSet::create));
     }
 
-    @SuppressWarnings("unchecked")
     public <T extends Tensor<?, ?, ?, ?, ?>> T grads(Tensor<?, ?, ?, ?, ?> loss, T tensor) {
-        return (T) grads(loss, new Tensor[]{tensor}).getFirst();
+        return grads(loss, new Tensor[]{tensor}).get(tensor);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public List<Tensor<?, ?, ?, ?, ?>> grads(Tensor<?, ?, ?, ?, ?> loss, Tensor<?, ?, ?, ?, ?>... tensors) {
+    public Grads grads(Tensor<?, ?, ?, ?, ?> loss, Tensor<?, ?, ?, ?, ?>... tensors) {
         var pruned = prune(loss, tensors);
         var queue = new ArrayDeque<>(pruned);
         var processedNodeOutputs = IdentityHashSet.<Tensor<?, ?, ?, ?, ?>>create();
@@ -102,7 +99,11 @@ public class Graph {
             Arrays.stream(tensors).map(gradsByOutput::get).forEach(
                     grad -> ArrayFire.moveScope(grad, ArrayFire.memoryScope(), parentScope));
         });
-        return Arrays.stream(tensors).map(gradsByOutput::get).collect(Collectors.toUnmodifiableList());
+        Grads grads = new Grads();
+        for (var tensor : tensors) {
+            grads.put(tensor, gradsByOutput.get(tensor));
+        }
+        return grads;
     }
 
     /**
@@ -124,6 +125,18 @@ public class Graph {
 
     public record Node(String name, Tensor<?, ?, ?, ?, ?> tensor, List<Tensor<?, ?, ?, ?, ?>> inputs,
                        GradFunction gradFunction) {
+    }
+
+    public class Grads {
+        private final Map<Tensor<?, ?, ?, ?, ?>, Tensor<?, ?, ?, ?, ?>> gradsByTensor = new IdentityHashMap<>();
+
+        public void put(Tensor<?, ?, ?, ?, ?> tensor, Tensor<?, ?, ?, ?, ?> grads) {
+            gradsByTensor.put(tensor, grads);
+        }
+        @SuppressWarnings("unchecked")
+        public <T extends Tensor<?, ?, ?, ?, ?>> T get(T tensor) {
+            return (T) gradsByTensor.get(tensor);
+        }
     }
 
 }
