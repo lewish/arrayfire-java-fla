@@ -140,12 +140,19 @@ public class ArrayFire {
 
     public static <DT extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
             Tensor<DT, D0, D1, D2, D3> tensor, Dim dim, boolean ascending) {
-        var values = new Tensor<>(tensor.type(), tensor.shape());
-        var indices = new Tensor<>(U32, tensor.shape());
-        handleStatus(
-                () -> arrayfire_h.af_sort_index(values.segment(), indices.segment(), tensor.dereference(), dim.index(),
-                        ascending));
-        return new SortIndexResult<>(values, indices);
+        try (Arena arena = Arena.ofConfined()) {
+            var values = arena.allocate(Tensor.LAYOUT);
+            var indices = arena.allocate(Tensor.LAYOUT);
+            handleStatus(
+                    () -> arrayfire_h.af_sort_index(values, indices, tensor.dereference(),
+                            dim.index(),
+                            ascending));
+            return new SortIndexResult<>(
+                    fromSegment(tensor.type(), tensor.shape(), values).withName("sort_values").withInput(
+                            tensor).withoutGradFunction(),
+                    fromSegment(U32, tensor.shape(), indices).withName("sort_indices").withInput(
+                            tensor).withoutGradFunction());
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -166,11 +173,9 @@ public class ArrayFire {
             AT array) {
         try (Arena arena = Arena.ofConfined()) {
             var shape = shape(n(array.length()));
-            var result = new Tensor<>(array.type(), shape);
-            handleStatus(
-                    () -> arrayfire_h.af_create_array(result.segment(), array.segment(), 1, nativeDims(arena, shape),
-                            array.type().code()));
-            return result;
+            return fromOperation(array.type(), shape,
+                    ptr -> arrayfire_h.af_create_array(ptr, array.segment(), 1, nativeDims(arena, shape),
+                            array.type().code())).withName("create").withoutInputs();
         }
     }
 
@@ -223,10 +228,9 @@ public class ArrayFire {
     public static <DT extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<DT, D0, D1, D2, D3> constant(
             DT type, Shape<D0, D1, D2, D3> shape, double value) {
         try (Arena arena = Arena.ofConfined()) {
-            var result = new Tensor<>(type, shape);
-            handleStatus(() -> arrayfire_h.af_constant(result.segment(), value, shape.dims().length,
-                    nativeDims(arena, shape), type.code()));
-            return result;
+            return fromOperation(type, shape,
+                    ptr -> arrayfire_h.af_constant(ptr, value, shape.dims().length, nativeDims(arena, shape),
+                            type.code())).withName("constant").withoutInputs();
         }
     }
 
@@ -534,9 +538,9 @@ public class ArrayFire {
     }
 
     private static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> TensorBuilder<T, D0, D1, D2, D3> fromTidy(
-            Supplier<Tensor<T, D0, D1, D2, D3>> tidy) {
+            Supplier<Tensor<T, D0, D1, D2, D3>> supplier) {
         var tb = new TensorBuilder<T, D0, D1, D2, D3>();
-        tb.tensor = af.tidy(tidy);
+        tb.tensor = af.tidy(supplier);
         return tb;
     }
 
@@ -989,23 +993,33 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> ImaxResult<T, U, D1, D2, D3> imax(
             Tensor<T, D0, D1, D2, D3> tensor) {
-        var shape = shape(u(), tensor.d1(), tensor.d2(), tensor.d3());
-        var maxValues = new Tensor<>(tensor.type(), shape);
-        var maxIndices = new Tensor<>(U32, shape);
-        handleStatus(() -> arrayfire_h.af_imax(maxValues.segment(), maxIndices.segment(), tensor.dereference(), 0));
-        return new ImaxResult<>(maxValues, maxIndices);
+        try (Arena arena = Arena.ofConfined()) {
+            var shape = shape(u(), tensor.d1(), tensor.d2(), tensor.d3());
+            var maxValues = arena.allocate(Tensor.LAYOUT);
+            var maxIndices = arena.allocate(Tensor.LAYOUT);
+            handleStatus(() -> arrayfire_h.af_imax(maxValues, maxIndices, tensor.dereference(), 0));
+            return new ImaxResult<>(fromSegment(tensor.type(), shape, maxValues).withName("imax_values").withInput(
+                    tensor).withoutGradFunction(),
+                    fromSegment(U32, shape, maxIndices).withName("imax_indices").withInput(
+                            tensor).withoutGradFunction());
+        }
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>, K extends IntNumber<?>> TopKResult<T, K, D1, D2, D3> topk(
             Tensor<T, D0, D1, D2, D3> tensor, K k) {
-        var shape = shape(k, tensor.d1(), tensor.d2(), tensor.d3());
-        var topValues = new Tensor<>(tensor.type(), shape);
-        var topIndices = new Tensor<>(U32, shape);
-        // TODO: Investigate fixed parameters.
-        handleStatus(
-                () -> arrayfire_h.af_topk(topValues.segment(), topIndices.segment(), tensor.dereference(), k.size(), 0,
-                        0));
-        return new TopKResult<>(topValues, topIndices);
+        try (Arena arena = Arena.ofConfined()) {
+            var shape = shape(k, tensor.d1(), tensor.d2(), tensor.d3());
+            var topValues = arena.allocate(Tensor.LAYOUT);
+            var topIndices = arena.allocate(Tensor.LAYOUT);
+            handleStatus(
+                    () -> arrayfire_h.af_topk(topValues, topIndices, tensor.dereference(), k.size(),
+                            0,
+                            0));
+            return new TopKResult<>(fromSegment(tensor.type(), shape, topValues).withName("topk_values").withInput(
+                    tensor).withoutGradFunction(),
+                    fromSegment(U32, shape, topIndices).withName("topk_indices").withInput(
+                            tensor).withoutGradFunction());
+        }
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D0, D2, D3> diag(
@@ -1237,10 +1251,13 @@ public class ArrayFire {
             var d1 = (int) dims.getAtIndex(ValueLayout.JAVA_LONG, 1);
             var d2 = (int) dims.getAtIndex(ValueLayout.JAVA_LONG, 2);
             var d3 = (int) dims.getAtIndex(ValueLayout.JAVA_LONG, 3);
-            var resultTensor = new Tensor<>(tensor.type(),
-                    shape(i0.createDim(d0), i1.createDim(d1), i2.createDim(d2), i3.createDim(d3)));
-            resultTensor.segment().copyFrom(result);
-            return resultTensor;
+
+            return fromSegment(tensor.type(),
+                    shape(i0.createDim(d0), i1.createDim(d1), i2.createDim(d2), i3.createDim(d3)), result)
+                    .withName("index")
+                    .withInput(tensor)
+                    .withoutGradFunction();
+
         }
     }
 
@@ -1305,7 +1322,7 @@ public class ArrayFire {
                 ptr -> arrayfire_h.af_tile(ptr, tensor.dereference(), d0ratio, d1ratio, d2ratio, d3ratio))
                 .withName("tile")
                 .withInput(tensor)
-                .withGradFunction((result, grads) -> sumAs((Tensor)grads, tensor.shape()).cast(tensor.type()));
+                .withGradFunction((result, grads) -> sumAs((Tensor) grads, tensor.shape()).cast(tensor.type()));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1390,11 +1407,12 @@ public class ArrayFire {
                     () -> arrayfire_h.af_convolve2_nn(result, tensor.dereference(), filters.dereference(), 2,
                             nativeDims(arena, stride), 2, nativeDims(arena, padding), 2, nativeDims(arena, dilation))));
             var computedDims = getDims(result);
-            var resultTensor = new Tensor<>(tensor.type(),
+            return fromSegment(tensor.type(),
                     shape(n((int) computedDims[0]), n((int) computedDims[1]), filters.shape().d3(),
-                            tensor.shape().d3()));
-            resultTensor.segment().copyFrom(result);
-            return resultTensor;
+                            tensor.shape().d3()), result)
+                    .withName("convolve2")
+                    .withInputs(tensor, filters)
+                    .withoutGradFunction();
         }
     }
 
@@ -1427,14 +1445,19 @@ public class ArrayFire {
     // svd
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>> SvdResult<T, D0, D1> svd(
             Tensor<T, D0, D1, U, U> tensor) {
-        var u = new Tensor<>(tensor.type(), shape(tensor.shape().d0(), tensor.shape().d0()));
-        var s = new Tensor<>(tensor.type(), shape(tensor.shape().d0()));
-        var v = new Tensor<>(tensor.type(), shape(tensor.shape().d1(), tensor.shape().d1()));
-        handleStatus(() -> arrayfire_h.af_svd(u.segment(), s.segment(), v.segment(), tensor.dereference()));
-        checkDims(u);
-        checkDims(s);
-        checkDims(v);
-        return new SvdResult<>(u, s, v);
+        try (Arena arena = Arena.ofConfined()) {
+            var u = arena.allocate(Tensor.LAYOUT);
+            var s = arena.allocate(Tensor.LAYOUT);
+            var v = arena.allocate(Tensor.LAYOUT);
+            handleStatus(() -> arrayfire_h.af_svd(u, s, v, tensor.dereference()));
+            return new SvdResult<>(
+                    fromSegment(tensor.type(), shape(tensor.shape().d0(), tensor.shape().d0()), u).withName(
+                            "svd_u").withInput(tensor).withoutGradFunction(),
+                    fromSegment(tensor.type(), shape(tensor.shape().d0()), s).withName("svd_s").withInput(
+                            tensor).withoutGradFunction(),
+                    fromSegment(tensor.type(), shape(tensor.shape().d1(), tensor.shape().d1()), v).withName(
+                            "svd_v").withInput(tensor).withoutGradFunction());
+        }
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>> Tensor<T, D0, D0, U, U> cov(
