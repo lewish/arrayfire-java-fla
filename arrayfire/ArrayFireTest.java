@@ -541,6 +541,18 @@ public class ArrayFireTest {
             assertArrayEquals(new float[] { -1, -1 }, af.data(startGrads).java(), 0);
         });
     }
+
+    @Test
+    public void graphGradientsTwoPaths() {
+        af.tidy(() -> {
+            var start = af.create(1.0f, 1.0f);
+            var negated = af.negate(start);
+            var added = af.add(start, negated);
+            var startGrads = af.memoryScope().graph().grads(added, start);
+            assertArrayEquals(new float[] { 0, 0 }, af.data(startGrads).java(), 0);
+        });
+    }
+
     @Test
     public void useAcrossScopes() {
         af.tidy(() -> {
