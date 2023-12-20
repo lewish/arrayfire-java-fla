@@ -177,7 +177,7 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
         return af.min(this);
     }
 
-    public Tensor<T, D0, D1, D2, D3> clamp(Tensor<T, ?, ?, ?, ?> lo, Tensor<T, ?, ?, ?, ?> hi) {
+    public Tensor<T, D0, D1, D2, D3> clamp(Tensor<T, D0, D1, D2, D3> lo, Tensor<T, D0, D1, D2, D3> hi) {
         return af.clamp(this, lo, hi);
     }
 
