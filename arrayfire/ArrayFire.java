@@ -6,6 +6,7 @@ import arrayfire.containers.NativeArray;
 import arrayfire.datatypes.*;
 import arrayfire.dims.Dim;
 import arrayfire.numbers.*;
+import arrayfire.optimizers.OptimizerProvider;
 import arrayfire.utils.Functions;
 import arrayfire.utils.Reference;
 
@@ -37,7 +38,7 @@ public class ArrayFire {
     public static final arrayfire.dims.D1 D1 = new arrayfire.dims.D1();
     public static final arrayfire.dims.D2 D2 = new arrayfire.dims.D2();
     public static final arrayfire.dims.D3 D3 = new arrayfire.dims.D3();
-    private static final ThreadLocal<MemoryScope> threadScope = ThreadLocal.withInitial(() -> null);
+
     private static boolean successfullyLoadedLibraries = false;
 
     private static void maybeLoadNativeLibraries() {
@@ -73,14 +74,7 @@ public class ArrayFire {
      * Executes the given function in a new memory scope, and disposes of all memory allocated in that scope afterward.
      */
     public static void tidy(Runnable fn) {
-        var previousScope = threadScope.get();
-        try {
-            threadScope.set(new MemoryScope());
-            fn.run();
-        } finally {
-            threadScope.get().dispose();
-            threadScope.set(previousScope);
-        }
+        MemoryScope.tidy(fn);
     }
 
     /**
@@ -92,22 +86,15 @@ public class ArrayFire {
         tidy(() -> {
             var result = (T) fn.get();
             if (result instanceof MemoryContainer mc) {
-                parentScope.track(mc);
-                memoryScope().untrack(mc);
+                MemoryScope.move(mc, parentScope);
             }
             resultReference.set(result);
         });
         return resultReference.get();
     }
 
-    public static <T extends MemoryContainer> T moveScope(T memoryContainer, MemoryScope from, MemoryScope to) {
-        from.untrack(memoryContainer);
-        to.track(memoryContainer);
-        return memoryContainer;
-    }
-
     public static MemoryScope memoryScope() {
-        return threadScope.get();
+        return MemoryScope.current();
     }
 
     public static <DT extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<DT, D0, D1, D2, D3> sort(
@@ -412,9 +399,9 @@ public class ArrayFire {
         handleStatus(() -> arrayfire_h.af_set_default_random_engine_type(type.code()));
     }
 
-    public static <AT extends NativeArray<?, ?, ?>, T extends DataType<AT, ?>> AT data(Tensor<T, ?, ?, ?, ?> a) {
-        var result = a.type().create(a.capacity());
-        handleStatus(() -> arrayfire_h.af_get_data_ptr(result.segment(), a.dereference()));
+    public static <AT extends NativeArray<?, ?, ?>, T extends DataType<AT, ?>> AT data(TensorLike<T, ?, ?, ?, ?> a) {
+        var result = a.tensor().type().create(a.tensor().capacity());
+        handleStatus(() -> arrayfire_h.af_get_data_ptr(result.segment(), a.tensor().dereference()));
         return result;
     }
 
@@ -553,7 +540,7 @@ public class ArrayFire {
 
     public static class TensorBuilder<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> {
         String name = "unknown";
-        List<Tensor<?, ?, ?, ?, ?>> inputs = new ArrayList<>();
+        List<TensorLike<?, ?, ?, ?, ?>> inputs = new ArrayList<>();
         Tensor<T, D0, D1, D2, D3> tensor;
 
         public TensorBuilder<T, D0, D1, D2, D3> withName(String name) {
@@ -562,20 +549,20 @@ public class ArrayFire {
         }
 
         public <I0T extends DataType<?, ?>, I0D0 extends IntNumber<?>, I0D1 extends IntNumber<?>, I0D2 extends IntNumber<?>, I0D3 extends IntNumber<?>> Unary<I0T, I0D0, I0D1, I0D2, I0D3> withInput(
-                Tensor<I0T, I0D0, I0D1, I0D2, I0D3> input) {
+                TensorLike<I0T, I0D0, I0D1, I0D2, I0D3> input) {
             inputs.add(input);
             return new Unary<>();
         }
 
         public <I0T extends DataType<?, ?>, I0D0 extends IntNumber<?>, I0D1 extends IntNumber<?>, I0D2 extends IntNumber<?>, I0D3 extends IntNumber<?>, I1T extends DataType<?, ?>, I1D0 extends IntNumber<?>, I1D1 extends IntNumber<?>, I1D2 extends IntNumber<?>, I1D3 extends IntNumber<?>> Binary<I0T, I0D0, I0D1, I0D2, I0D3, I1T, I1D0, I1D1, I1D2, I1D3> withInputs(
-                Tensor<I0T, I0D0, I0D1, I0D2, I0D3> input0,
-                Tensor<I1T, I1D0, I1D1, I1D2, I1D3> input1) {
+                TensorLike<I0T, I0D0, I0D1, I0D2, I0D3> input0,
+                TensorLike<I1T, I1D0, I1D1, I1D2, I1D3> input1) {
             inputs.addAll(List.of(input0, input1));
             return new Binary<>();
         }
 
         public Tensor<T, D0, D1, D2, D3> withoutInputs() {
-            memoryScope().graph().add(new Graph.Node(name, tensor, inputs, (grads) -> List.of()));
+            memoryScope().graph().add(new Graph.Node(name, tensor, List.of(), (grads) -> List.of()));
             return tensor;
         }
 
@@ -584,15 +571,24 @@ public class ArrayFire {
             @SuppressWarnings("unchecked")
             public Tensor<T, D0, D1, D2, D3> withGradFunction(
                     GradFunction.Unary<T, D0, D1, D2, D3, I0T, I0D0, I0D1, I0D2, I0D3> unaryGradFunction) {
-                memoryScope().graph().add(new Graph.Node(name, tensor, inputs, (grads) -> {
-                    var inputGrad = unaryGradFunction.grads(tensor, (Tensor<T, D0, D1, D2, D3>) grads);
-                    return List.of(inputGrad);
-                }));
+                // Register any inputs that are params.
+                inputs.stream().filter(tl -> (tl instanceof Params)).forEach(input -> {
+                    memoryScope().graph().addParams((Params<?, ?, ?, ?, ?>) input);
+                });
+                memoryScope().graph().add(
+                        new Graph.Node(name, tensor, inputs.stream().map(TensorLike::tensor).toList(), (grads) -> {
+                            var inputGrad = unaryGradFunction.grads(tensor, (Tensor<T, D0, D1, D2, D3>) grads);
+                            return List.of(inputGrad);
+                        }));
                 return tensor;
             }
 
             public Tensor<T, D0, D1, D2, D3> withoutGradFunction() {
-                memoryScope().graph().add(new Graph.Node(name, tensor, inputs, null));
+                inputs.stream().filter(tl -> (tl instanceof Params)).forEach(input -> {
+                    memoryScope().graph().addParams((Params<?, ?, ?, ?, ?>) input);
+                });
+                memoryScope().graph().add(
+                        new Graph.Node(name, tensor, inputs.stream().map(TensorLike::tensor).toList(), null));
                 return tensor;
             }
         }
@@ -602,15 +598,23 @@ public class ArrayFire {
             @SuppressWarnings("unchecked")
             public Tensor<T, D0, D1, D2, D3> withGradFunction(
                     GradFunction.Binary<T, D0, D1, D2, D3, I0T, I0D0, I0D1, I0D2, I0D3, I1T, I1D0, I1D1, I1D2, I1D3> binaryGradFunction) {
-                memoryScope().graph().add(new Graph.Node(name, tensor, inputs, (grads) -> {
-                    var inputGrads = binaryGradFunction.grads(tensor, (Tensor<T, D0, D1, D2, D3>) grads);
-                    return List.of(inputGrads.left(), inputGrads.right());
-                }));
+                inputs.stream().filter(tl -> (tl instanceof Params)).forEach(input -> {
+                    memoryScope().graph().addParams((Params<?, ?, ?, ?, ?>) input);
+                });
+                memoryScope().graph().add(
+                        new Graph.Node(name, tensor, inputs.stream().map(TensorLike::tensor).toList(), (grads) -> {
+                            var inputGrads = binaryGradFunction.grads(tensor, (Tensor<T, D0, D1, D2, D3>) grads);
+                            return List.of(inputGrads.left(), inputGrads.right());
+                        }));
                 return tensor;
             }
 
             public Tensor<T, D0, D1, D2, D3> withoutGradFunction() {
-                memoryScope().graph().add(new Graph.Node(name, tensor, inputs, null));
+                inputs.stream().filter(tl -> (tl instanceof Params)).forEach(input -> {
+                    memoryScope().graph().addParams((Params<?, ?, ?, ?, ?>) input);
+                });
+                memoryScope().graph().add(
+                        new Graph.Node(name, tensor, inputs.stream().map(TensorLike::tensor).toList(), null));
                 return tensor;
             }
         }
@@ -705,6 +709,16 @@ public class ArrayFire {
         return new Params<>(tensor);
     }
 
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Params<T, D0, D1, D2, D3> params(
+            Tensor<T, D0, D1, D2, D3> tensor, OptimizerProvider optimizerProvider) {
+        return new Params<>(tensor, optimizerProvider);
+    }
+
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Variable<T, D0, D1, D2, D3> variable(
+            Tensor<T, D0, D1, D2, D3> tensor) {
+        return new Variable<>(tensor);
+    }
+
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> eval(
             Tensor<T, D0, D1, D2, D3> tensor) {
         handleStatus(() -> arrayfire_h.af_eval(tensor.dereference()));
@@ -726,9 +740,14 @@ public class ArrayFire {
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> mul(
-            Tensor<T, D0, D1, D2, D3> left, Tensor<T, D0, D1, D2, D3> right) {
-        return fromOperation(left.type(), left.shape(),
-                ptr -> arrayfire_h.af_mul(ptr, left.dereference(), right.dereference(), true))
+            TensorLike<T, D0, D1, D2, D3> left, double right) {
+        return mul(left, af.constant(left.tensor().type(), left.tensor().shape(), right));
+    }
+
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> mul(
+            TensorLike<T, D0, D1, D2, D3> left, TensorLike<T, D0, D1, D2, D3> right) {
+        return fromOperation(left.tensor().type(), left.tensor().shape(),
+                ptr -> arrayfire_h.af_mul(ptr, left.tensor().dereference(), right.tensor().dereference(), true))
                 .withName("mul")
                 .withInputs(left, right)
                 .withGradFunction((result, grads) -> new GradFunction.TensorPair<>(mul(grads, right),
@@ -750,9 +769,9 @@ public class ArrayFire {
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> add(
-            Tensor<T, D0, D1, D2, D3> left, Tensor<T, D0, D1, D2, D3> right) {
-        return fromOperation(left.type(), left.shape(),
-                ptr -> arrayfire_h.af_add(ptr, left.dereference(), right.dereference(), false))
+            TensorLike<T, D0, D1, D2, D3> left, TensorLike<T, D0, D1, D2, D3> right) {
+        return fromOperation(left.tensor().type(), left.tensor().shape(),
+                ptr -> arrayfire_h.af_add(ptr, left.tensor().dereference(), right.tensor().dereference(), false))
                 .withName("add")
                 .withInputs(left, right)
                 .withGradFunction((result, resultGrads) -> new GradFunction.TensorPair<>(resultGrads, resultGrads));
@@ -760,11 +779,11 @@ public class ArrayFire {
 
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> sub(
-            Tensor<T, D0, D1, D2, D3> tensor, Tensor<T, D0, D1, D2, D3> rhs) {
-        return fromOperation(tensor.type(), tensor.shape(),
-                ptr -> arrayfire_h.af_sub(ptr, tensor.dereference(), rhs.tensor().dereference(), true))
+            TensorLike<T, D0, D1, D2, D3> left, TensorLike<T, D0, D1, D2, D3> right) {
+        return fromOperation(left.tensor().type(), left.tensor().shape(),
+                ptr -> arrayfire_h.af_sub(ptr, left.tensor().dereference(), right.tensor().dereference(), true))
                 .withName("sub")
-                .withInputs(tensor, rhs)
+                .withInputs(left, right)
                 .withGradFunction((result, grads) -> new GradFunction.TensorPair<>(grads, grads.negate()));
     }
 
@@ -1131,6 +1150,25 @@ public class ArrayFire {
                 .withInput(tensor)
                 .withGradFunction((result, grads) -> mul(grads, result));
 
+    }
+
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> pow(
+            Tensor<T, D0, D1, D2, D3> tensor, double pow) {
+        if (pow == 2) {
+            // Save some flops.
+            return mul(tensor, tensor);
+        }
+        return pow(tensor, constant(tensor.type(), tensor.shape(), pow));
+    }
+
+    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> pow(
+            Tensor<T, D0, D1, D2, D3> tensor, Tensor<T, D0, D1, D2, D3> pow) {
+        return fromOperation(tensor.type(), tensor.shape(),
+                ptr -> arrayfire_h.af_pow(ptr, tensor.dereference(), pow.dereference(), false))
+                .withName("pow")
+                .withInput(tensor)
+                .withGradFunction((result, grads) -> mul(mul(grads, pow),
+                        pow(tensor, sub(pow, constant(pow.type(), pow.shape(), 1)))));
     }
 
     /**

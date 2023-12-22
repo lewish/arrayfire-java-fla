@@ -5,11 +5,8 @@ import arrayfire.numbers.A;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;
 import arrayfire.numbers.D;
-import arrayfire.utils.Reference;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import arrayfire.optimizers.SGD;
+import org.junit.*;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -30,11 +27,17 @@ public class ArrayFireTest {
             System.out.println("Starting test: " + description.getMethodName());
         }
     };
+
     @Before
     public void setUpTest() {
         af.setBackend(Backend.CPU);
         af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_PHILOX_4X32_10);
         af.setSeed(0);
+    }
+
+    @After
+    public void validateMemory() {
+        assertEquals(MemoryScope.trackedContainers(), 0);
     }
 
     @Test
@@ -585,29 +588,56 @@ public class ArrayFireTest {
     }
 
     @Test
-    public void gradientDescentSimple() {
+    public void gradientDescentSimpleManual() {
         af.tidy(() -> {
-            var outerScope = af.memoryScope();
-            var a = af.params(af.randu(F32, shape(n(5))));
+            var a = af.variable(af.randu(F32, shape(n(5))));
             var b = af.randu(F32, shape(n(5)));
-            var trackedLoss = new Reference<>(Float.POSITIVE_INFINITY);
+            var latestLoss = af.variable(af.constant(Float.POSITIVE_INFINITY));
             for (int i = 0; i < 50; i++) {
                 af.tidy(() -> {
-                    var mul = af.mul(a.get(), b);
-                    var diff = af.sub(af.sum(mul), af.constant(5));
-                    var loss = af.mul(diff, diff);
-                    trackedLoss.set(af.data(loss).java()[0]);
-                    var aGrad = af.memoryScope().graph().grads(loss, a.get());
-                    // TODO: This sucks, swapping params in another scope should be easy.
-                    var newA = af.add(a.get(), af.mul(aGrad, af.constant(-0.1f).tileAs(aGrad.shape())));
-                    af.moveScope(newA, af.memoryScope(), outerScope);
-                    a.swap(newA);
+                    var mul = af.mul(a, b);
+                    var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
+                    var aGrad = af.memoryScope().graph().grads(loss, a);
+                    // Replace parameters with updated values.
+                    a.set(af.add(a, af.mul(aGrad, -0.1f)));
+                    latestLoss.set(loss);
                 });
             }
-            assertEquals(0, trackedLoss.get(), 1E-5f);
+            assertEquals(0, af.data(latestLoss).java()[0], 1E-10);
         });
     }
 
+    @Test
+    public void gradientDescentSimpleOptimizer() {
+        af.tidy(() -> {
+            var a = af.params(af.randu(F32, shape(n(5))), SGD.create());
+            var b = af.randu(F32, shape(n(5)));
+            var latestLoss = Float.POSITIVE_INFINITY;
+            for (int i = 0; i < 50 || latestLoss >= 1E-10; i++) {
+                latestLoss = af.tidy(() -> {
+                    var mul = af.mul(a, b);
+                    var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
+                    af.memoryScope().graph().optimize(loss);
+                    return af.data(loss).java()[0];
+                });
+            }
+            assertEquals(0, latestLoss, 1E-10);
+        });
+    }
+
+    @Test(expected = ArrayFireException.class)
+    public void useAfterRelease() {
+        af.tidy(() -> {
+            var arr = af.create(2f);
+            var pow2 = af.pow(arr, 2);
+            var pow4 = af.pow(pow2, 2);
+            pow2.release();
+            // Can still use pow4 after release.
+            assertEquals(16, af.data(pow4).java()[0], 0);
+            // Throws.
+            af.data(pow2);
+        });
+    }
     @Test
     public void useAcrossScopes() {
         af.tidy(() -> {

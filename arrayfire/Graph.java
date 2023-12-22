@@ -1,13 +1,17 @@
 package arrayfire;
 
 import arrayfire.autograd.GradFunction;
+import arrayfire.datatypes.DataType;
+import arrayfire.numbers.IntNumber;
 import arrayfire.utils.IdentityHashSet;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Graph {
 
+    private final Set<Params<?, ?, ?, ?, ?>> usedParams = IdentityHashSet.create();
     private final IdentityHashMap<Tensor<?, ?, ?, ?, ?>, Node> nodesByOutput = new IdentityHashMap<>();
     private final IdentityHashMap<Tensor<?, ?, ?, ?, ?>, List<Node>> dependentsByInput = new IdentityHashMap<>();
 
@@ -55,8 +59,18 @@ public class Graph {
         return nodesByOutput.values().stream().collect(Collectors.toCollection(IdentityHashSet::create));
     }
 
-    public <T extends Tensor<?, ?, ?, ?, ?>> T grads(Tensor<?, ?, ?, ?, ?> loss, T tensor) {
-        return grads(loss, new Tensor[]{tensor}).get(tensor);
+    public <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> grads(
+            Tensor<?, ?, ?, ?, ?> loss, TensorLike<T, D0, D1, D2, D3> tensor) {
+        return grads(loss, new Tensor[]{tensor.tensor()}).get(tensor.tensor());
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void optimize(Tensor<?, ?, ?, ?, ?> loss) {
+        var paramsToTensor = usedParams.stream().collect(Collectors.toMap(Function.identity(), Params::tensor));
+        var grads = grads(loss, paramsToTensor.values().toArray(Tensor[]::new));
+        for (var params : usedParams) {
+            params.optimize((Tensor) grads.get(paramsToTensor.get(params)));
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -82,6 +96,12 @@ public class Graph {
                     queue.addLast(current);
                     continue;
                 }
+                if (node.gradFunction == null) {
+                    throw new IllegalStateException(
+                            String.format(
+                                    "Attempting to compute the gradient of through a '%s' operation, but it does not support gradient propagation.",
+                                    node.name));
+                }
                 var inputGrads = node.gradFunction.grads(gradsByOutput.get(current));
                 for (var i = 0; i < node.inputs.size(); i++) {
                     var input = node.inputs.get(i);
@@ -97,7 +117,7 @@ public class Graph {
             }
             // Move all the gradients to the parent scope.
             Arrays.stream(tensors).map(gradsByOutput::get).forEach(
-                    grad -> ArrayFire.moveScope(grad, ArrayFire.memoryScope(), parentScope));
+                    grad -> MemoryScope.move(grad, parentScope));
         });
         Grads grads = new Grads();
         for (var tensor : tensors) {
@@ -123,19 +143,25 @@ public class Graph {
                 Collectors.toCollection(IdentityHashSet::create));
     }
 
-    public record Node(String name, Tensor<?, ?, ?, ?, ?> tensor, List<Tensor<?, ?, ?, ?, ?>> inputs,
+    public void addParams(Params<?, ?, ?, ?, ?> params) {
+        usedParams.add(params);
+    }
+
+    public record Node(String name, Tensor<?, ?, ?, ?, ?> tensor, List<? extends Tensor<?, ?, ?, ?, ?>> inputs,
                        GradFunction gradFunction) {
     }
 
-    public class Grads {
+    public static class Grads {
         private final Map<Tensor<?, ?, ?, ?, ?>, Tensor<?, ?, ?, ?, ?>> gradsByTensor = new IdentityHashMap<>();
 
-        public void put(Tensor<?, ?, ?, ?, ?> tensor, Tensor<?, ?, ?, ?, ?> grads) {
+        void put(Tensor<?, ?, ?, ?, ?> tensor, Tensor<?, ?, ?, ?, ?> grads) {
             gradsByTensor.put(tensor, grads);
         }
+
         @SuppressWarnings("unchecked")
-        public <T extends Tensor<?, ?, ?, ?, ?>> T get(T tensor) {
-            return (T) gradsByTensor.get(tensor);
+        public <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> get(
+                TensorLike<T, D0, D1, D2, D3> tensor) {
+            return (Tensor<T, D0, D1, D2, D3>) gradsByTensor.get(tensor.tensor());
         }
     }
 
