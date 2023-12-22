@@ -5,25 +5,39 @@ import arrayfire.numbers.A;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;
 import arrayfire.numbers.D;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import arrayfire.optimizers.SGD;
+import org.junit.*;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import static arrayfire.ArrayFire.*;
 import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
 public class ArrayFireTest {
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
 
     @Before
     public void setUpTest() {
         af.setBackend(Backend.CPU);
         af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_PHILOX_4X32_10);
         af.setSeed(0);
+    }
+
+    @After
+    public void validateMemory() {
+        assertEquals(MemoryScope.trackedContainers(), 0);
     }
 
     @Test
@@ -226,6 +240,27 @@ public class ArrayFireTest {
         });
     }
 
+    @Test
+    public void exp() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{0, 1});
+            var result = af.exp(data);
+            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(result).java(), 1E-5f);
+            var gradient = af.memoryScope().graph().grads(result, data);
+            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(gradient).java(), 1E-5f);
+        });
+    }
+
+    @Test
+    public void abs() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{-1, 2});
+            var result = af.abs(data);
+            assertArrayEquals(new float[]{1, 2}, af.data(result).java(), 1E-5f);
+            var gradient = af.memoryScope().graph().grads(result, data);
+            assertArrayEquals(new float[]{-1, 1}, af.data(gradient).java(), 1E-5f);
+        });
+    }
 
     @Test
     public void mulScalar() {
@@ -497,6 +532,112 @@ public class ArrayFireTest {
         });
     }
 
+    @Test
+    public void graph() {
+        af.tidy(() -> {
+            var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
+            var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
+            var leftT = left.transpose();
+            var matmul = af.matmul(leftT, right);
+            var softmax = af.softmax(matmul);
+            var sum = af.sum(matmul);
+            var graph = af.memoryScope().graph();
+            assertEquals(Set.of(left), graph.dependencies(leftT));
+            assertEquals(Set.of(leftT, right), graph.dependencies(matmul));
+            assertEquals(Set.of(matmul), graph.dependencies(softmax));
+            assertEquals(Set.of(matmul), graph.dependencies(sum));
+
+            assertEquals(Set.of(leftT), graph.dependents(left));
+            assertEquals(Set.of(softmax, sum), graph.dependents(matmul));
+        });
+    }
+
+    @Test
+    public void graphPrune() {
+        af.tidy(() -> {
+            var start = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
+            var ignored = af.sum(start);
+            var ignored2 = af.sum(ignored);
+            var loss = af.sum(start);
+            var graph = af.memoryScope().graph();
+            var pruned = graph.prune(loss, start);
+            assertEquals(Set.of(start, loss), pruned);
+        });
+    }
+
+    @Test
+    public void graphGradientsSimple() {
+        af.tidy(() -> {
+            var start = af.create(1.0f, 1.0f);
+            var negated = af.negate(start);
+            var loss = af.sum(negated);
+            var startGrads = af.memoryScope().graph().grads(loss, start);
+            assertArrayEquals(new float[]{-1, -1}, af.data(startGrads).java(), 0);
+        });
+    }
+
+    @Test
+    public void graphGradientsTwoPaths() {
+        af.tidy(() -> {
+            var start = af.create(1.0f, 1.0f);
+            var negated = af.negate(start);
+            var added = af.add(start, negated);
+            var startGrads = af.memoryScope().graph().grads(added, start);
+            assertArrayEquals(new float[]{0, 0}, af.data(startGrads).java(), 0);
+        });
+    }
+
+    @Test
+    public void gradientDescentSimpleManual() {
+        af.tidy(() -> {
+            var a = af.variable(af.randu(F32, shape(n(5))));
+            var b = af.randu(F32, shape(n(5)));
+            var latestLoss = af.variable(af.constant(Float.POSITIVE_INFINITY));
+            for (int i = 0; i < 50; i++) {
+                af.tidy(() -> {
+                    var mul = af.mul(a, b);
+                    var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
+                    var aGrad = af.memoryScope().graph().grads(loss, a);
+                    // Replace parameters with updated values.
+                    a.set(af.add(a, af.mul(aGrad, -0.1f)));
+                    latestLoss.set(loss);
+                });
+            }
+            assertEquals(0, af.data(latestLoss).java()[0], 1E-10);
+        });
+    }
+
+    @Test
+    public void gradientDescentSimpleOptimizer() {
+        af.tidy(() -> {
+            var a = af.params(af.randu(F32, shape(n(5))), SGD.create());
+            var b = af.randu(F32, shape(n(5)));
+            var latestLoss = Float.POSITIVE_INFINITY;
+            for (int i = 0; i < 50 || latestLoss >= 1E-10; i++) {
+                latestLoss = af.tidy(() -> {
+                    var mul = af.mul(a, b);
+                    var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
+                    af.memoryScope().graph().optimize(loss);
+                    return af.data(loss).java()[0];
+                });
+            }
+            assertEquals(0, latestLoss, 1E-10);
+        });
+    }
+
+    @Test(expected = ArrayFireException.class)
+    public void useAfterRelease() {
+        af.tidy(() -> {
+            var arr = af.create(2f);
+            var pow2 = af.pow(arr, 2);
+            var pow4 = af.pow(pow2, 2);
+            pow2.release();
+            // Can still use pow4 after release.
+            assertEquals(16, af.data(pow4).java()[0], 0);
+            // Throws.
+            af.data(pow2);
+        });
+    }
     @Test
     public void useAcrossScopes() {
         af.tidy(() -> {

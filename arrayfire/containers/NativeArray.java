@@ -1,6 +1,7 @@
 package arrayfire.containers;
 
 import arrayfire.MemoryContainer;
+import arrayfire.MemoryScope;
 import arrayfire.af;
 import arrayfire.datatypes.DataType;
 
@@ -25,7 +26,7 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
         this.length = length;
         this.arena = Arena.ofShared();
         this.segment = arena.allocateArray(layout(), length);
-        af.memoryScope().track(this);
+        MemoryScope.current().register(this);
     }
 
     public Arena arena() {
@@ -54,7 +55,7 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
 
     public abstract void set(int index, JT value);
 
-    abstract JAT java();
+    public abstract JAT java();
 
     @Override
     public void dispose() {
