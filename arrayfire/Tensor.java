@@ -26,7 +26,7 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
         this.segment = arena.allocate(LAYOUT);
         this.type = type;
         this.shape = shape;
-        af.memoryScope().track(this);
+        MemoryScope.current().register(this);
     }
 
     public MemorySegment segment() {
@@ -177,7 +177,7 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
         return af.min(this);
     }
 
-    public Tensor<T, D0, D1, D2, D3> clamp(Tensor<T, ?, ?, ?, ?> lo, Tensor<T, ?, ?, ?, ?> hi) {
+    public Tensor<T, D0, D1, D2, D3> clamp(Tensor<T, D0, D1, D2, D3> lo, Tensor<T, D0, D1, D2, D3> hi) {
         return af.clamp(this, lo, hi);
     }
 
@@ -240,6 +240,11 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
 
     }
 
+    public Tensor<T, D0, D1, D2, D3> move(MemoryScope scope) {
+        MemoryScope.move(this, scope);
+        return this;
+    }
+
     public <TN extends DataType<?, ?>> Tensor<TN, D0, D1, D2, D3> cast(TN t) {
         return af.cast(this, t);
     }
@@ -257,9 +262,20 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
         return this;
     }
 
+    boolean released = false;
+
     @Override
     public void dispose() {
-        ArrayFire.release(this);
-        arena.close();
+        // TODO: I'd like this to not be necessary. Seems like it might require manually tracking if the tensor has been released.
+        if (arena.scope().isAlive()) {
+            try {
+                if (af.refCount(this) > 0) {
+                    release();
+                }
+            } catch (ArrayFireException e) {
+                // Swallow.
+            }
+            arena.close();
+        }
     }
 }
