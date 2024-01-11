@@ -12,6 +12,10 @@ public class F32Array extends NativeArray<F32, Float, float[]> {
         super(F32, length);
     }
 
+    public F32Array(int length, boolean pinned) {
+        super(F32, length, pinned);
+    }
+
     @Override
     public ValueLayout.OfFloat layout() {
         return ValueLayout.JAVA_FLOAT;

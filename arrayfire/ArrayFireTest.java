@@ -1,5 +1,6 @@
 package arrayfire;
 
+import arrayfire.containers.F32Array;
 import arrayfire.datatypes.F32;
 import arrayfire.numbers.A;
 import arrayfire.numbers.B;
@@ -14,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static arrayfire.ArrayFire.*;
@@ -625,6 +627,32 @@ public class ArrayFireTest {
         });
     }
 
+    @Test
+    public void evalMultiple() {
+        af.tidy(() -> {
+            var random = af.randu(F32, shape(n(1_000_000)));
+            var transform1 = af.exp(random);
+            var transform2 = af.exp(transform1);
+            af.eval(transform1, transform2);
+        });
+    }
+
+    @Test
+    public void memorySanityCheck() {
+        af.tidy(() -> {
+            af.setBackend(Backend.CUDA);
+//            var random = af.randu(F32, shape(n(1_000_000)));
+//            var transform1 = af.exp(random);
+//            transform1.eval();
+//            random.release();
+//            var transform2 = af.exp(transform1);
+//            af.eval(transform2);
+            af.constant(F32, shape(n(10_000_000)), 1).eval();
+            af.printMeminfo();
+        });
+        throw new RuntimeException();
+    }
+
     @Test(expected = ArrayFireException.class)
     public void useAfterRelease() {
         af.tidy(() -> {
@@ -638,6 +666,7 @@ public class ArrayFireTest {
             af.data(pow2);
         });
     }
+
     @Test
     public void useAcrossScopes() {
         af.tidy(() -> {
@@ -666,6 +695,15 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var result = af.data(af.create(af.U32, values)).java();
             Assert.assertArrayEquals(values, result);
+        });
+    }
+
+    @Test
+    public void allocPinned() {
+        af.tidy(() -> {
+            var f32 = new F32Array(1, true);
+            f32.set(0, 3f);
+            assertEquals(3f, af.data(af.create(f32)).java()[0], 0);
         });
     }
 }

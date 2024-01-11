@@ -10,10 +10,7 @@ import arrayfire.optimizers.OptimizerProvider;
 import arrayfire.utils.Functions;
 import arrayfire.utils.Reference;
 
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -703,12 +700,6 @@ public class ArrayFire {
         }
     }
 
-    // wraps a tensor in Params
-    public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Params<T, D0, D1, D2, D3> params(
-            Tensor<T, D0, D1, D2, D3> tensor) {
-        return new Params<>(tensor);
-    }
-
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Params<T, D0, D1, D2, D3> params(
             Tensor<T, D0, D1, D2, D3> tensor, OptimizerProvider optimizerProvider) {
         return new Params<>(tensor, optimizerProvider);
@@ -723,6 +714,16 @@ public class ArrayFire {
             Tensor<T, D0, D1, D2, D3> tensor) {
         handleStatus(() -> arrayfire_h.af_eval(tensor.dereference()));
         return tensor;
+    }
+
+    public static void eval(Tensor<?, ?, ?, ?, ?>... tensors) {
+        try (Arena arena = Arena.ofConfined()) {
+            var array = arena.allocateArray(ValueLayout.ADDRESS, tensors.length);
+            for (int i = 0; i < tensors.length; i++) {
+                array.setAtIndex(ValueLayout.ADDRESS, i, tensors[i].dereference());
+            }
+            handleStatus(() -> arrayfire_h.af_eval_multiple(tensors.length, array));
+        }
     }
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> mul(
@@ -1691,4 +1692,18 @@ public class ArrayFire {
                     lockBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0));
         }
     }
+
+    public static MemorySegment allocPinned(long bytes) {
+        try (Arena arena = Arena.ofConfined()) {
+            var ptr = arena.allocateArray(ValueLayout.ADDRESS, 1);
+            handleStatus(() -> arrayfire_h.af_alloc_pinned(ptr, bytes));
+            return MemorySegment.ofAddress(ptr.getAtIndex(ValueLayout.ADDRESS, 0).address()).reinterpret(bytes);
+        }
+    }
+
+    public static void freePinned(MemorySegment segment) {
+        handleStatus(() -> arrayfire_h.af_free_pinned(segment));
+    }
+
+
 }

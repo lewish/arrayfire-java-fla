@@ -18,19 +18,28 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
 
     final DT type;
     final int length;
+
+    final boolean pinned;
     final Arena arena;
     final MemorySegment segment;
 
     NativeArray(DT type, int length) {
-        this.type = type;
-        this.length = length;
-        this.arena = Arena.ofShared();
-        this.segment = arena.allocateArray(layout(), length);
-        MemoryScope.current().register(this);
+        this(type, length, false);
     }
 
-    public Arena arena() {
-        return arena;
+    NativeArray(DT type, int length, boolean pinned) {
+        this.type = type;
+        this.length = length;
+        this.pinned = pinned;
+        if (pinned) {
+            this.arena = null;
+            this.segment = af.allocPinned(length * layout().byteSize());
+        } else {
+            this.arena = Arena.ofShared();
+            this.segment = arena.allocateArray(layout(), length);
+
+        }
+        MemoryScope.current().register(this);
     }
 
     public MemorySegment segment() {
@@ -59,8 +68,12 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
 
     @Override
     public void dispose() {
-        if (arena.scope().isAlive()) {
-            arena.close();
+        if (pinned) {
+            af.freePinned(segment);
+        } else {
+            if (arena.scope().isAlive()) {
+                arena.close();
+            }
         }
     }
 }
