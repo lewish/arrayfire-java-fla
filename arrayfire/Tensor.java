@@ -268,13 +268,14 @@ public class Tensor<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extend
     public void dispose() {
         // TODO: I'd like this to not be necessary. Seems like it might require manually tracking if the tensor has been released.
         if (arena.scope().isAlive()) {
-            try {
-                if (af.refCount(this) > 0) {
-                    release();
-                }
-            } catch (ArrayFireException e) {
-                // Swallow.
-            }
+            release();
+//            try {
+//                if (af.refCount(this) > 0) {
+//                    release();
+//                }
+//            } catch (ArrayFireException e) {
+//                // Swallow.
+//            }
             arena.close();
         }
     }

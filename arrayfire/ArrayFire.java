@@ -10,7 +10,10 @@ import arrayfire.optimizers.OptimizerProvider;
 import arrayfire.utils.Functions;
 import arrayfire.utils.Reference;
 
-import java.lang.foreign.*;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,10 +157,14 @@ public class ArrayFire {
 
     public static <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>> Tensor<DT, N, U, U, U> create(
             AT array) {
+        return create(array, shape(n(array.length())));
+    }
+
+    public static <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<DT, D0, D1, D2, D3> create(
+            AT array, Shape<D0, D1, D2, D3> shape) {
         try (Arena arena = Arena.ofConfined()) {
-            var shape = shape(n(array.length()));
             return fromOperation(array.type(), shape,
-                    ptr -> arrayfire_h.af_create_array(ptr, array.segment(), 1, nativeDims(arena, shape),
+                    ptr -> arrayfire_h.af_create_array(ptr, array.segment(), shape.dims().length, nativeDims(arena, shape),
                             array.type().code())).withName("create").withoutInputs();
         }
     }
@@ -637,10 +644,10 @@ public class ArrayFire {
 
 
     public static <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D1, D0, D2, D3> transpose(
-            Tensor<T, D0, D1, D2, D3> tensor) {
-        return fromOperation(tensor.type(),
-                shape(tensor.shape().d1(), tensor.shape().d0(), tensor.shape().d2(), tensor.shape().d3()),
-                ptr -> arrayfire_h.af_transpose(ptr, tensor.dereference(), false))
+            TensorLike<T, D0, D1, D2, D3> tensor) {
+        return fromOperation(tensor.tensor().type(),
+                shape(tensor.tensor().shape().d1(), tensor.tensor().shape().d0(), tensor.tensor().shape().d2(), tensor.tensor().shape().d3()),
+                ptr -> arrayfire_h.af_transpose(ptr, tensor.tensor().dereference(), false))
                 .withName("transpose")
                 .withInput(tensor)
                 .withGradFunction((result, grads) -> transpose(grads));
@@ -1097,12 +1104,12 @@ public class ArrayFire {
         if (a.d0().size() * b.d1().size() < b.d0().size() * c.d1().size()) {
             var tmp = matmul(a, b);
             var result = matmul(tmp, c);
-            tmp.release();
+            tmp.dispose();
             return result;
         } else {
             var tmp = matmul(b, c);
             var result = matmul(a, tmp);
-            tmp.release();
+            tmp.dispose();
             return result;
         }
     }
@@ -1379,7 +1386,7 @@ public class ArrayFire {
     public static <T extends DataType<?, ?>, D0 extends IntNumber<D0>, D1 extends IntNumber<D1>, D2 extends IntNumber<D2>, D3 extends IntNumber<D3>, BDT extends IntNumber<BDT>> List<Tensor<T, D0, BDT, U, U>> batch(
             Tensor<T, D0, D1, D2, D3> tensor, Function<Integer, BDT> type, int batchSize) {
         var results = new ArrayList<Tensor<T, D0, BDT, U, U>>();
-        var d0Seq = seq(0, tensor.shape().d0().size() - 1);
+        var d0Seq = seq(tensor.d0());
         for (int i = 0; i < tensor.shape().d1().size(); i += batchSize) {
             var computedD1Size = Math.min(batchSize, tensor.shape().d1().size() - i);
             var slice = index(tensor, d0Seq, seq(i, i + computedD1Size - 1));
