@@ -15,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import static arrayfire.ArrayFire.*;
@@ -131,10 +130,11 @@ public class ArrayFireTest {
     }
 
     @Test
-    public void shuffle() {
+    public void permutationIndex() {
         af.tidy(() -> {
             var arr = af.create(1, 2, 3, 4, 5, 6, 7, 8).reshape(2, 4);
-            var shuffled = af.shuffle(arr, af.D1);
+            var permutation = af.permutation(arr.d1());
+            var shuffled = af.index(arr, af.span(), permutation);
             var data = af.data(shuffled);
             assertArrayEquals(new int[]{5, 6, 1, 2, 7, 8, 3, 4}, data.java());
         });
@@ -264,7 +264,7 @@ public class ArrayFireTest {
             var data = af.create(new float[]{0, 1});
             var result = af.exp(data);
             assertArrayEquals(new float[]{1, 2.7182817f}, af.data(result).java(), 1E-5f);
-            var gradient = af.memoryScope().graph().grads(result, data);
+            var gradient = af.scope().graph().grads(result, data);
             assertArrayEquals(new float[]{1, 2.7182817f}, af.data(gradient).java(), 1E-5f);
         });
     }
@@ -275,7 +275,7 @@ public class ArrayFireTest {
             var data = af.create(new float[]{-1, 2});
             var result = af.abs(data);
             assertArrayEquals(new float[]{1, 2}, af.data(result).java(), 1E-5f);
-            var gradient = af.memoryScope().graph().grads(result, data);
+            var gradient = af.scope().graph().grads(result, data);
             assertArrayEquals(new float[]{-1, 1}, af.data(gradient).java(), 1E-5f);
         });
     }
@@ -559,7 +559,7 @@ public class ArrayFireTest {
             var matmul = af.matmul(leftT, right);
             var softmax = af.softmax(matmul);
             var sum = af.sum(matmul);
-            var graph = af.memoryScope().graph();
+            var graph = af.scope().graph();
             assertEquals(Set.of(left), graph.dependencies(leftT));
             assertEquals(Set.of(leftT, right), graph.dependencies(matmul));
             assertEquals(Set.of(matmul), graph.dependencies(softmax));
@@ -577,7 +577,7 @@ public class ArrayFireTest {
             var ignored = af.sum(start);
             var ignored2 = af.sum(ignored);
             var loss = af.sum(start);
-            var graph = af.memoryScope().graph();
+            var graph = af.scope().graph();
             var pruned = graph.prune(loss, start);
             assertEquals(Set.of(start, loss), pruned);
         });
@@ -589,7 +589,7 @@ public class ArrayFireTest {
             var start = af.create(1.0f, 1.0f);
             var negated = af.negate(start);
             var loss = af.sum(negated);
-            var startGrads = af.memoryScope().graph().grads(loss, start);
+            var startGrads = af.scope().graph().grads(loss, start);
             assertArrayEquals(new float[]{-1, -1}, af.data(startGrads).java(), 0);
         });
     }
@@ -600,7 +600,7 @@ public class ArrayFireTest {
             var start = af.create(1.0f, 1.0f);
             var negated = af.negate(start);
             var added = af.add(start, negated);
-            var startGrads = af.memoryScope().graph().grads(added, start);
+            var startGrads = af.scope().graph().grads(added, start);
             assertArrayEquals(new float[]{0, 0}, af.data(startGrads).java(), 0);
         });
     }
@@ -615,7 +615,7 @@ public class ArrayFireTest {
                 af.tidy(() -> {
                     var mul = af.mul(a, b);
                     var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
-                    var aGrad = af.memoryScope().graph().grads(loss, a);
+                    var aGrad = af.scope().graph().grads(loss, a);
                     // Replace parameters with updated values.
                     a.set(af.add(a, af.mul(aGrad, -0.1f)));
                     latestLoss.set(loss);
@@ -635,7 +635,7 @@ public class ArrayFireTest {
                 latestLoss = af.tidy(() -> {
                     var mul = af.mul(a, b);
                     var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
-                    af.memoryScope().graph().optimize(loss);
+                    af.optimize(loss);
                     return af.data(loss).java()[0];
                 });
             }

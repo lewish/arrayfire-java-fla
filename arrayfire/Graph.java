@@ -2,7 +2,7 @@ package arrayfire;
 
 import arrayfire.autograd.GradFunction;
 import arrayfire.datatypes.DataType;
-import arrayfire.numbers.IntNumber;
+import arrayfire.numbers.Num;
 import arrayfire.utils.IdentityHashSet;
 
 import java.util.*;
@@ -59,7 +59,7 @@ public class Graph {
         return nodesByOutput.values().stream().collect(Collectors.toCollection(IdentityHashSet::create));
     }
 
-    public <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> grads(
+    public <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> grads(
             Tensor<?, ?, ?, ?, ?> loss, TensorLike<T, D0, D1, D2, D3> tensor) {
         return grads(loss, new Tensor[]{tensor.tensor()}).get(tensor.tensor());
     }
@@ -79,7 +79,7 @@ public class Graph {
         var queue = new ArrayDeque<>(pruned);
         var processedNodeOutputs = IdentityHashSet.<Tensor<?, ?, ?, ?, ?>>create();
         var gradsByOutput = new IdentityHashMap<Tensor<?, ?, ?, ?, ?>, Tensor<?, ?, ?, ?, ?>>();
-        var parentScope = ArrayFire.memoryScope();
+        var parentScope = ArrayFire.scope();
         af.tidy(() -> {
             // We insert a sentinel value to ensure that we don't try to compute the gradient of the loss.
             gradsByOutput.put(loss, ArrayFire.constant(loss.type(), 1).tileAs((Tensor) loss));
@@ -117,7 +117,7 @@ public class Graph {
             }
             // Move all the gradients to the parent scope.
             Arrays.stream(tensors).map(gradsByOutput::get).forEach(
-                    grad -> MemoryScope.move(grad, parentScope));
+                    grad -> MemoryScope.move(grad, parentScope.memory()));
         });
         Grads grads = new Grads();
         for (var tensor : tensors) {
@@ -159,7 +159,7 @@ public class Graph {
         }
 
         @SuppressWarnings("unchecked")
-        public <T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> Tensor<T, D0, D1, D2, D3> get(
+        public <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> get(
                 TensorLike<T, D0, D1, D2, D3> tensor) {
             return (Tensor<T, D0, D1, D2, D3>) gradsByTensor.get(tensor.tensor());
         }

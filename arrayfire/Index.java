@@ -1,7 +1,6 @@
 package arrayfire;
 
-import arrayfire.datatypes.U64;
-import arrayfire.numbers.IntNumber;
+import arrayfire.numbers.Num;
 
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
@@ -12,7 +11,7 @@ import java.util.function.Function;
 /*
  * https://arrayfire.org/docs/index_8h_source.htm
  */
-public class Index<D extends IntNumber> {
+public class Index<D extends Num> {
   static MemoryLayout LAYOUT = MemoryLayout.structLayout(
       MemoryLayout.unionLayout(ValueLayout.ADDRESS.withName("arr"), Seq.LAYOUT.withName("seq")).withName("union"),
       ValueLayout.JAVA_BOOLEAN.withName("isSeq"),

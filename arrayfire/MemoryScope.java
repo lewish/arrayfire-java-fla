@@ -7,30 +7,12 @@ import java.util.Set;
 
 public class MemoryScope {
 
-    private static final ThreadLocal<MemoryScope> threadScope = ThreadLocal.withInitial(() -> null);
+    public static MemoryScope current() {
+        return Scope.current().memory();
+    }
+
     private static final IdentityHashMap<MemoryContainer, MemoryScope> containerScopes = new IdentityHashMap<>();
     private static final IdentityHashMap<MemoryScope, Set<MemoryContainer>> scopeContainers = new IdentityHashMap<>();
-
-    private final Graph graph = new Graph();
-
-    public static MemoryScope current() {
-        return threadScope.get();
-    }
-
-    public Graph graph() {
-        return graph;
-    }
-
-    public static void tidy(Runnable fn) {
-        var previousScope = current();
-        try {
-            threadScope.set(new MemoryScope());
-            fn.run();
-        } finally {
-            threadScope.get().dispose();
-            threadScope.set(previousScope);
-        }
-    }
 
     public void dispose() {
         scopeContainers.getOrDefault(this, Set.of()).forEach(mc -> {

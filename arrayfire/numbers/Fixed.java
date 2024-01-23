@@ -1,6 +1,6 @@
 package arrayfire.numbers;
 
-public abstract class Fixed<T> implements IntNumber<T> {
+public abstract class Fixed<T> implements Num<T> {
     private final int size;
 
     public Fixed(int size) {

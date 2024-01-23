@@ -1,10 +1,9 @@
 package arrayfire;
 
 import arrayfire.datatypes.DataType;
-import arrayfire.numbers.IntNumber;
-import arrayfire.optimizers.OptimizerProvider;
+import arrayfire.numbers.Num;
 
-public class Variable<T extends DataType<?, ?>, D0 extends IntNumber<?>, D1 extends IntNumber<?>, D2 extends IntNumber<?>, D3 extends IntNumber<?>> implements TensorLike<T, D0, D1, D2, D3> {
+public class Variable<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> implements TensorLike<T, D0, D1, D2, D3> {
     private Tensor<T, D0, D1, D2, D3> tensor;
 
     public Variable(Tensor<T, D0, D1, D2, D3> tensor) {

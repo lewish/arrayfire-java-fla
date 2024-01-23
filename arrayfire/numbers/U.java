@@ -1,12 +1,11 @@
+
 package arrayfire.numbers;
 
-public record U(int size) implements IntNumber<U> {
-  public U {
-    assert size == 1 : "U numbers must always be 1";
-  }
+public record U(int size) implements Num<U> {
 
-  @Override
-  public U create(int size) {
-    return new U(size);
-  }
+    @Override
+    public U create(int size) {
+        return new U(size);
+    }
 }
+  

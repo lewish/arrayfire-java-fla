@@ -1,6 +1,6 @@
 package arrayfire.numbers;
 
-public interface IntNumber<N> {
+public interface Num<N> {
     int size();
     N create(int size);
 }
