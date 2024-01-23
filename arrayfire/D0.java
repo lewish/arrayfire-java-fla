@@ -1,4 +1,4 @@
-package arrayfire.dims;
+package arrayfire;
 
 public record D0(int index) implements Dim {
   public D0 {

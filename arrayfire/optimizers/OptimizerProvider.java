@@ -1,7 +1,7 @@
 package arrayfire.optimizers;
 
 import arrayfire.Optimizer;
-import arrayfire.datatypes.DataType;
+import arrayfire.DataType;
 import arrayfire.numbers.Num;
 
 public interface OptimizerProvider {

@@ -1,7 +1,7 @@
 package arrayfire.autograd;
 
 import arrayfire.Tensor;
-import arrayfire.datatypes.DataType;
+import arrayfire.DataType;
 import arrayfire.numbers.Num;
 
 import java.util.List;

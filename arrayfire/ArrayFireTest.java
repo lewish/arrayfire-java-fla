@@ -1,7 +1,6 @@
 package arrayfire;
 
 import arrayfire.containers.F32Array;
-import arrayfire.datatypes.F32;
 import arrayfire.numbers.A;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;

@@ -1,4 +1,4 @@
-package arrayfire.datatypes;
+package arrayfire;
 
 import arrayfire.containers.F64Array;
 
@@ -12,7 +12,7 @@ public class F64 implements DataType<F64Array, F64> {
     }
 
     @Override
-    public arrayfire.datatypes.F64 sumType() {
+    public arrayfire.F64 sumType() {
         return F64;
     }
 

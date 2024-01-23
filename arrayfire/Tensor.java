@@ -1,6 +1,5 @@
 package arrayfire;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.numbers.Num;
 import arrayfire.numbers.N;
 import arrayfire.numbers.U;
@@ -153,11 +152,11 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         return af.mean(this);
     }
 
-    public Tensor<T, U, D1, D2, D3> mean(arrayfire.dims.D0 dim) {
+    public Tensor<T, U, D1, D2, D3> mean(arrayfire.D0 dim) {
         return af.mean(this, dim);
     }
 
-    public Tensor<T, D0, U, D2, D3> mean(arrayfire.dims.D1 dim) {
+    public Tensor<T, D0, U, D2, D3> mean(arrayfire.D1 dim) {
         return af.mean(this, dim);
     }
 
@@ -169,7 +168,7 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         return af.max(this);
     }
 
-    public Tensor<T, D0, U, D2, D3> max(arrayfire.dims.D1 dim) {
+    public Tensor<T, D0, U, D2, D3> max(arrayfire.D1 dim) {
         return af.max(this, dim);
     }
 

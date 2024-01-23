@@ -1,4 +1,4 @@
-package arrayfire.dims;
+package arrayfire;
 
 public record D3(int index) implements Dim {
   public static final int INDEX = 3;

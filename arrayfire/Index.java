@@ -11,7 +11,7 @@ import java.util.function.Function;
 /*
  * https://arrayfire.org/docs/index_8h_source.htm
  */
-public class Index<D extends Num> {
+public class Index<D extends Num<D>> {
   static MemoryLayout LAYOUT = MemoryLayout.structLayout(
       MemoryLayout.unionLayout(ValueLayout.ADDRESS.withName("arr"), Seq.LAYOUT.withName("seq")).withName("union"),
       ValueLayout.JAVA_BOOLEAN.withName("isSeq"),
@@ -50,8 +50,7 @@ public class Index<D extends Num> {
                                                      PathElement.groupElement("seq"))));
     }
     segment.set(ValueLayout.JAVA_BOOLEAN, LAYOUT.byteOffset(PathElement.groupElement("isSeq")), seq != null);
-    // TODO: Work out what this is for.
-    segment.set(ValueLayout.JAVA_BOOLEAN, LAYOUT.byteOffset(PathElement.groupElement("isBatch")), true);
+    segment.set(ValueLayout.JAVA_BOOLEAN, LAYOUT.byteOffset(PathElement.groupElement("isBatch")), false);
   }
 
   int size() {

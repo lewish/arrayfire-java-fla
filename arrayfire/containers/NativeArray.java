@@ -3,7 +3,7 @@ package arrayfire.containers;
 import arrayfire.MemoryContainer;
 import arrayfire.MemoryScope;
 import arrayfire.af;
-import arrayfire.datatypes.DataType;
+import arrayfire.DataType;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;

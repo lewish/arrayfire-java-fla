@@ -1,6 +1,5 @@
-package arrayfire.datatypes;
+package arrayfire;
 
-import arrayfire.containers.B8Array;
 import arrayfire.containers.U8Array;
 
 import static arrayfire.af.U32;

@@ -1,4 +1,4 @@
-package arrayfire.datatypes;
+package arrayfire;
 
 import arrayfire.containers.F32Array;
 
@@ -12,7 +12,7 @@ public class F32 implements DataType<F32Array, F32> {
     }
 
     @Override
-    public arrayfire.datatypes.F32 sumType() {
+    public arrayfire.F32 sumType() {
         return F32;
     }
 

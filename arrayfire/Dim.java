@@ -1,4 +1,4 @@
-package arrayfire.dims;
+package arrayfire;
 
 public interface Dim {
   int index();

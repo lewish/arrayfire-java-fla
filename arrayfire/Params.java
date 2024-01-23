@@ -1,6 +1,5 @@
 package arrayfire;
 
-import arrayfire.datatypes.DataType;
 import arrayfire.numbers.Num;
 import arrayfire.optimizers.OptimizerProvider;
 

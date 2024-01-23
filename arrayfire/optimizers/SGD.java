@@ -4,7 +4,7 @@ import arrayfire.Optimizer;
 import arrayfire.Params;
 import arrayfire.Tensor;
 import arrayfire.af;
-import arrayfire.datatypes.DataType;
+import arrayfire.DataType;
 import arrayfire.numbers.Num;
 
 public class SGD implements OptimizerProvider {

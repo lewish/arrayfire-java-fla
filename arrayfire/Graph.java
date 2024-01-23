@@ -1,7 +1,6 @@
 package arrayfire;
 
 import arrayfire.autograd.GradFunction;
-import arrayfire.datatypes.DataType;
 import arrayfire.numbers.Num;
 import arrayfire.utils.IdentityHashSet;
 

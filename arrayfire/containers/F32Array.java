@@ -1,6 +1,6 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.F32;
+import arrayfire.F32;
 
 import java.lang.foreign.ValueLayout;
 

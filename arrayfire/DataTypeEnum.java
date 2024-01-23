@@ -1,4 +1,4 @@
-package arrayfire.datatypes;
+package arrayfire;
 
 import java.util.Arrays;
 import java.util.Map;

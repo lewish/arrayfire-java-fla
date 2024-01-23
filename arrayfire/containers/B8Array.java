@@ -1,6 +1,6 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.B8;
+import arrayfire.B8;
 
 import java.lang.foreign.ValueLayout;
 

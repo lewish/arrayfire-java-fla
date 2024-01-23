@@ -1,6 +1,6 @@
 package arrayfire.containers;
 
-import arrayfire.datatypes.U64;
+import arrayfire.U64;
 
 import java.lang.foreign.ValueLayout;
 

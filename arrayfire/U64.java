@@ -1,4 +1,4 @@
-package arrayfire.datatypes;
+package arrayfire;
 
 import arrayfire.containers.U64Array;
 

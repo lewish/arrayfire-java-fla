@@ -1,4 +1,4 @@
-package arrayfire.datatypes;
+package arrayfire;
 
 import arrayfire.containers.F16Array;
 import static arrayfire.af.F16;
