@@ -101,15 +101,7 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         return af.reshape(this, af.shape(d0));
     }
 
-    public <OD0 extends Num<?>> Tensor<T, OD0, U, U, U> reshape(OD0 d0) {
-        return af.reshape(this, af.shape(d0));
-    }
-
     public Tensor<T, N, N, U, U> reshape(int d0, int d1) {
-        return af.reshape(this, af.shape(d0, d1));
-    }
-
-    public <OD0 extends Num<?>, OD1 extends Num<?>> Tensor<T, OD0, OD1, U, U> reshape(OD0 d0, OD1 d1) {
         return af.reshape(this, af.shape(d0, d1));
     }
 
@@ -121,6 +113,13 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         return af.reshape(this, af.shape(d0, d1, d2, d3));
     }
 
+    public <OD0 extends Num<?>> Tensor<T, OD0, U, U, U> reshape(OD0 d0) {
+        return af.reshape(this, af.shape(d0));
+    }
+
+    public <OD0 extends Num<?>, OD1 extends Num<?>> Tensor<T, OD0, OD1, U, U> reshape(OD0 d0, OD1 d1) {
+        return af.reshape(this, af.shape(d0, d1));
+    }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>> Tensor<T, OD0, OD1, OD2, U> reshape(
             OD0 d0,

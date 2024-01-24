@@ -1430,7 +1430,7 @@ public class ArrayFire {
     }
 
     /**
-     * Computes the covariance matrix of the given tensor.
+     * Computes the covariance matrix of the given matrix.
      */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>> Tensor<T, D0, D0, U, U> cov(
             Tensor<T, D0, D1, U, U> tensor) {
@@ -1442,7 +1442,7 @@ public class ArrayFire {
     }
 
     /**
-     * Computes the ZCA whitening matrix of the given tensor.
+     * Computes the ZCA whitening matrix of the given matrix.
      */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>> Tensor<T, D0, D0, U, U> zca(
             Tensor<T, D0, D1, U, U> tensor) {
