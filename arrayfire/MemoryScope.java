@@ -1,5 +1,6 @@
 package arrayfire;
 
+import arrayfire.numbers.Num;
 import arrayfire.utils.IdentityHashSet;
 
 import java.util.IdentityHashMap;
@@ -13,6 +14,14 @@ public class MemoryScope {
 
     private static final IdentityHashMap<MemoryContainer, MemoryScope> containerScopes = new IdentityHashMap<>();
     private static final IdentityHashMap<MemoryScope, Set<MemoryContainer>> scopeContainers = new IdentityHashMap<>();
+
+    /**
+     * Permanently removes this memory container from the tracking system
+     */
+    public static  void untrack(MemoryContainer mc) {
+        scopeContainers.get(containerScopes.get(mc)).remove(mc);
+        containerScopes.remove(mc);
+    }
 
     public void dispose() {
         scopeContainers.getOrDefault(this, Set.of()).forEach(mc -> {

@@ -59,13 +59,13 @@ public class Graph {
     }
 
     public <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> grads(
-            Tensor<?, ?, ?, ?, ?> loss, TensorLike<T, D0, D1, D2, D3> tensor) {
-        return grads(loss, new Tensor[]{tensor.tensor()}).get(tensor.tensor());
+            Tensor<?, ?, ?, ?, ?> loss, Tensor<T, D0, D1, D2, D3> tensor) {
+        return grads(loss, new Tensor[]{tensor}).get(tensor);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void optimize(Tensor<?, ?, ?, ?, ?> loss) {
-        var paramsToTensor = usedParams.stream().collect(Collectors.toMap(Function.identity(), Params::tensor));
+        var paramsToTensor = usedParams.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
         var grads = grads(loss, paramsToTensor.values().toArray(Tensor[]::new));
         for (var params : usedParams) {
             params.optimize((Tensor) grads.get(paramsToTensor.get(params)));
@@ -159,8 +159,8 @@ public class Graph {
 
         @SuppressWarnings("unchecked")
         public <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> get(
-                TensorLike<T, D0, D1, D2, D3> tensor) {
-            return (Tensor<T, D0, D1, D2, D3>) gradsByTensor.get(tensor.tensor());
+                Tensor<T, D0, D1, D2, D3> tensor) {
+            return (Tensor<T, D0, D1, D2, D3>) gradsByTensor.get(tensor);
         }
     }
 

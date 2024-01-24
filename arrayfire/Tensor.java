@@ -10,11 +10,10 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.function.Function;
 
-public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> implements TensorLike<T, D0, D1, D2, D3>, MemoryContainer {
+public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> implements MemoryContainer {
 
     // Contains a single device pointer.
     public static final AddressLayout LAYOUT = ValueLayout.ADDRESS;
-
     private final Arena arena;
     private final MemorySegment segment;
     private final T type;
@@ -28,7 +27,7 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         MemoryScope.current().register(this);
     }
 
-    public MemorySegment segment() {
+    MemorySegment segment() {
         return segment;
     }
 
@@ -139,7 +138,11 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
     }
 
     public void release() {
-        ArrayFire.release(this);
+        af.release(this);
+    }
+
+    void retain() {
+        af.retain(this);
     }
 
 
@@ -212,8 +215,8 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> tileAs(
-            TensorLike<T, OD0, OD1, OD2, OD3> newShapeTensor) {
-        return af.tileAs(this, newShapeTensor.tensor().shape());
+            Tensor<T, OD0, OD1, OD2, OD3> newShapeTensor) {
+        return af.tileAs(this, newShapeTensor.shape());
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> tileAs(
@@ -245,11 +248,6 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
 
     public Tensor<T, D0, D1, D2, D3> center() {
         return af.center(this);
-    }
-
-    @Override
-    public Tensor<T, D0, D1, D2, D3> tensor() {
-        return this;
     }
 
     @Override

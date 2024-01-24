@@ -605,29 +605,9 @@ public class ArrayFireTest {
     }
 
     @Test
-    public void gradientDescentSimpleManual() {
-        af.tidy(() -> {
-            var a = af.variable(af.randu(F32, shape(n(5))));
-            var b = af.randu(F32, shape(n(5)));
-            var latestLoss = af.variable(af.constant(Float.POSITIVE_INFINITY));
-            for (int i = 0; i < 50; i++) {
-                af.tidy(() -> {
-                    var mul = af.mul(a, b);
-                    var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
-                    var aGrad = af.scope().graph().grads(loss, a);
-                    // Replace parameters with updated values.
-                    a.set(af.add(a, af.mul(aGrad, -0.1f)));
-                    latestLoss.set(loss);
-                });
-            }
-            assertEquals(0, af.data(latestLoss).java()[0], 1E-10);
-        });
-    }
-
-    @Test
     public void gradientDescentSimpleOptimizer() {
         af.tidy(() -> {
-            var a = af.params(af.randu(F32, shape(n(5))), SGD.create());
+            var a = af.params(() -> af.randu(F32, shape(n(5))), SGD.create());
             var b = af.randu(F32, shape(n(5)));
             var latestLoss = Float.POSITIVE_INFINITY;
             for (int i = 0; i < 50 || latestLoss >= 1E-10; i++) {
