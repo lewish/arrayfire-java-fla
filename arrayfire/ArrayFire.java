@@ -682,6 +682,7 @@ public class ArrayFire {
 
     public static void release(Tensor<?, ?, ?, ?, ?> tensor) {
         handleStatus(() -> arrayfire_h.af_release_array(tensor.dereference()));
+        MemoryScope.untrack(tensor);
     }
 
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> retain(
@@ -695,7 +696,7 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> void retainInto(
         Tensor<T, D0, D1, D2, D3> tensor, Variable<T, D0, D1, D2, D3> params) {
-        release(params);
+        handleStatus(() -> arrayfire_h.af_release_array(params.dereference()));
         handleStatus(() -> arrayfire_h.af_retain_array(params.segment(), tensor.dereference()));
     }
 
@@ -1099,16 +1100,15 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, AD0 extends Num<?>, AD1 extends Num<?>, BD1 extends Num<?>, CD1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, AD0, CD1, D2, D3> matmul(
         Tensor<T, AD0, AD1, D2, D3> a, Tensor<T, AD1, BD1, D2, D3> b, Tensor<T, BD1, CD1, D2, D3> c) {
-        // Determine the optimal order of operations.
         if (a.d0().size() * b.d1().size() < b.d0().size() * c.d1().size()) {
             var tmp = matmul(a, b);
             var result = matmul(tmp, c);
-            tmp.dispose();
+            tmp.release();
             return result;
         } else {
             var tmp = matmul(b, c);
             var result = matmul(a, tmp);
-            tmp.dispose();
+            tmp.release();
             return result;
         }
     }

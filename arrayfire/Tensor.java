@@ -9,21 +9,21 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> implements MemoryContainer {
 
     // Contains a single device pointer.
     public static final AddressLayout LAYOUT = ValueLayout.ADDRESS;
-    private final Arena arena;
-    private final MemorySegment segment;
     private final T type;
     private final Shape<D0, D1, D2, D3> shape;
+    private final MemorySegment segment;
+//    private final Supplier<MemorySegment> supplier;
 
     Tensor(T type, Shape<D0, D1, D2, D3> shape) {
-        this.arena = Arena.ofShared();
-        this.segment = arena.allocate(LAYOUT);
         this.type = type;
         this.shape = shape;
+        this.segment = Arena.ofAuto().allocate(LAYOUT);
         MemoryScope.current().register(this);
     }
 
@@ -252,9 +252,6 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
 
     @Override
     public void dispose() {
-        if (arena.scope().isAlive()) {
-            release();
-            arena.close();
-        }
+        release();
     }
 }

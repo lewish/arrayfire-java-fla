@@ -4,6 +4,7 @@ import arrayfire.numbers.Num;
 import arrayfire.utils.IdentityHashSet;
 
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Set;
 
 public class MemoryScope {
@@ -24,10 +25,8 @@ public class MemoryScope {
     }
 
     public void dispose() {
-        scopeContainers.getOrDefault(this, Set.of()).forEach(mc -> {
-            mc.dispose();
-            containerScopes.remove(mc);
-        });
+        // Copy first to avoid concurrent modification exceptions.
+        List.copyOf(scopeContainers.getOrDefault(this, Set.of())).forEach(MemoryContainer::dispose);
         scopeContainers.remove(this);
     }
 
