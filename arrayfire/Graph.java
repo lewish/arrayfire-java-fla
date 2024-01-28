@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 public class Graph {
 
-    private final Set<Params<?, ?, ?, ?, ?>> usedParams = IdentityHashSet.create();
     private final IdentityHashMap<Tensor<?, ?, ?, ?, ?>, Node> nodesByOutput = new IdentityHashMap<>();
     private final IdentityHashMap<Tensor<?, ?, ?, ?, ?>, List<Node>> dependentsByInput = new IdentityHashMap<>();
 
@@ -26,8 +25,11 @@ public class Graph {
 
     public Set<Tensor<?, ?, ?, ?, ?>> dependents(Tensor<?, ?, ?, ?, ?> tensor) {
         if (dependentsByInput.containsKey(tensor)) {
-            return dependentsByInput.get(tensor).stream().map(node -> node.tensor).collect(
-                    Collectors.toUnmodifiableSet());
+            return dependentsByInput
+                       .get(tensor)
+                       .stream()
+                       .map(node -> node.tensor)
+                       .collect(Collectors.toUnmodifiableSet());
         }
         return Collections.emptySet();
     }
@@ -59,12 +61,18 @@ public class Graph {
     }
 
     public <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> grads(
-            Tensor<?, ?, ?, ?, ?> loss, Tensor<T, D0, D1, D2, D3> tensor) {
+        Tensor<?, ?, ?, ?, ?> loss, Tensor<T, D0, D1, D2, D3> tensor) {
         return grads(loss, new Tensor[]{tensor}).get(tensor);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void optimize(Tensor<?, ?, ?, ?, ?> loss) {
+        var usedParams = nodes()
+                             .stream()
+                             .flatMap(node -> node.inputs.stream())
+                             .filter(input -> input instanceof Params)
+                             .map(input -> (Params) input)
+                             .collect(Collectors.toCollection(IdentityHashSet::create));
         var paramsToTensor = usedParams.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
         var grads = grads(loss, paramsToTensor.values().toArray(Tensor[]::new));
         for (var params : usedParams) {
@@ -96,10 +104,9 @@ public class Graph {
                     continue;
                 }
                 if (node.gradFunction == null) {
-                    throw new IllegalStateException(
-                            String.format(
-                                    "Attempting to compute the gradient of through a '%s' operation, but it does not support gradient propagation.",
-                                    node.name));
+                    throw new IllegalStateException(String.format(
+                        "Attempting to compute the gradient of through a '%s' operation, but it does not support gradient propagation.",
+                        node.name));
                 }
                 var inputGrads = node.gradFunction.grads(gradsByOutput.get(current));
                 for (var i = 0; i < node.inputs.size(); i++) {
@@ -109,14 +116,16 @@ public class Graph {
                         gradsByOutput.put(input, inputGrad);
                     } else {
                         gradsByOutput.put(input,
-                                ArrayFire.add((Tensor) gradsByOutput.get(input), (Tensor) (inputGrad)));
+                            ArrayFire.add((Tensor) gradsByOutput.get(input), (Tensor) (inputGrad)));
                     }
                 }
                 processedNodeOutputs.add(current);
             }
             // Move all the gradients to the parent scope.
-            Arrays.stream(tensors).map(gradsByOutput::get).forEach(
-                    grad -> MemoryScope.move(grad, parentScope.memory()));
+            Arrays
+                .stream(tensors)
+                .map(gradsByOutput::get)
+                .forEach(grad -> MemoryScope.move(grad, parentScope.memory()));
         });
         Grads grads = new Grads();
         for (var tensor : tensors) {
@@ -134,16 +143,14 @@ public class Graph {
             var transitiveDependents = transitiveDependents(tensor);
             if (!transitiveDependents.contains(loss)) {
                 throw new IllegalStateException(
-                        String.format("There is no path in the graph from %s to the given loss %s", tensor, loss));
+                    String.format("There is no path in the graph from %s to the given loss %s", tensor, loss));
             }
             set.addAll(transitiveDependents(tensor));
         }
-        return set.stream().filter(dependent -> transitiveDependents(dependent).contains(loss)).collect(
-                Collectors.toCollection(IdentityHashSet::create));
-    }
-
-    public void addParams(Params<?, ?, ?, ?, ?> params) {
-        usedParams.add(params);
+        return set
+                   .stream()
+                   .filter(dependent -> transitiveDependents(dependent).contains(loss))
+                   .collect(Collectors.toCollection(IdentityHashSet::create));
     }
 
     public record Node(String name, Tensor<?, ?, ?, ?, ?> tensor, List<? extends Tensor<?, ?, ?, ?, ?>> inputs,
@@ -159,7 +166,7 @@ public class Graph {
 
         @SuppressWarnings("unchecked")
         public <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> get(
-                Tensor<T, D0, D1, D2, D3> tensor) {
+            Tensor<T, D0, D1, D2, D3> tensor) {
             return (Tensor<T, D0, D1, D2, D3>) gradsByTensor.get(tensor);
         }
     }

@@ -1,7 +1,7 @@
 package arrayfire;
 
-import arrayfire.numbers.Num;
 import arrayfire.numbers.N;
+import arrayfire.numbers.Num;
 import arrayfire.numbers.U;
 
 import java.lang.foreign.AddressLayout;
@@ -9,7 +9,6 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> implements MemoryContainer {
 
@@ -18,13 +17,15 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
     private final T type;
     private final Shape<D0, D1, D2, D3> shape;
     private final MemorySegment segment;
-//    private final Supplier<MemorySegment> supplier;
+
+    public Tensor(Prototype<T, D0, D1, D2, D3> prototype) {
+        this(prototype.type(), prototype.shape());
+    }
 
     Tensor(T type, Shape<D0, D1, D2, D3> shape) {
         this.type = type;
         this.shape = shape;
         this.segment = Arena.ofAuto().allocate(LAYOUT);
-        MemoryScope.current().register(this);
     }
 
     MemorySegment segment() {
@@ -62,6 +63,10 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         return shape;
     }
 
+    public Prototype<T, D0, D1, D2, D3> prototype() {
+        return new Prototype<>(type, shape);
+    }
+
     public T type() {
         return type;
     }
@@ -79,20 +84,18 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         return af.castshape(this, d0);
     }
 
-    public <OD0 extends Num<?>, OD1 extends Num<?>> Tensor<T, OD0, OD1, D2, D3> castshape(
-            Function<Integer, OD0> d0,
-            Function<Integer, OD1> d1) {
+    public <OD0 extends Num<?>, OD1 extends Num<?>> Tensor<T, OD0, OD1, D2, D3> castshape(Function<Integer, OD0> d0,
+                                                                                          Function<Integer, OD1> d1) {
         return af.castshape(this, d0, d1);
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>> Tensor<T, OD0, OD1, OD2, D3> castshape(
-            Function<Integer, OD0> d0, Function<Integer, OD1> d1, Function<Integer, OD2> d2) {
+        Function<Integer, OD0> d0, Function<Integer, OD1> d1, Function<Integer, OD2> d2) {
         return af.castshape(this, d0, d1, d2);
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> castshape(
-            Function<Integer, OD0> d0, Function<Integer, OD1> d1, Function<Integer, OD2> d2,
-            Function<Integer, OD3> d3) {
+        Function<Integer, OD0> d0, Function<Integer, OD1> d1, Function<Integer, OD2> d2, Function<Integer, OD3> d3) {
         return af.castshape(this, d0, d1, d2, d3);
     }
 
@@ -120,20 +123,19 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         return af.reshape(this, af.shape(d0, d1));
     }
 
-    public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>> Tensor<T, OD0, OD1, OD2, U> reshape(
-            OD0 d0,
-            OD1 d1,
-            OD2 d2) {
+    public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>> Tensor<T, OD0, OD1, OD2, U> reshape(OD0 d0,
+                                                                                                            OD1 d1,
+                                                                                                            OD2 d2) {
         return af.reshape(this, af.shape(d0, d1, d2));
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> reshape(
-            OD0 d0, OD1 d1, OD2 d2, OD3 d3) {
+        OD0 d0, OD1 d1, OD2 d2, OD3 d3) {
         return af.reshape(this, af.shape(d0, d1, d2, d3));
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> reshape(
-            Shape<OD0, OD1, OD2, OD3> newShape) {
+        Shape<OD0, OD1, OD2, OD3> newShape) {
         return af.reshape(this, newShape);
     }
 
@@ -215,12 +217,12 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> tileAs(
-            Tensor<T, OD0, OD1, OD2, OD3> newShapeTensor) {
+        Tensor<T, OD0, OD1, OD2, OD3> newShapeTensor) {
         return af.tileAs(this, newShapeTensor.shape());
     }
 
     public <OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> tileAs(
-            Shape<OD0, OD1, OD2, OD3> newShape) {
+        Shape<OD0, OD1, OD2, OD3> newShape) {
         return af.tileAs(this, newShape);
     }
 

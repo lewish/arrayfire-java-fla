@@ -19,6 +19,6 @@ public record Seq(double begin, double end, double step) {
   }
 
   public int size() {
-    return ((int) end - ((int) begin) + 1) / (int) step;
+    return ((int) Math.max(end, begin) - ((int) Math.min(end, begin)) + 1) / (int) Math.abs(step);
   }
 }
