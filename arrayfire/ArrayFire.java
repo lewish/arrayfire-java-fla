@@ -1,6 +1,5 @@
 package arrayfire;
 
-import arrayfire.autograd.GradFunction;
 import arrayfire.capi.arrayfire_h;
 import arrayfire.containers.NativeArray;
 import arrayfire.numbers.*;
@@ -834,7 +833,7 @@ public class ArrayFire {
                    .inputs(left, right)
                    .outputs(prototype(left.type(), left.shape()))
                    .operation(ptr -> arrayfire_h.af_mul(ptr, left.dereference(), right.dereference(), true))
-                   .grads((result, grads) -> new GradFunction.TensorPair<>(mul(grads, right), mul(grads, left)))
+                   .grads((result, grads) -> new TensorPair<>(mul(grads, right), mul(grads, left)))
                    .build();
     }
 
@@ -848,7 +847,7 @@ public class ArrayFire {
                        var rightReciprocal = af.div(af.constant(1f).cast(left.type()).tileAs(right), right);
                        var leftGrads = mul(rightReciprocal, grads);
                        var rightGrads = af.mul(af.mul(leftGrads, left.negate()), rightReciprocal);
-                       return new GradFunction.TensorPair<>(leftGrads, rightGrads);
+                       return new TensorPair<>(leftGrads, rightGrads);
                    })
                    .build();
 
@@ -860,7 +859,7 @@ public class ArrayFire {
                    .inputs(left, right)
                    .outputs(prototype(left.type(), left.shape()))
                    .operation(ptr -> arrayfire_h.af_add(ptr, left.dereference(), right.dereference(), true))
-                   .grads((result, grads) -> new GradFunction.TensorPair<>(grads, grads))
+                   .grads((result, grads) -> new TensorPair<>(grads, grads))
                    .build();
     }
 
@@ -870,7 +869,7 @@ public class ArrayFire {
                    .inputs(left, right)
                    .outputs(prototype(left.type(), left.shape()))
                    .operation(ptr -> arrayfire_h.af_sub(ptr, left.dereference(), right.dereference(), true))
-                   .grads((result, grads) -> new GradFunction.TensorPair<>(grads, grads.negate()))
+                   .grads((result, grads) -> new TensorPair<>(grads, grads.negate()))
                    .build();
     }
 
@@ -910,7 +909,7 @@ public class ArrayFire {
                    .grads((result, grads) -> {
                        var leftIsMax = af.eq(result, left).cast(left.type());
                        var rightIsMax = af.eq(result, right).cast(left.type());
-                       return new GradFunction.TensorPair<>(mul(leftIsMax, grads), mul(rightIsMax, grads));
+                       return new TensorPair<>(mul(leftIsMax, grads), mul(rightIsMax, grads));
                    })
                    .build();
     }
@@ -924,7 +923,7 @@ public class ArrayFire {
                    .grads((result, grads) -> {
                        var leftIsMin = af.eq(result, left).cast(left.type());
                        var rightIsMin = af.eq(result, right).cast(left.type());
-                       return new GradFunction.TensorPair<>(mul(leftIsMin, grads), mul(rightIsMin, grads));
+                       return new TensorPair<>(mul(leftIsMin, grads), mul(rightIsMin, grads));
                    })
                    .build();
     }
@@ -936,7 +935,7 @@ public class ArrayFire {
                    .outputs(
                        prototype(lhs.type(), shape(n(lhs.d0().size() + rhs.d0().size()), lhs.d1(), lhs.d2(), lhs.d3())))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 0, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new GradFunction.TensorPair<>(index(grads, seq(lhs.d0())),
+                   .grads((result, grads) -> new TensorPair<>(index(grads, seq(lhs.d0())),
                        index(grads, seq(lhs.d0().size(), rhs.d0()))))
                    .build();
     }
@@ -953,7 +952,7 @@ public class ArrayFire {
                    .outputs(
                        prototype(lhs.type(), shape(lhs.d0(), n(lhs.d1().size() + rhs.d1().size()), lhs.d2(), lhs.d3())))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 1, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new GradFunction.TensorPair<>(index(grads, span(), seq(lhs.d1())),
+                   .grads((result, grads) -> new TensorPair<>(index(grads, span(), seq(lhs.d1())),
                        index(grads, span(), seq(lhs.d1().size(), rhs.d1()))))
                    .build();
     }
@@ -970,7 +969,7 @@ public class ArrayFire {
                    .outputs(
                        prototype(lhs.type(), shape(lhs.d0(), lhs.d1(), n(lhs.d2().size() + rhs.d2().size()), lhs.d3())))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 2, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new GradFunction.TensorPair<>(index(grads, span(), span(), seq(lhs.d2())),
+                   .grads((result, grads) -> new TensorPair<>(index(grads, span(), span(), seq(lhs.d2())),
                        index(grads, span(), span(), seq(lhs.d2().size(), rhs.d2()))))
                    .build();
     }
@@ -987,7 +986,7 @@ public class ArrayFire {
                    .outputs(
                        prototype(lhs.type(), shape(lhs.d0(), lhs.d1(), lhs.d2(), n(lhs.d3().size() + rhs.d3().size()))))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 3, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new GradFunction.TensorPair<>(
+                   .grads((result, grads) -> new TensorPair<>(
                        index(grads, span(), span(), span(), seq(lhs.d3())),
                        index(grads, span(), span(), span(), seq(lhs.d3().size(), rhs.d3()))))
                    .build();
@@ -1212,7 +1211,7 @@ public class ArrayFire {
                    .grads((result, grads) -> {
                        var leftGrads = matmul(grads, right.transpose());
                        var rightGrads = matmul(left.transpose(), grads);
-                       return new GradFunction.TensorPair<>(leftGrads, rightGrads);
+                       return new TensorPair<>(leftGrads, rightGrads);
                    })
                    .build();
     }
