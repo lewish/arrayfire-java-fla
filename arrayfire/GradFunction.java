@@ -8,7 +8,7 @@ import arrayfire.numbers.Num;
 import java.util.List;
 
 @FunctionalInterface
-public interface GradFunction {
+interface GradFunction {
 
     List<Tensor<?, ?, ?, ?, ?>> grads(Tensor<?, ?, ?, ?, ?> resultGrads);
 
@@ -21,5 +21,4 @@ public interface GradFunction {
         TensorPair<I0T, I0D0, I0D1, I0D2, I0D3, I1T, I1D0, I1D1, I1D2, I1D3> grads(
             Tensor<RT, RD0, RD1, RD2, RD3> result, Tensor<RT, RD0, RD1, RD2, RD3> grads);
     }
-
 }

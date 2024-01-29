@@ -2,43 +2,6 @@ load("//bazel:java.bzl", "java_library_auto", "java_test_auto")
 
 package(default_visibility = ["//visibility:public"])
 
-LETTERS = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "F",
-    "G",
-    "H",
-    "I",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P",
-    "Q",
-    "R",
-    "S",
-    "T",
-    "U",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-]
-
-java_library(
-    name = "numbers",
-    srcs = [
-        letter + ".java"
-        for letter in LETTERS
-    ],
-)
-
 genrule(
     name = "generate_capi",
     srcs = [
