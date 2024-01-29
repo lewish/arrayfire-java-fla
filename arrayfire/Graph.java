@@ -85,47 +85,40 @@ public class Graph {
         var queue = new ArrayDeque<>(pruned);
         var processedNodeOutputs = IdentityHashSet.<Tensor>create();
         var gradsByOutput = new IdentityHashMap<Tensor, Tensor>();
-        var parentScope = ArrayFire.scope();
-        af.tidy(() -> {
-            // We insert a sentinel value to ensure that we don't try to compute the gradient of the loss.
-            gradsByOutput.put(loss, ArrayFire.constant(loss.type(), 1).tileAs((Tensor) loss));
-            while (!queue.isEmpty()) {
-                var current = queue.poll();
-                // We can compute the gradient of this node if it was constructed from a gradable function.
-                var node = nodesByOutput.get(current);
-                if (node == null) {
-                    // This is a source node, so we don't need to compute its gradient.
-                    continue;
-                }
-                // If our dependents that are part of the pruned graph haven't all been computed yet, we can't compute this node's gradient yet.
-                if (!processedNodeOutputs.containsAll(dependents(current).stream().filter(pruned::contains).toList())) {
-                    queue.addLast(current);
-                    continue;
-                }
-                if (node.grads() == null) {
-                    throw new IllegalStateException(String.format(
-                        "Attempting to compute the gradient of through a '%s' operation, but it does not support gradient propagation.",
-                        node.name()));
-                }
-                var inputGrads = node.grads().grads(gradsByOutput.get(current));
-                for (var i = 0; i < node.inputs().size(); i++) {
-                    var input = node.inputs().get(i);
-                    var inputGrad = inputGrads.get(i);
-                    if (!gradsByOutput.containsKey(input)) {
-                        gradsByOutput.put(input, inputGrad);
-                    } else {
-                        gradsByOutput.put(input,
-                            ArrayFire.add((Tensor) gradsByOutput.get(input), (Tensor) (inputGrad)));
-                    }
-                }
-                processedNodeOutputs.add(current);
+
+        // We insert a sentinel value to ensure that we don't try to compute the gradient of the loss.
+        gradsByOutput.put(loss, ArrayFire.constant(loss.type(), 1).tileAs((Tensor) loss));
+        while (!queue.isEmpty()) {
+            var current = queue.poll();
+            // We can compute the gradient of this node if it was constructed from a gradable function.
+            var node = nodesByOutput.get(current);
+            if (node == null) {
+                // This is a source node, so we don't need to compute its gradient.
+                continue;
             }
-            // Move all the gradients to the parent scope.
-            Arrays
-                .stream(tensors)
-                .map(gradsByOutput::get)
-                .forEach(grad -> MemoryScope.move(grad, parentScope.memory()));
-        });
+            // If our dependents that are part of the pruned graph haven't all been computed yet, we can't compute this node's gradient yet.
+            if (!processedNodeOutputs.containsAll(dependents(current).stream().filter(pruned::contains).toList())) {
+                queue.addLast(current);
+                continue;
+            }
+            if (node.grads() == null) {
+                throw new IllegalStateException(String.format(
+                    "Attempting to compute the gradient of through a '%s' operation, but it does not support gradient propagation.",
+                    node.name()));
+            }
+            var inputGrads = node.grads().grads(gradsByOutput.get(current));
+            for (var i = 0; i < node.inputs().size(); i++) {
+                var input = node.inputs().get(i);
+                var inputGrad = inputGrads.get(i);
+                if (!gradsByOutput.containsKey(input)) {
+                    gradsByOutput.put(input, inputGrad);
+                } else {
+                    gradsByOutput.put(input, ArrayFire.add((Tensor) gradsByOutput.get(input), (Tensor) (inputGrad)));
+                }
+            }
+            processedNodeOutputs.add(current);
+        }
+
         Grads grads = new Grads();
         for (var tensor : tensors) {
             grads.put(tensor, gradsByOutput.get(tensor));

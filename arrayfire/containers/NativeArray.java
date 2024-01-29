@@ -1,7 +1,7 @@
 package arrayfire.containers;
 
 import arrayfire.MemoryContainer;
-import arrayfire.MemoryScope;
+import arrayfire.Scope;
 import arrayfire.af;
 import arrayfire.DataType;
 
@@ -39,7 +39,7 @@ public abstract class NativeArray<DT extends DataType<?, ?>, JT, JAT> implements
             this.segment = arena.allocateArray(layout(), length);
 
         }
-        MemoryScope.current().register(this);
+        Scope.current().register(this);
     }
 
     public MemorySegment segment() {

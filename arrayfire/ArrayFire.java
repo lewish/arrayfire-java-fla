@@ -83,7 +83,7 @@ public class ArrayFire {
         tidy(() -> {
             var result = (T) fn.get();
             if (result instanceof MemoryContainer mc) {
-                MemoryScope.move(mc, parentScope.memory());
+                Scope.move(mc, parentScope);
             }
             resultReference.set(result);
         });
@@ -562,8 +562,11 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> reshape(
         Tensor<T, D0, D1, D2, D3> tensor, Shape<OD0, OD1, OD2, OD3> newShape) {
-        assert tensor.shape().capacity() == newShape.capacity() : String.format(
-            "New shape %s doesn't have same capacity as original shape %s", newShape, tensor.shape());
+        if (tensor.shape().capacity() != newShape.capacity()) {
+            throw new IllegalArgumentException(
+                String.format("New shape %s doesn't have same capacity as original shape %s", newShape,
+                    tensor.shape()));
+        }
         return operation("reshape")
                    .inputs(tensor)
                    .outputs(prototype(tensor.type(), newShape))
@@ -575,7 +578,7 @@ public class ArrayFire {
 
     public static void release(Tensor<?, ?, ?, ?, ?> tensor) {
         handleStatus(() -> arrayfire_h.af_release_array(tensor.dereference()));
-        MemoryScope.untrack(tensor);
+        Scope.untrack(tensor);
     }
 
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> retain(
@@ -609,7 +612,7 @@ public class ArrayFire {
         var tensor = af.tidy(initializer);
         var variable = new Variable<>(tensor.type(), tensor.shape());
         variable.segment().copyFrom(tensor.segment());
-        MemoryScope.untrack(tensor);
+        Scope.untrack(tensor);
         return variable;
     }
 
@@ -618,7 +621,7 @@ public class ArrayFire {
         var tensor = af.tidy(initializer);
         var params = new Params<>(tensor.type(), tensor.shape(), optimizerProvider);
         params.segment().copyFrom(tensor.segment());
-        MemoryScope.untrack(tensor);
+        Scope.untrack(tensor);
         return params;
     }
 
@@ -776,9 +779,11 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, LD1 extends Num<LD1>, RD1 extends Num<RD1>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, D0, N, D2, D3> join(
         Tensor<T, D0, LD1, D2, D3> lhs, Tensor<T, D0, RD1, D2, D3> rhs, arrayfire.D1 ignored) {
-        assert lhs.d0().size() == rhs.d0().size() && lhs.d2().size() == rhs.d2().size() &&
-                   lhs.d3().size() == rhs.d3().size() : String.format("Incompatible shapes to join along d1: %s, %s",
-            lhs.shape(), rhs.shape());
+        if (!(lhs.d0().size() == rhs.d0().size() && lhs.d2().size() == rhs.d2().size() &&
+                  lhs.d3().size() == rhs.d3().size())) {
+            throw new IllegalArgumentException(
+                String.format("Incompatible shapes to join along d1: %s, %s", lhs.shape(), rhs.shape()));
+        }
         return operation("join")
                    .inputs(lhs, rhs)
                    .outputs(
@@ -791,9 +796,11 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, LD2 extends Num<LD2>, RD2 extends Num<RD2>, D0 extends Num<D0>, D1 extends Num<D1>, D3 extends Num<D3>> Tensor<T, D0, D1, N, D3> join(
         Tensor<T, D0, D1, LD2, D3> lhs, Tensor<T, D0, D1, RD2, D3> rhs, arrayfire.D2 ignored) {
-        assert lhs.d0().size() == rhs.d0().size() && lhs.d1().size() == rhs.d1().size() &&
-                   lhs.d3().size() == rhs.d3().size() : String.format("Incompatible shapes to join along d2: %s, %s",
-            lhs.shape(), rhs.shape());
+        if (!(lhs.d0().size() == rhs.d0().size() && lhs.d1().size() == rhs.d1().size() &&
+                  lhs.d3().size() == rhs.d3().size())) {
+            throw new IllegalArgumentException(
+                String.format("Incompatible shapes to join along d2: %s, %s", lhs.shape(), rhs.shape()));
+        }
         return operation("join")
                    .inputs(lhs, rhs)
                    .outputs(
@@ -806,9 +813,11 @@ public class ArrayFire {
 
     public static <T extends DataType<?, ?>, LD3 extends Num<LD3>, RD3 extends Num<RD3>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>> Tensor<T, D0, D1, D2, N> join(
         Tensor<T, D0, D1, D2, LD3> lhs, Tensor<T, D0, D1, D2, RD3> rhs, arrayfire.D3 ignored) {
-        assert lhs.d0().size() == rhs.d0().size() && lhs.d1().size() == rhs.d1().size() &&
-                   lhs.d2().size() == rhs.d2().size() : String.format("Incompatible shapes to join along d3: %s, %s",
-            lhs.shape(), rhs.shape());
+        if (!(lhs.d0().size() == rhs.d0().size() && lhs.d1().size() == rhs.d1().size() &&
+                  lhs.d2().size() == rhs.d2().size())) {
+            throw new IllegalArgumentException(
+                String.format("Incompatible shapes to join along d3: %s, %s", lhs.shape(), rhs.shape()));
+        }
         return operation("join")
                    .inputs(lhs, rhs)
                    .outputs(
@@ -1030,8 +1039,10 @@ public class ArrayFire {
     // https://arrayfire.org/docs/group__blas__func__matmul.htm
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>, OD1 extends Num<?>> Tensor<T, D0, OD1, D2, D3> matmul(
         Tensor<T, D0, D1, D2, D3> left, Tensor<T, D1, OD1, D2, D3> right) {
-        assert left.d1().size() == right.d0().size() : String.format("Misaligned shapes for matmul, left: %s right: %s",
-            left.shape(), right.shape());
+        if (left.d1().size() != right.d0().size()) {
+            throw new IllegalArgumentException(
+                String.format("Incompatible shapes for matmul, left: %s right: %s", left.shape(), right.shape()));
+        }
         return operation("matmul")
                    .inputs(left, right)
                    .outputs(prototype(left.type(), shape(left.d0(), right.d1(), left.d2(), left.d3())))
@@ -1190,7 +1201,7 @@ public class ArrayFire {
         return ptr -> {
             var result = tidy(fn);
             ptr.copyFrom(result.segment());
-            MemoryScope.untrack(result);
+            Scope.untrack(result);
             return Status.AF_SUCCESS.code();
         };
     }
@@ -1319,9 +1330,10 @@ public class ArrayFire {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> tileAs(
         Tensor<T, D0, D1, D2, D3> tensor, Shape<OD0, OD1, OD2, OD3> newShape) {
-        assert
-            newShape.capacity() % tensor.shape().capacity() == 0 : String.format("Can't tile perfectly from %s to %s",
-            tensor.shape(), newShape);
+        if (newShape.capacity() % tensor.shape().capacity() != 0) {
+            throw new IllegalArgumentException(
+                String.format("Can't tile perfectly from %s to %s", tensor.shape(), newShape));
+        }
         int d0ratio = newShape.d0().size() / tensor.d0().size();
         int d1ratio = newShape.d1().size() / tensor.d1().size();
         int d2ratio = newShape.d2().size() / tensor.d2().size();
@@ -1637,13 +1649,13 @@ public class ArrayFire {
         return U;
     }
 
-    public static <T extends Tensor<?, ? ,? ,? ,?>> T grads(Tensor<?, ?, ?, ?, ?> loss, T tensor) {
-        var graph = new Graph(scope().memory().operations());
+    public static <T extends Tensor<?, ?, ?, ?, ?>> T grads(Tensor<?, ?, ?, ?, ?> loss, T tensor) {
+        var graph = new Graph(scope().operations());
         return graph.grads(loss, tensor);
     }
 
     public static void optimize(Tensor<?, ?, ?, ?, ?> loss) {
-        var graph = new Graph(scope().memory().operations());
+        var graph = new Graph(scope().operations());
         graph.optimize(loss);
     }
 

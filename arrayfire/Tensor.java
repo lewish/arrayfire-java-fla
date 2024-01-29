@@ -235,8 +235,8 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
 
     }
 
-    public Tensor<T, D0, D1, D2, D3> move(MemoryScope scope) {
-        MemoryScope.move(this, scope);
+    public Tensor<T, D0, D1, D2, D3> move(Scope scope) {
+        Scope.move(this, scope);
         return this;
     }
 

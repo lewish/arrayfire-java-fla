@@ -87,7 +87,7 @@ public class Operation {
 
                 @SuppressWarnings("unchecked")
                 public Tensor<OT, OD0, OD1, OD2, OD3> build() {
-                    af.scope().memory().register(operation);
+                    af.scope().register(operation);
                     return (Tensor<OT, OD0, OD1, OD2, OD3>) operation.outputs.getFirst();
                 }
             }
@@ -129,7 +129,7 @@ public class Operation {
                 }
 
                 public Operation build() {
-                    af.scope().memory().register(operation);
+                    af.scope().register(operation);
                     return operation;
                 }
             }
@@ -153,7 +153,7 @@ public class Operation {
 
                 @SuppressWarnings("unchecked")
                 public Tensor<OT, OD0, OD1, OD2, OD3> build() {
-                    af.scope().memory().register(operation);
+                    af.scope().register(operation);
                     return (Tensor<OT, OD0, OD1, OD2, OD3>) operation.outputs.getFirst();
                 }
             }
@@ -169,7 +169,7 @@ public class Operation {
 
                 @SuppressWarnings("unchecked")
                 public GradFunction.TensorPair<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3> build() {
-                    af.scope().memory().register(operation);
+                    af.scope().register(operation);
                     return new GradFunction.TensorPair<>(
                         (Tensor<O0T, O0D0, O0D1, O0D2, O0D3>) operation.outputs.getFirst(),
                         (Tensor<O1T, O1D0, O1D1, O1D2, O1D3>) operation.outputs.get(1));
@@ -188,7 +188,7 @@ public class Operation {
 
                 @SuppressWarnings("unchecked")
                 public GradFunction.TensorTrio<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3, O2T, O2D0, O2D1, O2D2, O2D3> build() {
-                    af.scope().memory().register(operation);
+                    af.scope().register(operation);
                     return new GradFunction.TensorTrio<>(
                         (Tensor<O0T, O0D0, O0D1, O0D2, O0D3>) operation.outputs.getFirst(),
                         (Tensor<O1T, O1D0, O1D1, O1D2, O1D3>) operation.outputs.get(1),
@@ -224,7 +224,7 @@ public class Operation {
 
                 @SuppressWarnings("unchecked")
                 public Tensor<OT, OD0, OD1, OD2, OD3> build() {
-                    af.scope().memory().register(operation);
+                    af.scope().register(operation);
                     return (Tensor<OT, OD0, OD1, OD2, OD3>) operation.outputs.getFirst();
                 }
             }

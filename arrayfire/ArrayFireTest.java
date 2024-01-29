@@ -37,7 +37,7 @@ public class ArrayFireTest {
 
     @After
     public void validateMemory() {
-        assertEquals(0, MemoryScope.trackedContainers());
+        assertEquals(0, Scope.trackedContainers());
     }
 
     @Test
@@ -558,7 +558,7 @@ public class ArrayFireTest {
             var matmul = af.matmul(leftT, right);
             var softmax = af.softmax(matmul);
             var sum = af.sum(matmul);
-            var graph = new Graph(af.scope().memory().operations());
+            var graph = new Graph(af.scope().operations());
             assertEquals(Set.of(left), graph.dependencies(leftT));
             assertEquals(Set.of(leftT, right), graph.dependencies(matmul));
             assertEquals(Set.of(matmul), graph.dependencies(softmax));
@@ -576,7 +576,7 @@ public class ArrayFireTest {
             var ignored = af.sum(start);
             var ignored2 = af.sum(ignored);
             var loss = af.sum(start);
-            var graph = new Graph(af.scope().memory().operations());
+            var graph = new Graph(af.scope().operations());
             var pruned = graph.prune(loss, start);
             assertEquals(Set.of(start, loss), pruned);
         });
