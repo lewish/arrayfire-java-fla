@@ -5,14 +5,9 @@ public class Scope {
     private static final ThreadLocal<Scope> threadScope = ThreadLocal.withInitial(() -> null);
 
     private final MemoryScope memory = new MemoryScope();
-    private final Graph graph = new Graph();
 
     public static Scope current() {
         return threadScope.get();
-    }
-
-    public Graph graph() {
-        return graph;
     }
 
     public MemoryScope memory() {

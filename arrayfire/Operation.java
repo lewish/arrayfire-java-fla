@@ -19,6 +19,8 @@ public class Operation {
     private Consumer<List<Tensor>> apply;
     private GradFunction grads;
 
+    private boolean executed = false;
+
     public String name() {
         return name;
     }
@@ -31,8 +33,11 @@ public class Operation {
         return Collections.unmodifiableList(outputs);
     }
 
-    public void execute() {
-        apply.accept(outputs);
+    public void apply() {
+        if (!executed) {
+            apply.accept(outputs);
+            executed = true;
+        }
     }
 
     public GradFunction grads() {

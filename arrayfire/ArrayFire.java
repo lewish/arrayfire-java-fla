@@ -1637,8 +1637,14 @@ public class ArrayFire {
         return U;
     }
 
+    public static <T extends Tensor<?, ? ,? ,? ,?>> T grads(Tensor<?, ?, ?, ?, ?> loss, T tensor) {
+        var graph = new Graph(scope().memory().operations());
+        return graph.grads(loss, tensor);
+    }
+
     public static void optimize(Tensor<?, ?, ?, ?, ?> loss) {
-        scope().graph().optimize(loss);
+        var graph = new Graph(scope().memory().operations());
+        graph.optimize(loss);
     }
 
     private static void retryWithGc(Runnable fn) {
