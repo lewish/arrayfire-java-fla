@@ -35,7 +35,7 @@ public class ArrayFire {
     public static final arrayfire.D1 D1 = new D1();
     public static final arrayfire.D2 D2 = new D2();
     public static final arrayfire.D3 D3 = new D3();
-
+    public static final U U = new U(1);
     private static boolean successfullyLoadedLibraries = false;
 
     private static void maybeLoadNativeLibraries() {
@@ -97,16 +97,25 @@ public class ArrayFire {
         return Scope.current();
     }
 
+    /**
+     * Sorts a tensor over D0.
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<DT, D0, D1, D2, D3> sort(
         Tensor<DT, D0, D1, D2, D3> tensor) {
         return sort(tensor, D0);
     }
 
+    /**
+     * Sorts a tensor over the given dimension.
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<DT, D0, D1, D2, D3> sort(
         Tensor<DT, D0, D1, D2, D3> tensor, Dim dim) {
         return sort(tensor, dim, true);
     }
 
+    /**
+     * Sorts a tensor over the given dimension in ascending or descending order.
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<DT, D0, D1, D2, D3> sort(
         Tensor<DT, D0, D1, D2, D3> tensor, Dim dim, boolean ascending) {
         return operation("sort")
@@ -116,28 +125,41 @@ public class ArrayFire {
                    .build();
     }
 
-
+    /**
+     * Returns a prototype tensor with the given type and shape.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Prototype<T, D0, D1, D2, D3> prototype(
         T type, Shape<D0, D1, D2, D3> shape) {
         return new Prototype<>(type, shape);
     }
 
-
+    /**
+     * Returns a prototype tensor with the same type and shape as the given tensor.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Prototype<T, D0, D1, D2, D3> prototype(
         Tensor<T, D0, D1, D2, D3> tensor) {
         return new Prototype<>(tensor.type(), tensor.shape());
     }
 
+    /**
+     * Sorts a tensor over D0 and returns the values and indices of original values.
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
         Tensor<DT, D0, D1, D2, D3> tensor) {
         return sortIndex(tensor, D0);
     }
 
+    /**
+     * Sorts a tensor over the given dimension and returns the values and indices of original values.
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
         Tensor<DT, D0, D1, D2, D3> tensor, Dim dim) {
         return sortIndex(tensor, dim, true);
     }
 
+    /**
+     * Sorts a tensor over the given dimension in ascending or descending order and returns the values and indices of original values.
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> SortIndexResult<DT, D0, D1, D2, D3> sortIndex(
         Tensor<DT, D0, D1, D2, D3> tensor, Dim dim, boolean ascending) {
         var pair = operation("sort_index")
@@ -158,11 +180,17 @@ public class ArrayFire {
         return af.seq(indices);
     }
 
+    /**
+     * Creates a device tensor from the given native array.
+     */
     public static <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>> Tensor<DT, N, U, U, U> create(
         AT array) {
         return create(array, shape(n(array.length())));
     }
 
+    /**
+     * Creates a device tensor from the given native array and shape.
+     */
     public static <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<DT, D0, D1, D2, D3> create(
         AT array, Shape<D0, D1, D2, D3> shape) {
         return operation("create")
@@ -174,7 +202,10 @@ public class ArrayFire {
                    .build();
     }
 
-
+    /**
+     * Creates a device tensor from the given type and java values.
+     * This is not recommended in a production setting, as memory will be copied twice. Instead, use {@link #create(NativeArray)}.
+     */
     @SafeVarargs
     public static <JT, AT extends NativeArray<DT, JT, ?>, DT extends DataType<AT, ?>> Tensor<DT, N, U, U, U> create(
         DT type, JT... values) {
@@ -187,6 +218,10 @@ public class ArrayFire {
         });
     }
 
+    /**
+     * Creates a device tensor from the given type and java native array.
+     * This is not recommended in a production setting, as memory will be copied twice. Instead, use {@link #create(NativeArray)}.
+     */
     @SuppressWarnings("unchecked")
     public static <JT, JTA, AT extends NativeArray<DT, JT, JTA>, DT extends DataType<AT, ?>> Tensor<DT, N, U, U, U> create(
         DT type, JTA values) {
@@ -200,26 +235,51 @@ public class ArrayFire {
         });
     }
 
+    /**
+     * Creates a {@link F32} device tensor from the given float values.
+     */
     public static Tensor<F32, N, U, U, U> create(float... values) {
         return create(F32, values);
     }
 
+    /**
+     * Creates a {@link F64} device tensor from the given double values.
+     */
     public static Tensor<F64, N, U, U, U> create(double... values) {
         return create(F64, values);
     }
 
+    /**
+     * Creates a {@link S32} device tensor from the given byte values.
+     */
     public static Tensor<S32, N, U, U, U> create(int... values) {
         return create(S32, values);
     }
 
+    /**
+     * Creates a constant scalar {@link F32} device tensor from the given float value.
+     */
     public static Tensor<F32, U, U, U, U> constant(float value) {
         return constant(F32, value);
     }
 
+    /**
+     * Creates a constant scalar {@link F64} device tensor from the given float value.
+     */
+    public static Tensor<F64, U, U, U, U> constant(double value) {
+        return constant(F64, value);
+    }
+
+    /**
+     * Creates a constant scalar device tensor from the given type and double value.
+     */
     public static <DT extends DataType<?, ?>> Tensor<DT, U, U, U, U> constant(DT type, double value) {
         return constant(type, shape(u()), value);
     }
 
+    /**
+     * Creates a constant device tensor from the given type, shape, and double value.
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<DT, D0, D1, D2, D3> constant(
         DT type, Shape<D0, D1, D2, D3> shape, double value) {
         return operation("constant")
@@ -231,38 +291,65 @@ public class ArrayFire {
 
     }
 
+    /**
+     * Blocks until all operations on device are finished
+     */
     public static void sync() {
         handleStatus(() -> arrayfire_h.af_sync(deviceId()));
     }
 
+    /**
+     * Returns an index from the given sequence.
+     */
     public static Index<N> seq(int begin, int endInclusive, int step) {
         return new Index<>(new Seq(begin, endInclusive, step), ArrayFire::n);
     }
 
+    /**
+     * Returns an index from the given sequence with a step of 1.
+     */
     public static Index<N> seq(int begin, int endInclusive) {
         return new Index<>(new Seq(begin, endInclusive, 1), ArrayFire::n);
     }
 
+    /**
+     * Returns a lookup index using the given tensor as lookup values (indices).
+     */
     public static <DT extends DataType<?, ?>, D0 extends Num<D0>> Index<D0> seq(Tensor<DT, D0, U, U, U> index) {
         return new Index<>(index, index.d0()::create);
     }
 
+    /**
+     * Returns a sequence from the given dimension, starting at 0 with a length equal to the dimension and a step of 1.
+     */
     public static <D extends Num<D>> Index<D> seq(D num) {
         return new Index<>(new Seq(0, num.size() - 1, 1), num::create);
     }
 
+    /**
+     * Returns a sequence from the given dimension, starting at the given offset with a length equal to the dimension and a step of 1.
+     */
     public static <D extends Num<D>> Index<D> seq(int offset, D num) {
         return new Index<>(new Seq(offset, num.size() - 1 + offset, 1), num::create);
     }
 
+    /**
+     * Returns a span that can be used to index the entire dimension when calling {@link #index}.
+     */
     public static Span span() {
         return new Span();
     }
 
+    /**
+     * Returns a 1D shape of the given size and type N.
+     */
     public static Shape<N, U, U, U> shape(int d0) {
         return new Shape<>(n(d0), u(), u(), u());
     }
 
+    /**
+     * Returns a 1D shape of the given dimension.
+     */
     public static <D0 extends Num<?>> Shape<D0, U, U, U> shape(D0 d0) {
         return new Shape<>(d0, u(), u(), u());
     }
@@ -287,7 +374,6 @@ public class ArrayFire {
         return new Shape<>(n(d0), n(d1), n(d2), u());
     }
 
-
     public static Shape<N, N, N, N> shape(int d0, int d1, int d2, int d3) {
         return new Shape<>(n(d0), n(d1), n(d2), n(d3));
     }
@@ -300,12 +386,6 @@ public class ArrayFire {
     public static <D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Shape<D0, D1, D2, D3> shape(
         D0 d0, D1 d1, D2 d2, D3 d3) {
         return new Shape<>(d0, d1, d2, d3);
-    }
-
-    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Operation.Builder.Unary<IT, D0, D1, D2, D3>.Single<T, U, D1, D2, D3> reduce(
-        String name, Tensor<IT, D0, D1, D2, D3> a,
-        Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method, T resultType) {
-        return reduce(name, a, method, D0, resultType);
     }
 
     private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Operation.Builder.Unary<IT, D0, D1, D2, D3>.Single<T, U, D1, D2, D3> reduce(
@@ -345,7 +425,9 @@ public class ArrayFire {
                    .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
     }
 
-
+    /**
+     * Cast the given tensor to the given type.
+     */
     @SuppressWarnings("unchecked")
     public static <T extends DataType<?, ?>, OT extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<OT, D0, D1, D2, D3> cast(
         Tensor<T, D0, D1, D2, D3> input, OT type) {
@@ -360,21 +442,33 @@ public class ArrayFire {
                    .build();
     }
 
+    /**
+     * Returns a tensor of value 1 with the same type and shape as the given tensor.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> ones(
         Tensor<T, D0, D1, D2, D3> model) {
         return ones(model.type(), model.shape());
     }
 
+    /**
+     * Returns a tensor of value 1 with the given type and shape.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> ones(
         T type, Shape<D0, D1, D2, D3> shape) {
         return constant(type, 1).tileAs(shape);
     }
 
+    /**
+     * Returns a tensor of value 0 with the given type and shape.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> zeros(
         T type, Shape<D0, D1, D2, D3> shape) {
         return constant(type, 0).tileAs(shape);
     }
 
+    /**
+     * Create a random tensor sampled from uniform distribution between [0, 1].
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> randu(
         T type, Shape<D0, D1, D2, D3> shape) {
         return operation("randu")
@@ -384,6 +478,9 @@ public class ArrayFire {
                    .build();
     }
 
+    /**
+     * Create a random tensor sampled from a normal distribution with mean 0.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> randn(
         T type, Shape<D0, D1, D2, D3> shape) {
         return operation("randn")
@@ -393,10 +490,16 @@ public class ArrayFire {
                    .build();
     }
 
+    /**
+     * Create a tensor with values [0, n-1].
+     */
     public static Tensor<U32, N, U, U, U> range(int n) {
         return range(U32, n);
     }
 
+    /**
+     * Create a tensor with values [0, n-1] of the given type.
+     */
     public static <T extends DataType<?, ?>> Tensor<T, N, U, U, U> range(T type, int n) {
         var shape = shape(n(n));
         return operation("range")
@@ -406,42 +509,50 @@ public class ArrayFire {
                    .build();
     }
 
+    /**
+     * Set the seed of the random engine.
+     */
     public static void setSeed(long seed) {
         handleStatus(() -> arrayfire_h.af_set_seed(seed));
     }
 
+    /**
+     * Set the type of the random engine.
+     */
     public static void setRandomEngineType(RandomEngineType type) {
         handleStatus(() -> arrayfire_h.af_set_default_random_engine_type(type.code()));
     }
 
+    /**
+     * Pull data from the device to the host, returning a native array.
+     */
     public static <AT extends NativeArray<?, ?, ?>, T extends DataType<AT, ?>> AT data(Tensor<T, ?, ?, ?, ?> a) {
         var result = a.type().create(a.capacity());
         handleStatus(() -> arrayfire_h.af_get_data_ptr(result.segment(), a.dereference()));
         return result;
     }
 
-    public static void checkDims(Tensor<?, ?, ?, ?, ?> tensor) {
-        var trueDims = getDims(tensor.segment());
-        var expectedDims = tensor.shape().dims();
-        for (int i = 0; i < trueDims.length; i++) {
-            if (trueDims[i] != expectedDims[i]) {
-                throw new IllegalStateException(
-                    String.format("Expected dimensions %s but got %s", Arrays.toString(expectedDims),
-                        Arrays.toString(trueDims)));
-            }
-        }
-    }
-
-    public static long[] getDims(MemorySegment a) {
+    private static void checkDims(Tensor<?, ?, ?, ?, ?> tensor) {
         try (Arena arena = Arena.ofConfined()) {
             var dims = arena.allocateArray(ValueLayout.JAVA_LONG, 4);
             handleStatus(
                 () -> arrayfire_h.af_get_dims(dims.asSlice(0), dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
-                    a.getAtIndex(ValueLayout.ADDRESS, 0)));
-            return dims.toArray(ValueLayout.JAVA_LONG);
+                    tensor.dereference()));
+            var trueDims = dims.toArray(ValueLayout.JAVA_LONG);
+            var expectedDims = tensor.shape().dims();
+            for (int i = 0; i < trueDims.length; i++) {
+                if (trueDims[i] != expectedDims[i]) {
+                    throw new IllegalStateException(
+                        String.format("Expected dimensions %s but got %s", Arrays.toString(expectedDims),
+                            Arrays.toString(trueDims)));
+                }
+            }
         }
     }
 
+    /**
+     * Return the current version of arrayfire.
+     */
     public static Version version() {
         try (Arena arena = Arena.ofConfined()) {
             var result = arena.allocateArray(ValueLayout.JAVA_INT, 3);
@@ -451,22 +562,9 @@ public class ArrayFire {
         }
     }
 
-    //  public String lastError() {
-    //    var allocator = allocator();
-    //    var message = allocator.allocateArray(ValueLayout.JAVA_BYTE, 1024);
-    //    var messagePtr = allocator.allocate(ValueLayout.ADDRESS, message);
-    //    var length = allocator.allocate(ValueLayout.JAVA_LONG);
-    //    try {
-    //      api().getLastError.invoke(messagePtr.address(), length.address());
-    //    } catch (Throwable e) {
-    //      throw new RuntimeException(e);
-    //    }
-    //    var messageSegment = MemorySegment.ofAddress(messagePtr.get(ValueLayout.ADDRESS, 0),
-    //        length.get(ValueLayout.JAVA_LONG, 0),
-    //        message.());
-    //    return new String(messageSegment.toArray(ValueLayout.JAVA_BYTE));
-    //  }
-
+    /**
+     * Return a set of the available backends. See {@link Backend} for all options.
+     */
     public static Set<Backend> availableBackends() {
         try (Arena arena = Arena.ofConfined()) {
             var result = arena.allocate(ValueLayout.JAVA_INT);
@@ -475,6 +573,9 @@ public class ArrayFire {
         }
     }
 
+    /**
+     * Return the currently active backend.
+     */
     public static Backend backend() {
         try (Arena arena = Arena.ofConfined()) {
             var result = arena.allocate(ValueLayout.JAVA_INT);
@@ -483,10 +584,16 @@ public class ArrayFire {
         }
     }
 
+    /**
+     * Set the backend to use for all operations.
+     */
     public static void setBackend(Backend backend) {
         handleStatus(() -> arrayfire_h.af_set_backend(backend.code()));
     }
 
+    /**
+     * Return the currently active device ID.
+     */
     public static int deviceId() {
         try (Arena arena = Arena.ofConfined()) {
             var result = arena.allocate(ValueLayout.JAVA_INT);
@@ -495,10 +602,16 @@ public class ArrayFire {
         }
     }
 
+    /**
+     * Set the device ID to use for all operations, see {@link #deviceCount()} for available devices.
+     */
     public static void setDeviceId(int device) {
         handleStatus(() -> arrayfire_h.af_set_device(device));
     }
 
+    /**
+     * Return the number of devices available.
+     */
     public static int deviceCount() {
         try (Arena arena = Arena.ofConfined()) {
             var result = arena.allocate(ValueLayout.JAVA_INT);
@@ -507,6 +620,9 @@ public class ArrayFire {
         }
     }
 
+    /**
+     * Return information about the currently active device.
+     */
     public static DeviceInfo deviceInfo() {
         try (Arena arena = Arena.ofConfined()) {
             var name = arena.allocateArray(ValueLayout.JAVA_CHAR, 64);
@@ -523,6 +639,9 @@ public class ArrayFire {
         return Arena.ofAuto().allocateArray(ValueLayout.JAVA_LONG, shape.dims());
     }
 
+    /**
+     * Transpose D0 and D1 dimensions of the given tensor.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D1, D0, D2, D3> transpose(
         Tensor<T, D0, D1, D2, D3> tensor) {
         return operation("transpose")
@@ -533,17 +652,26 @@ public class ArrayFire {
                    .build();
     }
 
+    /**
+     * Change the type of the tensor's D0 dimension to the given type variable provider.
+     */
     public static <T extends DataType<?, ?>, OD0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, OD0, D1, D2, D3> castshape(
         Tensor<T, ?, D1, D2, D3> tensor, Function<Integer, OD0> d0) {
         return reshape(tensor, shape(d0.apply(tensor.d0().size()), tensor.d1(), tensor.d2(), tensor.d3()));
     }
 
+    /**
+     * Change the type of the tensor's D0, D1 dimensions to the given type variable providers.
+     */
     public static <T extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, OD0, OD1, D2, D3> castshape(
         Tensor<T, ?, ?, D2, D3> tensor, Function<Integer, OD0> d0, Function<Integer, OD1> d1) {
         return reshape(tensor,
             shape(d0.apply(tensor.d0().size()), d1.apply(tensor.d1().size()), tensor.d2(), tensor.d3()));
     }
 
+    /**
+     * Change the type of the tensor's D0, D1, D2 dimensions to the given type variable providers.
+     */
     public static <T extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, D3 extends Num<?>> Tensor<T, OD0, OD1, OD2, D3> castshape(
         Tensor<T, ?, ?, ?, D3> tensor, Function<Integer, OD0> d0, Function<Integer, OD1> d1,
         Function<Integer, OD2> d2) {
@@ -552,6 +680,9 @@ public class ArrayFire {
                 tensor.d3()));
     }
 
+    /**
+     * Change the type of the tensor's dimensions to the given type variable providers.
+     */
     public static <T extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> castshape(
         Tensor<T, ?, ?, ?, ?> tensor, Function<Integer, OD0> d0, Function<Integer, OD1> d1, Function<Integer, OD2> d2,
         Function<Integer, OD3> d3) {
@@ -560,6 +691,9 @@ public class ArrayFire {
                 d3.apply(tensor.d3().size())));
     }
 
+    /**
+     * Reshape the tensor to the given shape.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Tensor<T, OD0, OD1, OD2, OD3> reshape(
         Tensor<T, D0, D1, D2, D3> tensor, Shape<OD0, OD1, OD2, OD3> newShape) {
         if (tensor.shape().capacity() != newShape.capacity()) {
@@ -576,11 +710,17 @@ public class ArrayFire {
                    .build();
     }
 
+    /**
+     * Release the memory of the given tensor on the device.
+     */
     public static void release(Tensor<?, ?, ?, ?, ?> tensor) {
         handleStatus(() -> arrayfire_h.af_release_array(tensor.dereference()));
         Scope.untrack(tensor);
     }
 
+    /**
+     * Retain the given tensor, increasing its ref count by 1 and return a new container for it.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> retain(
         Tensor<T, D0, D1, D2, D3> tensor) {
         return operation("retain")
@@ -591,14 +731,20 @@ public class ArrayFire {
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Operation replace(
-        Tensor<T, D0, D1, D2, D3> tensor, Variable<T, D0, D1, D2, D3> variable) {
-        return operation("replace").inputs(tensor).outputs().operation(() -> {
+    /**
+     * Set the values of the given variable to the values of the given tensor.
+     */
+    public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Operation set(
+        Variable<T, D0, D1, D2, D3> variable, Tensor<T, D0, D1, D2, D3> tensor) {
+        return operation("set").inputs(tensor).outputs().operation(() -> {
             handleStatus(() -> arrayfire_h.af_release_array(variable.dereference()));
             handleStatus(() -> arrayfire_h.af_retain_array(variable.segment(), tensor.dereference()));
         }).build();
     }
 
+    /**
+     * Return the ref count of the given tensor.
+     */
     public static int refCount(Tensor<?, ?, ?, ?, ?> tensor) {
         try (Arena arena = Arena.ofConfined()) {
             var result = arena.allocate(ValueLayout.JAVA_INT);
@@ -607,6 +753,9 @@ public class ArrayFire {
         }
     }
 
+    /**
+     * Create a variable with the given initializer.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Variable<T, D0, D1, D2, D3> variable(
         Supplier<Tensor<T, D0, D1, D2, D3>> initializer) {
         var tensor = af.tidy(initializer);
@@ -616,6 +765,9 @@ public class ArrayFire {
         return variable;
     }
 
+    /**
+     * Create params with the given initializer and optimizer.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Params<T, D0, D1, D2, D3> params(
         Supplier<Tensor<T, D0, D1, D2, D3>> initializer, OptimizerProvider optimizerProvider) {
         var tensor = af.tidy(initializer);
@@ -625,12 +777,18 @@ public class ArrayFire {
         return params;
     }
 
+    /**
+     * Evaluate the tensor, telling the ArrayFire JIT compiler that you want the literal values of the tensor.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> eval(
         Tensor<T, D0, D1, D2, D3> tensor) {
         handleStatus(() -> arrayfire_h.af_eval(tensor.dereference()));
         return tensor;
     }
 
+    /**
+     * Evaluate the tensors, telling the ArrayFire JIT compiler that you want the literal values of the tensors.
+     */
     public static void eval(Tensor<?, ?, ?, ?, ?>... tensors) {
         try (Arena arena = Arena.ofConfined()) {
             var array = arena.allocateArray(ValueLayout.ADDRESS, tensors.length);
@@ -641,6 +799,9 @@ public class ArrayFire {
         }
     }
 
+    /**
+     * Multiply two tensors together element wise, broadcasting the smaller tensor to the larger tensor's shape.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> mul(
         Tensor<T, D0, D1, D2, D3> tensor, Tileable<T, ?, ?, ?, ?> tileable) {
         checkTileableIsSmaller(tensor, tileable);
@@ -656,11 +817,17 @@ public class ArrayFire {
         }
     }
 
+    /**
+     * Multiply the tensor by a scalar value.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> mul(
         Tensor<T, D0, D1, D2, D3> left, double right) {
         return mul(left, af.constant(left.type(), left.shape(), right));
     }
 
+    /**
+     * Multiply two tensors together, element wise.
+     */
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> mul(
         Tensor<T, D0, D1, D2, D3> left, Tensor<T, D0, D1, D2, D3> right) {
         return operation("mul")
@@ -696,7 +863,6 @@ public class ArrayFire {
                    .grads((result, grads) -> new GradFunction.TensorPair<>(grads, grads))
                    .build();
     }
-
 
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<T, D0, D1, D2, D3> sub(
         Tensor<T, D0, D1, D2, D3> left, Tensor<T, D0, D1, D2, D3> right) {
@@ -763,7 +929,6 @@ public class ArrayFire {
                    .build();
     }
 
-
     public static <T extends DataType<?, ?>, LD0 extends Num<LD0>, RD0 extends Num<RD0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, N, D1, D2, D3> join(
         Tensor<T, LD0, D1, D2, D3> lhs, Tensor<T, RD0, D1, D2, D3> rhs) {
         return operation("join")
@@ -775,7 +940,6 @@ public class ArrayFire {
                        index(grads, seq(lhs.d0().size(), rhs.d0()))))
                    .build();
     }
-
 
     public static <T extends DataType<?, ?>, LD1 extends Num<LD1>, RD1 extends Num<RD1>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, D0, N, D2, D3> join(
         Tensor<T, D0, LD1, D2, D3> lhs, Tensor<T, D0, RD1, D2, D3> rhs, arrayfire.D1 ignored) {
@@ -828,7 +992,6 @@ public class ArrayFire {
                        index(grads, span(), span(), span(), seq(lhs.d3().size(), rhs.d3()))))
                    .build();
     }
-
 
     public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> Tensor<ST, U, D1, D2, D3> sum(
         Tensor<T, D0, D1, D2, D3> tensor) {
@@ -999,7 +1162,6 @@ public class ArrayFire {
                        grads.tileAs(tensor)))
                    .build();
     }
-
 
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> ImaxResult<T, U, D1, D2, D3> imax(
         Tensor<T, D0, D1, D2, D3> tensor) {
@@ -1244,7 +1406,6 @@ public class ArrayFire {
                    .build();
     }
 
-
     public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, D0, D1, D2, D3> index(
         Tensor<T, ?, D1, D2, D3> tensor, Index<D0> i0) {
         return index(tensor, i0, seq(tensor.d1()), seq(tensor.d2()), seq(tensor.d3()));
@@ -1388,7 +1549,6 @@ public class ArrayFire {
                    .build();
     }
 
-
     public static <T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>, FD3 extends Num<?>> Tensor<T, N, N, FD3, D3> convolve2(
         Tensor<T, D0, D1, D2, D3> tensor, Tensor<T, ?, ?, D2, FD3> filters) {
         return convolve2(tensor, filters, shape(1, 1), shape(0, 0), shape(1, 1));
@@ -1490,7 +1650,6 @@ public class ArrayFire {
             return matmul(svd.u(), matmul(invSqrtS, svd.u().transpose()));
         });
     }
-
 
     /**
      * Inverts the given matrix.
@@ -1639,8 +1798,6 @@ public class ArrayFire {
         return new Z(value);
     }
 
-    public static final U U = new U(1);
-
     public static U u() {
         return U;
     }
@@ -1688,6 +1845,18 @@ public class ArrayFire {
         }
     }
 
+    public static MemorySegment allocPinned(long bytes) {
+        try (Arena arena = Arena.ofConfined()) {
+            var ptr = arena.allocateArray(ValueLayout.ADDRESS, 1);
+            handleStatus(() -> arrayfire_h.af_alloc_pinned(ptr, bytes));
+            return MemorySegment.ofAddress(ptr.getAtIndex(ValueLayout.ADDRESS, 0).address()).reinterpret(bytes);
+        }
+    }
+
+    public static void freePinned(MemorySegment segment) {
+        handleStatus(() -> arrayfire_h.af_free_pinned(segment));
+    }
+
     public DeviceMemInfo deviceMemInfo() {
         try (Arena arena = Arena.ofConfined()) {
             var allocBytes = arena.allocateArray(ValueLayout.JAVA_LONG, 1);
@@ -1699,17 +1868,5 @@ public class ArrayFire {
                 allocBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0), lockBytes.getAtIndex(ValueLayout.JAVA_LONG, 0),
                 lockBuffers.getAtIndex(ValueLayout.JAVA_LONG, 0));
         }
-    }
-
-    public static MemorySegment allocPinned(long bytes) {
-        try (Arena arena = Arena.ofConfined()) {
-            var ptr = arena.allocateArray(ValueLayout.ADDRESS, 1);
-            handleStatus(() -> arrayfire_h.af_alloc_pinned(ptr, bytes));
-            return MemorySegment.ofAddress(ptr.getAtIndex(ValueLayout.ADDRESS, 0).address()).reinterpret(bytes);
-        }
-    }
-
-    public static void freePinned(MemorySegment segment) {
-        handleStatus(() -> arrayfire_h.af_free_pinned(segment));
     }
 }

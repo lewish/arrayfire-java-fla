@@ -143,8 +143,8 @@ public class Tensor<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<
         af.release(this);
     }
 
-    void retain() {
-        af.retain(this);
+    Tensor<T, D0, D1, D2, D3> retain() {
+        return af.retain(this);
     }
 
 
