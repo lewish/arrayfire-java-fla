@@ -132,7 +132,7 @@ public class ArrayFireTest {
     public void permutationIndex() {
         af.tidy(() -> {
             var arr = af.create(1, 2, 3, 4, 5, 6, 7, 8).reshape(2, 4);
-            var permutation = af.permutation(arr.d1());
+            var permutation = af.permutation(arr.shape().d1());
             var shuffled = af.index(arr, af.span(), permutation);
             var data = af.data(shuffled);
             assertArrayEquals(new int[]{5, 6, 1, 2, 7, 8, 3, 4}, data.java());
@@ -143,7 +143,7 @@ public class ArrayFireTest {
     public void transpose() {
         af.tidy(() -> {
             var arr = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
-            var transpose = arr.transpose();
+            var transpose = af.transpose(arr);
             assertArrayEquals(new float[]{1, 3, 2, 4}, af.data(transpose).java(), 1E-5f);
         });
     }
@@ -172,7 +172,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
             var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
-            var result = af.matmul(left.transpose(), right);
+            var result = af.matmul(af.transpose(left), right);
             assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, data(result).java(), 1E-5f);
         });
     }
@@ -182,7 +182,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
             var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
-            var result = af.matmul(left.transpose(), right);
+            var result = af.matmul(af.transpose(left), right);
             assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, data(result).java(), 1E-5f);
         });
     }
@@ -292,7 +292,7 @@ public class ArrayFireTest {
     public void min() {
         af.tidy(() -> {
             var data = af.create(new float[]{-5, 12, 0, 1});
-            var result = data.min();
+            var result = af.min(data);
             assertArrayEquals(new float[]{-5}, af.data(result).java(), 1e-5f);
         });
     }
@@ -384,9 +384,9 @@ public class ArrayFireTest {
             var data = af
                            .create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})
                            .reshape(2, 2, 2, 2);
-            Tensor<F32, A, B, C, D> result = af.index(data, af.seq(af.create(0).castshape(af::a)),
-                af.seq(af.create(1).castshape(af::b)), af.seq(af.create(0).castshape(af::c)),
-                af.seq(af.create(1).castshape(af::d)));
+            Tensor<F32, Shape<A, B, C, D>> result = af.index(data, af.seq(af.create(0).reshape(af.a(1))),
+                af.seq(af.create(1).reshape(af.b(1))), af.seq(af.create(0).reshape(af.c(1))),
+                af.seq(af.create(1).reshape(af.d(1))));
             assertArrayEquals(new float[]{11}, af.data(result).java(), 1E-5f);
         });
     }
@@ -554,7 +554,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
             var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
-            var leftT = left.transpose();
+            var leftT = af.transpose(left);
             var matmul = af.matmul(leftT, right);
             var softmax = af.softmax(matmul);
             var sum = af.sum(matmul);

@@ -1,7 +1,5 @@
 package arrayfire;
 
-import arrayfire.numbers.Num;
-
-public record TopKResult<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>>(
-    Tensor<T, D0, D1, D2, D3> values, Tensor<U32, D0, D1, D2, D3> indices) {
+public record TopKResult<T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>>(Tensor<T, S> values,
+                                                                                Tensor<U32, S> indices) {
 }

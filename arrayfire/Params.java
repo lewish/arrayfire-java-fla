@@ -6,16 +6,16 @@ import arrayfire.optimizers.OptimizerProvider;
 /**
  * A variable with an optimizer.
  */
-public class Params<T extends DataType<?, ?>, D0 extends Num<?>, D1 extends Num<?>, D2 extends Num<?>, D3 extends Num<?>> extends Variable<T, D0, D1, D2, D3> {
+public class Params<T extends DataType<?, ?>, S extends Shape<?, ? ,? ,?>> extends Variable<T, S> {
 
-    private final Optimizer<T, D0, D1, D2, D3> optimizer;
+    private final Optimizer<T, S> optimizer;
 
-    public Params(T type, Shape<D0, D1, D2, D3> shape, OptimizerProvider optimizerProvider) {
+    public Params(T type, S shape, OptimizerProvider optimizerProvider) {
         super(type, shape);
         this.optimizer = optimizerProvider.get();
     }
 
-    public void optimize(Tensor<T, D0, D1, D2, D3> gradients) {
+    public void optimize(Tensor<T, S> gradients) {
         if (optimizer == null) {
             throw new IllegalStateException("Attempting to optimize params but no optimizer is provided.");
         }

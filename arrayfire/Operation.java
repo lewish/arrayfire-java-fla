@@ -1,6 +1,5 @@
 package arrayfire;
 
-import arrayfire.numbers.Num;
 import arrayfire.utils.Functions;
 
 import java.lang.foreign.MemorySegment;
@@ -39,7 +38,7 @@ public class Operation {
         }
     }
 
-    public GradFunction grads() {
+    GradFunction grads() {
         return grads;
     }
 
@@ -56,14 +55,13 @@ public class Operation {
             return new Nullary();
         }
 
-        public <I0T extends DataType<?, ?>, I0D0 extends Num<?>, I0D1 extends Num<?>, I0D2 extends Num<?>, I0D3 extends Num<?>> Unary<I0T, I0D0, I0D1, I0D2, I0D3> inputs(
-            Tensor<I0T, I0D0, I0D1, I0D2, I0D3> input) {
+        public <IT extends Tensor<?, ?>> Unary<IT> inputs(IT input) {
             operation.inputs.add(input);
             return new Unary<>();
         }
 
-        public <I0T extends DataType<?, ?>, I0D0 extends Num<?>, I0D1 extends Num<?>, I0D2 extends Num<?>, I0D3 extends Num<?>, I1T extends DataType<?, ?>, I1D0 extends Num<?>, I1D1 extends Num<?>, I1D2 extends Num<?>, I1D3 extends Num<?>> Binary<I0T, I0D0, I0D1, I0D2, I0D3, I1T, I1D0, I1D1, I1D2, I1D3> inputs(
-            Tensor<I0T, I0D0, I0D1, I0D2, I0D3> left, Tensor<I1T, I1D0, I1D1, I1D2, I1D3> right) {
+        public <I0T extends DataType<?, ?>, I0S extends Shape<?, ?, ?, ?>, I1T extends DataType<?, ?>, I1S extends Shape<?, ?, ?, ?>> Binary<Tensor<I0T, I0S>, Tensor<I1T, I1S>> inputs(
+            Tensor<I0T, I0S> left, Tensor<I1T, I1S> right) {
             operation.inputs.add(left);
             operation.inputs.add(right);
             return new Binary<>();
@@ -71,49 +69,48 @@ public class Operation {
 
         public class Nullary {
 
-            public <OT extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Single<OT, OD0, OD1, OD2, OD3> outputs(
-                Prototype<OT, OD0, OD1, OD2, OD3> prototype) {
+            public <OT extends DataType<?, ?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
+                Prototype<OT, OS> prototype) {
                 operation.outputs.add(new Tensor<>(prototype));
                 return new Single<>();
             }
 
-            public class Single<OT extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> {
+            public class Single<OT extends Tensor<?, ?>> {
 
-                public Single<OT, OD0, OD1, OD2, OD3> operation(Function<MemorySegment, Integer> function) {
+                public Single<OT> operation(Function<MemorySegment, Integer> function) {
                     operation.apply = (outputs) -> af.handleStatus(() -> function.apply(outputs.getFirst().segment()));
                     return this;
                 }
 
                 @SuppressWarnings("unchecked")
-                public Tensor<OT, OD0, OD1, OD2, OD3> build() {
+                public OT build() {
                     af.scope().register(operation);
-                    return (Tensor<OT, OD0, OD1, OD2, OD3>) operation.outputs.getFirst();
+                    return (OT) operation.outputs.getFirst();
                 }
             }
         }
 
-        public class Unary<I0T extends DataType<?, ?>, I0D0 extends Num<?>, I0D1 extends Num<?>, I0D2 extends Num<?>, I0D3 extends Num<?>> {
+        public class Unary<IT extends Tensor<?, ?>> {
 
-            public <OT extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> None outputs() {
+            public None outputs() {
                 return new None();
             }
 
-            public <OT extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Single<OT, OD0, OD1, OD2, OD3> outputs(
-                Prototype<OT, OD0, OD1, OD2, OD3> prototype) {
+            public <OT extends DataType<?, ?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
+                Prototype<OT, OS> prototype) {
                 operation.outputs.add(new Tensor<>(prototype));
                 return new Single<>();
             }
 
-            public <O0T extends DataType<?, ?>, O0D0 extends Num<?>, O0D1 extends Num<?>, O0D2 extends Num<?>, O0D3 extends Num<?>, O1T extends DataType<?, ?>, O1D0 extends Num<?>, O1D1 extends Num<?>, O1D2 extends Num<?>, O1D3 extends Num<?>> Pair<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3> outputs(
-                Prototype<O0T, O0D0, O0D1, O0D2, O0D3> left, Prototype<O1T, O1D0, O1D1, O1D2, O1D3> right) {
+            public <O0T extends DataType<?, ?>, O0S extends Shape<?, ?, ?, ?>, O1T extends DataType<?, ?>, O1S extends Shape<?, ?, ?, ?>> Pair<Tensor<O0T, O0S>, Tensor<O1T, O1S>> outputs(
+                Prototype<O0T, O0S> left, Prototype<O1T, O1S> right) {
                 operation.outputs.add(new Tensor<>(left));
                 operation.outputs.add(new Tensor<>(right));
                 return new Pair<>();
             }
 
-            public <O0T extends DataType<?, ?>, O0D0 extends Num<?>, O0D1 extends Num<?>, O0D2 extends Num<?>, O0D3 extends Num<?>, O1T extends DataType<?, ?>, O1D0 extends Num<?>, O1D1 extends Num<?>, O1D2 extends Num<?>, O1D3 extends Num<?>, O2T extends DataType<?, ?>, O2D0 extends Num<?>, O2D1 extends Num<?>, O2D2 extends Num<?>, O2D3 extends Num<?>> Trio<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3, O2T, O2D0, O2D1, O2D2, O2D3> outputs(
-                Prototype<O0T, O0D0, O0D1, O0D2, O0D3> left, Prototype<O1T, O1D0, O1D1, O1D2, O1D3> middle,
-                Prototype<O2T, O2D0, O2D1, O2D2, O2D3> right) {
+            public <O0T extends DataType<?, ?>, O0S extends Shape<?, ?, ?, ?>, O1T extends DataType<?, ?>, O1S extends Shape<?, ?, ?, ?>, O2T extends DataType<?, ?>, O2S extends Shape<?, ?, ?, ?>> Trio<Tensor<O0T, O0S>, Tensor<O1T, O1S>, Tensor<O2T, O2S>> outputs(
+                Prototype<O0T, O0S> left, Prototype<O1T, O1S> middle, Prototype<O2T, O2S> right) {
                 operation.outputs.add(new Tensor<>(left));
                 operation.outputs.add(new Tensor<>(middle));
                 operation.outputs.add(new Tensor<>(right));
@@ -133,51 +130,47 @@ public class Operation {
                 }
             }
 
-            public class Single<OT extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> {
+            public class Single<OT extends Tensor<?, ?>> {
 
-                public Single<OT, OD0, OD1, OD2, OD3> operation(Function<MemorySegment, Integer> function) {
+                public Single<OT> operation(Function<MemorySegment, Integer> function) {
                     operation.apply = (outputs) -> af.handleStatus(() -> function.apply(outputs.getFirst().segment()));
                     return this;
                 }
 
                 @SuppressWarnings("unchecked")
-                public Single<OT, OD0, OD1, OD2, OD3> grads(
-                    GradFunction.Unary<OT, OD0, OD1, OD2, OD3, I0T, I0D0, I0D1, I0D2, I0D3> unaryGradFunction) {
+                public Single<OT> grads(GradFunction.Unary<OT, IT> unaryGradFunction) {
                     operation.grads = (grads) -> {
-                        var inputGrad = unaryGradFunction.grads(operation.outputs.getFirst(), (Tensor) grads);
+                        var inputGrad = unaryGradFunction.grads((OT) operation.outputs.getFirst(), (OT) grads);
                         return List.of(inputGrad);
                     };
                     return this;
                 }
 
                 @SuppressWarnings("unchecked")
-                public Tensor<OT, OD0, OD1, OD2, OD3> build() {
+                public OT build() {
                     af.scope().register(operation);
-                    return (Tensor<OT, OD0, OD1, OD2, OD3>) operation.outputs.getFirst();
+                    return (OT) operation.outputs.getFirst();
                 }
             }
 
-            public class Pair<O0T extends DataType<?, ?>, O0D0 extends Num<?>, O0D1 extends Num<?>, O0D2 extends Num<?>, O0D3 extends Num<?>, O1T extends DataType<?, ?>, O1D0 extends Num<?>, O1D1 extends Num<?>, O1D2 extends Num<?>, O1D3 extends Num<?>> {
+            public class Pair<O0T extends Tensor<?, ?>, O1T extends Tensor<?, ?>> {
 
-                public Pair<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3> operation(
-                    Functions.Function2<MemorySegment, MemorySegment, Integer> function) {
+                public Pair<O0T, O1T> operation(Functions.Function2<MemorySegment, MemorySegment, Integer> function) {
                     operation.apply = (outputs) -> af.handleStatus(
                         () -> function.apply(outputs.getFirst().segment(), outputs.get(1).segment()));
                     return this;
                 }
 
                 @SuppressWarnings("unchecked")
-                public TensorPair<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3> build() {
+                public TensorPair<O0T, O1T> build() {
                     af.scope().register(operation);
-                    return new TensorPair<>(
-                        (Tensor<O0T, O0D0, O0D1, O0D2, O0D3>) operation.outputs.getFirst(),
-                        (Tensor<O1T, O1D0, O1D1, O1D2, O1D3>) operation.outputs.get(1));
+                    return new TensorPair<>((O0T) operation.outputs.getFirst(), (O1T) operation.outputs.get(1));
                 }
             }
 
-            public class Trio<O0T extends DataType<?, ?>, O0D0 extends Num<?>, O0D1 extends Num<?>, O0D2 extends Num<?>, O0D3 extends Num<?>, O1T extends DataType<?, ?>, O1D0 extends Num<?>, O1D1 extends Num<?>, O1D2 extends Num<?>, O1D3 extends Num<?>, O2T extends DataType<?, ?>, O2D0 extends Num<?>, O2D1 extends Num<?>, O2D2 extends Num<?>, O2D3 extends Num<?>> {
+            public class Trio<O0T extends Tensor<?, ?>, O1T extends Tensor<?, ?>, O2T extends Tensor<?, ?>> {
 
-                public Trio<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3, O2T, O2D0, O2D1, O2D2, O2D3> operation(
+                public Trio<O0T, O1T, O2T> operation(
                     Functions.Function3<MemorySegment, MemorySegment, MemorySegment, Integer> function) {
                     operation.apply = (outputs) -> af.handleStatus(
                         () -> function.apply(outputs.getFirst().segment(), outputs.get(1).segment(),
@@ -186,45 +179,42 @@ public class Operation {
                 }
 
                 @SuppressWarnings("unchecked")
-                public TensorTrio<O0T, O0D0, O0D1, O0D2, O0D3, O1T, O1D0, O1D1, O1D2, O1D3, O2T, O2D0, O2D1, O2D2, O2D3> build() {
+                public TensorTrio<O0T, O1T, O2T> build() {
                     af.scope().register(operation);
-                    return new TensorTrio<>(
-                        (Tensor<O0T, O0D0, O0D1, O0D2, O0D3>) operation.outputs.getFirst(),
-                        (Tensor<O1T, O1D0, O1D1, O1D2, O1D3>) operation.outputs.get(1),
-                        (Tensor<O2T, O2D0, O2D1, O2D2, O2D3>) operation.outputs.get(2));
+                    return new TensorTrio<>((O0T) operation.outputs.getFirst(), (O1T) operation.outputs.get(1),
+                        (O2T) operation.outputs.get(2));
                 }
             }
         }
 
-        public class Binary<I0T extends DataType<?, ?>, I0D0 extends Num<?>, I0D1 extends Num<?>, I0D2 extends Num<?>, I0D3 extends Num<?>, I1T extends DataType<?, ?>, I1D0 extends Num<?>, I1D1 extends Num<?>, I1D2 extends Num<?>, I1D3 extends Num<?>> {
+        public class Binary<I0T extends Tensor<?, ?>, I1T extends Tensor<?, ?>> {
 
-            public <OT extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> Single<OT, OD0, OD1, OD2, OD3> outputs(
-                Prototype<OT, OD0, OD1, OD2, OD3> prototype) {
+            public <OT extends DataType<?, ?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
+                Prototype<OT, OS> prototype) {
                 operation.outputs.add(new Tensor<>(prototype));
                 return new Single<>();
             }
 
-            public class Single<OT extends DataType<?, ?>, OD0 extends Num<?>, OD1 extends Num<?>, OD2 extends Num<?>, OD3 extends Num<?>> {
+            public class Single<OT extends Tensor<?, ?>> {
 
-                public Single<OT, OD0, OD1, OD2, OD3> operation(Function<MemorySegment, Integer> function) {
+                public Single<OT> operation(Function<MemorySegment, Integer> function) {
                     operation.apply = (outputs) -> af.handleStatus(() -> function.apply(outputs.getFirst().segment()));
                     return this;
                 }
 
                 @SuppressWarnings("unchecked")
-                public Single<OT, OD0, OD1, OD2, OD3> grads(
-                    GradFunction.Binary<OT, OD0, OD1, OD2, OD3, I0T, I0D0, I0D1, I0D2, I0D3, I1T, I1D0, I1D1, I1D2, I1D3> binaryGradFunction) {
+                public Single<OT> grads(GradFunction.Binary<OT, I0T, I1T> binaryGradFunction) {
                     operation.grads = (grads) -> {
-                        var inputGrad = binaryGradFunction.grads(operation.outputs.getFirst(), (Tensor) grads);
+                        var inputGrad = binaryGradFunction.grads((OT) operation.outputs.getFirst(), (OT) grads);
                         return List.of(inputGrad.left(), inputGrad.right());
                     };
                     return this;
                 }
 
                 @SuppressWarnings("unchecked")
-                public Tensor<OT, OD0, OD1, OD2, OD3> build() {
+                public OT build() {
                     af.scope().register(operation);
-                    return (Tensor<OT, OD0, OD1, OD2, OD3>) operation.outputs.getFirst();
+                    return (OT) operation.outputs.getFirst();
                 }
             }
         }

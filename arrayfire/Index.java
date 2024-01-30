@@ -17,12 +17,12 @@ public class Index<D extends Num<D>> {
         ValueLayout.JAVA_BOOLEAN.withName("isSeq"), ValueLayout.JAVA_BOOLEAN.withName("isBatch"),
         MemoryLayout.paddingLayout(6));
 
-    private final Tensor<?, ?, ?, ?, ?> arr;
+    private final Tensor<?, ?> arr;
     private final Seq seq;
 
     private final Function<Integer, D> generator;
 
-    Index(Tensor<?, ?, ?, ?, ?> arr, Function<Integer, D> generator) {
+    Index(Tensor<?, ?> arr, Function<Integer, D> generator) {
         this.arr = arr;
         this.seq = null;
         this.generator = generator;

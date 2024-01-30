@@ -74,7 +74,7 @@ public class Graph {
         }
     }
 
-    public <T extends Tensor<?, ?, ?, ?, ?>> T grads(Tensor loss, T tensor) {
+    public <T extends Tensor<?, ?>> T grads(Tensor loss, T tensor) {
         var grads = grads(loss, new Tensor[]{tensor});
         return grads.get(tensor);
     }
@@ -153,7 +153,7 @@ public class Graph {
         }
 
         @SuppressWarnings("unchecked")
-        public <T extends Tensor<?, ?, ?, ?, ?>> T get(T tensor) {
+        public <T extends Tensor<?, ?>> T get(T tensor) {
             return (T) gradsByTensor.get(tensor);
         }
     }
