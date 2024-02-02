@@ -8,6 +8,7 @@ import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.util.Arrays;
 
 public class Tensor<T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> implements MemoryContainer {
 
@@ -95,8 +96,16 @@ public class Tensor<T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> imple
         return af.reshape(this, af.shape(d0, d1, d2, d3));
     }
 
-    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>, OD2 extends Num<OD2>, OD3 extends Num<OD3>> Tensor<T, Shape<OD0, OD1, OD2, OD3>> reshape(
-        Shape<OD0, OD1, OD2, OD3> newShape) {
+    public <NS extends Shape<?, ? ,? ,?>> Tensor<T, NS> reshape(
+        NS newShape) {
+        return af.reshape(this, newShape);
+    }
+
+    public <NS extends Shape<?, ? ,? ,?>> Tensor<T, NS> castshape(
+        NS newShape) {
+        if (!Arrays.equals(shape.dims(), newShape.dims())) {
+            throw new IllegalArgumentException("Cannot cast shape " + shape + " to " + newShape);
+        }
         return af.reshape(this, newShape);
     }
 

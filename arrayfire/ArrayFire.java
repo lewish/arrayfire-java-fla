@@ -181,7 +181,7 @@ public class ArrayFire {
     /**
      * Creates a device tensor from the given native array.
      */
-    public static <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>> Tensor<DT, Shape<N, U, U, U>> create(
+    public static <DT extends DataType<?, ?>, AT extends NativeArray<DT, ?, ?>> Tensor<DT, R1<N>> create(
         AT array) {
         return create(array, shape(n(array.length())));
     }
@@ -205,7 +205,7 @@ public class ArrayFire {
      * This is not recommended in a production setting, as memory will be copied twice. Instead, use {@link #create(NativeArray)}.
      */
     @SafeVarargs
-    public static <JT, AT extends NativeArray<DT, JT, ?>, DT extends DataType<AT, ?>> Tensor<DT, Shape<N, U, U, U>> create(
+    public static <JT, AT extends NativeArray<DT, JT, ?>, DT extends DataType<AT, ?>> Tensor<DT, R1<N>> create(
         DT type, JT... values) {
         return tidy(() -> {
             var array = type.create(values.length);
@@ -221,7 +221,7 @@ public class ArrayFire {
      * This is not recommended in a production setting, as memory will be copied twice. Instead, use {@link #create(NativeArray)}.
      */
     @SuppressWarnings("unchecked")
-    public static <JT, JTA, AT extends NativeArray<DT, JT, JTA>, DT extends DataType<AT, ?>> Tensor<DT, Shape<N, U, U, U>> create(
+    public static <JT, JTA, AT extends NativeArray<DT, JT, JTA>, DT extends DataType<AT, ?>> Tensor<DT, R1<N>> create(
         DT type, JTA values) {
         return tidy(() -> {
             var length = Array.getLength(values);
@@ -236,43 +236,47 @@ public class ArrayFire {
     /**
      * Creates a {@link F32} device tensor from the given float values.
      */
-    public static Tensor<F32, Shape<N, U, U, U>> create(float... values) {
+    public static Tensor<F32, R1<N>> create(float... values) {
         return create(F32, values);
     }
 
     /**
      * Creates a {@link F64} device tensor from the given double values.
      */
-    public static Tensor<F64, Shape<N, U, U, U>> create(double... values) {
+    public static Tensor<F64, R1<N>> create(double... values) {
         return create(F64, values);
     }
 
     /**
      * Creates a {@link S32} device tensor from the given byte values.
      */
-    public static Tensor<S32, Shape<N, U, U, U>> create(int... values) {
+    public static Tensor<S32, R1<N>> create(int... values) {
         return create(S32, values);
     }
 
     /**
      * Creates a constant scalar {@link F32} device tensor from the given float value.
      */
-    public static Tensor<F32, Shape<U, U, U, U>> constant(float value) {
+    public static Tensor<F32, R0> constant(float value) {
         return constant(F32, value);
     }
 
     /**
      * Creates a constant scalar {@link F64} device tensor from the given float value.
      */
-    public static Tensor<F64, Shape<U, U, U, U>> constant(double value) {
+    public static Tensor<F64, R0> constant(double value) {
         return constant(F64, value);
     }
 
     /**
      * Creates a constant scalar device tensor from the given type and double value.
      */
-    public static <DT extends DataType<?, ?>> Tensor<DT, Shape<U, U, U, U>> constant(DT type, double value) {
-        return constant(type, shape(u()), value);
+    public static <DT extends DataType<?, ?>> Tensor<DT, R0> constant(DT type, double value) {
+        return constant(type, scalar(), value);
+    }
+
+    public static R0 scalar() {
+        return new R0();
     }
 
     /**
@@ -313,7 +317,8 @@ public class ArrayFire {
     /**
      * Returns a lookup index using the given tensor as lookup values (indices).
      */
-    public static <DT extends DataType<?, ?>, D0 extends Num<D0>> Index<D0> seq(Tensor<DT, Shape<D0, U, U, U>> index) {
+    public static <DT extends DataType<?, ?>, D0 extends Num<D0>, S extends Shape<D0, U, U, U>> Index<D0> seq(
+        Tensor<DT, S> index) {
         return new Index<>(index, index.shape().d0()::create);
     }
 
@@ -341,44 +346,44 @@ public class ArrayFire {
     /**
      * Returns a 1D shape of the given size and type N.
      */
-    public static Shape<N, U, U, U> shape(int d0) {
-        return new Shape<>(n(d0), u(), u(), u());
+    public static R1<N> shape(int d0) {
+        return new R1<>(n(d0));
     }
 
     /**
      * Returns a 1D shape of the given dimension.
      */
-    public static <D0 extends Num<D0>> Shape<D0, U, U, U> shape(D0 d0) {
-        return new Shape<>(d0, u(), u(), u());
+    public static <D0 extends Num<D0>> R1<D0> shape(D0 d0) {
+        return new R1<>(d0);
     }
 
-    public static <D0 extends Num<D0>> Shape<D0, N, U, U> shape(D0 d0, int d1) {
-        return new Shape<>(d0, n(d1), u(), u());
+    public static <D0 extends Num<D0>> R2<D0, N> shape(D0 d0, int d1) {
+        return new R2<>(d0, n(d1));
     }
 
-    public static <D1 extends Num<D1>> Shape<N, D1, U, U> shape(int d0, D1 d1) {
-        return new Shape<>(n(d0), d1, u(), u());
+    public static <D1 extends Num<D1>> R2<N, D1> shape(int d0, D1 d1) {
+        return new R2<>(n(d0), d1);
     }
 
-    public static Shape<N, N, U, U> shape(int d0, int d1) {
-        return new Shape<>(n(d0), n(d1), u(), u());
+    public static R2<N, N> shape(int d0, int d1) {
+        return new R2<>(n(d0), n(d1));
     }
 
-    public static <D0 extends Num<D0>, D1 extends Num<D1>> Shape<D0, D1, U, U> shape(D0 d0, D1 d1) {
-        return new Shape<>(d0, d1, u(), u());
+    public static <D0 extends Num<D0>, D1 extends Num<D1>> R2<D0, D1> shape(D0 d0, D1 d1) {
+        return new R2<>(d0, d1);
     }
 
-    public static Shape<N, N, N, U> shape(int d0, int d1, int d2) {
-        return new Shape<>(n(d0), n(d1), n(d2), u());
+    public static R3<N, N, N> shape(int d0, int d1, int d2) {
+        return new R3<>(n(d0), n(d1), n(d2));
     }
 
     public static Shape<N, N, N, N> shape(int d0, int d1, int d2, int d3) {
         return new Shape<>(n(d0), n(d1), n(d2), n(d3));
     }
 
-    public static <D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>> Shape<D0, D1, D2, U> shape(D0 d0, D1 d1,
+    public static <D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>> R3<D0, D1, D2> shape(D0 d0, D1 d1,
                                                                                                           D2 d2) {
-        return new Shape<>(d0, d1, d2, u());
+        return new R3<>(d0, d1, d2);
     }
 
     public static <D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Shape<D0, D1, D2, D3> shape(
@@ -386,18 +391,18 @@ public class ArrayFire {
         return new Shape<>(d0, d1, d2, d3);
     }
 
-    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Operation.Builder.Unary<Tensor<IT, Shape<D0, D1, D2, D3>>>.Single<Tensor<T, Shape<U, D1, D2, D3>>> reduce(
-        String name, Tensor<IT, Shape<D0, D1, D2, D3>> a,
-        Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method, arrayfire.D0 dim, T resultType) {
+    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Operation.Builder.Unary<Tensor<IT, S>>.Single<Tensor<T, Shape<U, D1, D2, D3>>> reduce(
+        String name, Tensor<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
+        arrayfire.D0 dim, T resultType) {
         return operation(name)
                    .inputs(a)
                    .outputs(prototype(resultType, shape(u(), a.shape().d1(), a.shape().d2(), a.shape().d3())))
                    .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
     }
 
-    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Operation.Builder.Unary<Tensor<IT, Shape<D0, D1, D2, D3>>>.Single<Tensor<T, Shape<D0, U, D2, D3>>> reduce(
-        String name, Tensor<IT, Shape<D0, D1, D2, D3>> a,
-        Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method, arrayfire.D1 dim, T resultType) {
+    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Operation.Builder.Unary<Tensor<IT, S>>.Single<Tensor<T, Shape<D0, U, D2, D3>>> reduce(
+        String name, Tensor<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
+        arrayfire.D1 dim, T resultType) {
         return operation(name)
                    .inputs(a)
                    .outputs(prototype(resultType, shape(a.shape().d0(), u(), a.shape().d2(), a.shape().d3())))
@@ -405,18 +410,18 @@ public class ArrayFire {
 
     }
 
-    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Operation.Builder.Unary<Tensor<IT, Shape<D0, D1, D2, D3>>>.Single<Tensor<T, Shape<D0, D1, U, D3>>> reduce(
-        String name, Tensor<IT, Shape<D0, D1, D2, D3>> a,
-        Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method, arrayfire.D2 dim, T resultType) {
+    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Operation.Builder.Unary<Tensor<IT, S>>.Single<Tensor<T, Shape<D0, D1, U, D3>>> reduce(
+        String name, Tensor<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
+        arrayfire.D2 dim, T resultType) {
         return operation(name)
                    .inputs(a)
                    .outputs(prototype(resultType, shape(a.shape().d0(), a.shape().d1(), u(), a.shape().d3())))
                    .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
     }
 
-    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Operation.Builder.Unary<Tensor<IT, Shape<D0, D1, D2, D3>>>.Single<Tensor<T, Shape<D0, D1, D2, U>>> reduce(
-        String name, Tensor<IT, Shape<D0, D1, D2, D3>> a,
-        Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method, arrayfire.D3 dim, T resultType) {
+    private static <T extends DataType<?, ?>, IT extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Operation.Builder.Unary<Tensor<IT, S>>.Single<Tensor<T, Shape<D0, D1, D2, U>>> reduce(
+        String name, Tensor<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
+        arrayfire.D3 dim, T resultType) {
         return operation(name)
                    .inputs(a)
                    .outputs(prototype(resultType, shape(a.shape().d0(), a.shape().d1(), a.shape().d2(), u())))
@@ -486,14 +491,14 @@ public class ArrayFire {
     /**
      * Create a tensor with values [0, n-1].
      */
-    public static Tensor<U32, Shape<N, U, U, U>> range(int n) {
+    public static Tensor<U32, R1<N>> range(int n) {
         return range(U32, n);
     }
 
     /**
      * Create a tensor with values [0, n-1] of the given type.
      */
-    public static <T extends DataType<?, ?>> Tensor<T, Shape<N, U, U, U>> range(T type, int n) {
+    public static <T extends DataType<?, ?>> Tensor<T, R1<N>> range(T type, int n) {
         var shape = shape(n(n));
         return operation("range")
                    .inputs()
@@ -635,14 +640,14 @@ public class ArrayFire {
     /**
      * Transpose D0 and D1 dimensions of the given tensor.
      */
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D1, D0, D2, D3>> transpose(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D1, D0, D2, D3>> transpose(
+        Tensor<T, S> tensor) {
         return operation("transpose")
                    .inputs(tensor)
                    .outputs(prototype(tensor.type(),
                        shape(tensor.shape().d1(), tensor.shape().d0(), tensor.shape().d2(), tensor.shape().d3())))
                    .operation(ptr -> arrayfire_h.af_transpose(ptr, tensor.dereference(), true))
-                   .grads((result, grads) -> transpose(grads))
+                   .grads((result, grads) -> transpose(grads).reshape(tensor.shape()))
                    .build();
     }
 
@@ -848,45 +853,46 @@ public class ArrayFire {
 
     }
 
-    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Tensor<T, S> add(Tensor<T, S> left,
-                                                                                           Tensor<T, S> right) {
+    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<T, SL> add(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         return operation("add")
                    .inputs(left, right)
                    .outputs(prototype(left.type(), left.shape()))
                    .operation(ptr -> arrayfire_h.af_add(ptr, left.dereference(), right.dereference(), true))
-                   .grads((result, grads) -> new TensorPair<>(grads, grads))
+                   .grads((result, grads) -> new TensorPair<>(grads, grads.reshape(right.shape())))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Tensor<T, S> sub(Tensor<T, S> left,
-                                                                                           Tensor<T, S> right) {
+    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<T, SL> sub(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         return operation("sub")
                    .inputs(left, right)
-                   .outputs(prototype(left.type(), left.shape()))
+                   .outputs(prototype(left))
                    .operation(ptr -> arrayfire_h.af_sub(ptr, left.dereference(), right.dereference(), true))
-                   .grads((result, grads) -> new TensorPair<>(grads, grads.negate()))
+                   .grads((result, grads) -> new TensorPair<>(grads, grads.negate().reshape(right.shape())))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Tensor<B8, S> ge(Tensor<T, S> tensor,
-                                                                                           Tensor<T, S> rhs) {
+    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<B8, SL> ge(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         return operation("ge")
-                   .inputs(tensor, rhs)
-                   .outputs(prototype(B8, tensor.shape()))
-                   .operation(ptr -> arrayfire_h.af_ge(ptr, tensor.dereference(), rhs.dereference(), true))
+                   .inputs(left, right)
+                   .outputs(prototype(B8, left.shape()))
+                   .operation(ptr -> arrayfire_h.af_ge(ptr, left.dereference(), right.dereference(), true))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Tensor<B8, S> le(Tensor<T, S> tensor,
-                                                                                           Tensor<T, S> rhs) {
+    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<B8, SL> le(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         return operation("le")
-                   .inputs(tensor, rhs)
-                   .outputs(prototype(B8, tensor.shape()))
-                   .operation(ptr -> arrayfire_h.af_le(ptr, tensor.dereference(), rhs.dereference(), true))
+                   .inputs(left, right)
+                   .outputs(prototype(B8, left.shape()))
+                   .operation(ptr -> arrayfire_h.af_le(ptr, left.dereference(), right.dereference(), true))
                    .build();
     }
 
-    public static <S extends Shape<?, ?, ?, ?>> Tensor<B8, S> and(Tensor<B8, S> left, Tensor<B8, S> right) {
+    public static <S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<B8, SL> and(Tensor<B8, SL> left,
+                                                                                               Tensor<B8, SR> right) {
         return operation("and")
                    .inputs(left, right)
                    .outputs(prototype(B8, left.shape()))
@@ -894,8 +900,8 @@ public class ArrayFire {
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Tensor<T, S> maxof(Tensor<T, S> left,
-                                                                                             Tensor<T, S> right) {
+    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<T, SL> maxof(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         return operation("maxof")
                    .inputs(left, right)
                    .outputs(prototype(left.type(), left.shape()))
@@ -903,13 +909,13 @@ public class ArrayFire {
                    .grads((result, grads) -> {
                        var leftIsMax = eq(result, left).cast(left.type());
                        var rightIsMax = eq(result, right).cast(left.type());
-                       return new TensorPair<>(mul(leftIsMax, grads), mul(rightIsMax, grads));
+                       return new TensorPair<>(mul(leftIsMax, grads), mul(rightIsMax, grads).reshape(right.shape()));
                    })
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Tensor<T, S> minof(Tensor<T, S> left,
-                                                                                             Tensor<T, S> right) {
+    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<T, SL> minof(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         return operation("minof")
                    .inputs(left, right)
                    .outputs(prototype(left.type(), left.shape()))
@@ -917,26 +923,27 @@ public class ArrayFire {
                    .grads((result, grads) -> {
                        var leftIsMin = eq(result, left).cast(left.type());
                        var rightIsMin = eq(result, right).cast(left.type());
-                       return new TensorPair<>(mul(leftIsMin, grads), mul(rightIsMin, grads));
+                       return new TensorPair<>(mul(leftIsMin, grads), mul(rightIsMin, grads).castshape(right.shape()));
                    })
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, LD0 extends Num<LD0>, RD0 extends Num<RD0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<N, D1, D2, D3>> join(
-        Tensor<T, Shape<LD0, D1, D2, D3>> lhs, Tensor<T, Shape<RD0, D1, D2, D3>> rhs) {
+    public static <T extends DataType<?, ?>, LD0 extends Num<LD0>, RD0 extends Num<RD0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, SL extends Shape<LD0, D1, D2, D3>, SR extends Shape<RD0, D1, D2, D3>> Tensor<T, Shape<N, D1, D2, D3>> join(
+        Tensor<T, SL> lhs, Tensor<T, SR> rhs) {
         return operation("join")
                    .inputs(lhs, rhs)
                    .outputs(prototype(lhs.type(),
                        shape(n(lhs.shape().d0().size() + rhs.shape().d0().size()), lhs.shape().d1(), lhs.shape().d2(),
                            lhs.shape().d3())))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 0, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new TensorPair<>(index(grads, seq(lhs.shape().d0())),
-                       index(grads, seq(lhs.shape().d0().size(), rhs.shape().d0()))))
+                   .grads(
+                       (result, grads) -> new TensorPair<>(index(grads, seq(lhs.shape().d0())).castshape(lhs.shape()),
+                           index(grads, seq(lhs.shape().d0().size(), rhs.shape().d0())).castshape(rhs.shape())))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, LD1 extends Num<LD1>, RD1 extends Num<RD1>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, N, D2, D3>> join(
-        Tensor<T, Shape<D0, LD1, D2, D3>> lhs, Tensor<T, Shape<D0, RD1, D2, D3>> rhs, arrayfire.D1 ignored) {
+    public static <T extends DataType<?, ?>, LD1 extends Num<LD1>, RD1 extends Num<RD1>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>, SL extends Shape<D0, LD1, D2, D3>, SR extends Shape<D0, RD1, D2, D3>> Tensor<T, Shape<D0, N, D2, D3>> join(
+        Tensor<T, SL> lhs, Tensor<T, SR> rhs, arrayfire.D1 ignored) {
         if (!(lhs.shape().d0().size() == rhs.shape().d0().size() &&
                   lhs.shape().d2().size() == rhs.shape().d2().size() &&
                   lhs.shape().d3().size() == rhs.shape().d3().size())) {
@@ -949,13 +956,14 @@ public class ArrayFire {
                        shape(lhs.shape().d0(), n(lhs.shape().d1().size() + rhs.shape().d1().size()), lhs.shape().d2(),
                            lhs.shape().d3())))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 1, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new TensorPair<>(index(grads, span(), seq(lhs.shape().d1())),
-                       index(grads, span(), seq(lhs.shape().d1().size(), rhs.shape().d1()))))
+                   .grads((result, grads) -> new TensorPair<>(
+                       index(grads, span(), seq(lhs.shape().d1())).castshape(lhs.shape()),
+                       index(grads, span(), seq(lhs.shape().d1().size(), rhs.shape().d1())).castshape(rhs.shape())))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, LD2 extends Num<LD2>, RD2 extends Num<RD2>, D0 extends Num<D0>, D1 extends Num<D1>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, N, D3>> join(
-        Tensor<T, Shape<D0, D1, LD2, D3>> lhs, Tensor<T, Shape<D0, D1, RD2, D3>> rhs, arrayfire.D2 ignored) {
+    public static <T extends DataType<?, ?>, LD2 extends Num<LD2>, RD2 extends Num<RD2>, D0 extends Num<D0>, D1 extends Num<D1>, D3 extends Num<D3>, SL extends Shape<D0, D1, LD2, D3>, SR extends Shape<D0, D1, RD2, D3>> Tensor<T, Shape<D0, D1, N, D3>> join(
+        Tensor<T, SL> lhs, Tensor<T, SR> rhs, arrayfire.D2 ignored) {
         if (!(lhs.shape().d0().size() == rhs.shape().d0().size() &&
                   lhs.shape().d1().size() == rhs.shape().d1().size() &&
                   lhs.shape().d3().size() == rhs.shape().d3().size())) {
@@ -968,13 +976,15 @@ public class ArrayFire {
                        shape(lhs.shape().d0(), lhs.shape().d1(), n(lhs.shape().d2().size() + rhs.shape().d2().size()),
                            lhs.shape().d3())))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 2, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new TensorPair<>(index(grads, span(), span(), seq(lhs.shape().d2())),
-                       index(grads, span(), span(), seq(lhs.shape().d2().size(), rhs.shape().d2()))))
+                   .grads((result, grads) -> new TensorPair<>(
+                       index(grads, span(), span(), seq(lhs.shape().d2())).castshape(lhs.shape()),
+                       index(grads, span(), span(), seq(lhs.shape().d2().size(), rhs.shape().d2())).castshape(
+                           rhs.shape())))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, LD3 extends Num<LD3>, RD3 extends Num<RD3>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>> Tensor<T, Shape<D0, D1, D2, N>> join(
-        Tensor<T, Shape<D0, D1, D2, LD3>> lhs, Tensor<T, Shape<D0, D1, D2, RD3>> rhs, arrayfire.D3 ignored) {
+    public static <T extends DataType<?, ?>, LD3 extends Num<LD3>, RD3 extends Num<RD3>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, SL extends Shape<D0, D1, D2, LD3>, SR extends Shape<D0, D1, D2, RD3>> Tensor<T, Shape<D0, D1, D2, N>> join(
+        Tensor<T, SL> lhs, Tensor<T, SR> rhs, arrayfire.D3 ignored) {
         if (!(lhs.shape().d0().size() == rhs.shape().d0().size() &&
                   lhs.shape().d1().size() == rhs.shape().d1().size() &&
                   lhs.shape().d2().size() == rhs.shape().d2().size())) {
@@ -986,184 +996,185 @@ public class ArrayFire {
                    .outputs(prototype(lhs.type(), shape(lhs.shape().d0(), lhs.shape().d1(), lhs.shape().d2(),
                        n(lhs.shape().d3().size() + rhs.shape().d3().size()))))
                    .operation(ptr -> arrayfire_h.af_join(ptr, 3, lhs.dereference(), rhs.dereference()))
-                   .grads(
-                       (result, grads) -> new TensorPair<>(index(grads, span(), span(), span(), seq(lhs.shape().d3())),
-                           index(grads, span(), span(), span(), seq(lhs.shape().d3().size(), rhs.shape().d3()))))
+                   .grads((result, grads) -> new TensorPair<>(
+                       index(grads, span(), span(), span(), seq(lhs.shape().d3())).castshape(lhs.shape()),
+                       index(grads, span(), span(), span(), seq(lhs.shape().d3().size(), rhs.shape().d3())).castshape(
+                           rhs.shape())))
                    .build();
     }
 
-    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<ST, Shape<U, D1, D2, D3>> sum(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<ST, Shape<U, D1, D2, D3>> sum(
+        Tensor<T, S> tensor) {
         return sum(tensor, D0);
     }
 
-    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<ST, Shape<U, D1, D2, D3>> sum(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D0 dim) {
+    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<ST, Shape<U, D1, D2, D3>> sum(
+        Tensor<T, S> tensor, arrayfire.D0 dim) {
         return reduce("sum", tensor, arrayfire_h::af_sum, dim, tensor.type().sumType())
                    .grads((result, grads) -> grads.cast(tensor.type()).tileAs(tensor))
                    .build();
 
     }
 
-    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<ST, Shape<D0, U, D2, D3>> sum(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D1 dim) {
+    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<ST, Shape<D0, U, D2, D3>> sum(
+        Tensor<T, S> tensor, arrayfire.D1 dim) {
         return reduce("sum", tensor, arrayfire_h::af_sum, dim, tensor.type().sumType())
                    .grads((result, grads) -> grads.cast(tensor.type()).tileAs(tensor))
                    .build();
     }
 
-    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<ST, Shape<D0, D1, U, D3>> sum(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D2 dim) {
+    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<ST, Shape<D0, D1, U, D3>> sum(
+        Tensor<T, S> tensor, arrayfire.D2 dim) {
         return reduce("sum", tensor, arrayfire_h::af_sum, dim, tensor.type().sumType())
                    .grads((result, grads) -> grads.cast(tensor.type()).tileAs(tensor))
                    .build();
     }
 
-    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<ST, Shape<D0, D1, D2, U>> sum(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D3 dim) {
+    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<ST, Shape<D0, D1, D2, U>> sum(
+        Tensor<T, S> tensor, arrayfire.D3 dim) {
         return reduce("sum", tensor, arrayfire_h::af_sum, dim, tensor.type().sumType())
                    .grads((result, grads) -> grads.cast(tensor.type()).tileAs(tensor))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> mean(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> mean(
+        Tensor<T, S> tensor) {
         return mean(tensor, D0);
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> mean(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D0 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> mean(
+        Tensor<T, S> tensor, arrayfire.D0 dim) {
         return reduce("mean", tensor, arrayfire_h::af_mean, dim, tensor.type())
                    .grads((result, grads) -> af.div(grads.tileAs(tensor),
                        af.constant(tensor.type(), tensor.shape().d0().size()).tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, U, D2, D3>> mean(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D1 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, U, D2, D3>> mean(
+        Tensor<T, S> tensor, arrayfire.D1 dim) {
         return reduce("mean", tensor, arrayfire_h::af_mean, dim, tensor.type())
                    .grads((result, grads) -> af.div(grads.tileAs(tensor),
                        af.constant(tensor.type(), tensor.shape().d1().size()).tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, U, D3>> mean(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D2 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, U, D3>> mean(
+        Tensor<T, S> tensor, arrayfire.D2 dim) {
         return reduce("mean", tensor, arrayfire_h::af_mean, dim, tensor.type())
                    .grads((result, grads) -> af.div(grads.tileAs(tensor),
                        af.constant(tensor.type(), tensor.shape().d2().size()).tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, D2, U>> mean(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D3 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, D2, U>> mean(
+        Tensor<T, S> tensor, arrayfire.D3 dim) {
         return reduce("mean", tensor, arrayfire_h::af_mean, dim, tensor.type())
                    .grads((result, grads) -> af.div(grads.tileAs(tensor),
                        af.constant(tensor.type(), tensor.shape().d3().size()).tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> median(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> median(
+        Tensor<T, S> tensor) {
         return median(tensor, D0);
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> median(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D0 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> median(
+        Tensor<T, S> tensor, arrayfire.D0 dim) {
         return reduce("median", tensor, arrayfire_h::af_median, dim, tensor.type()).build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, U, D2, D3>> median(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D1 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, U, D2, D3>> median(
+        Tensor<T, S> tensor, arrayfire.D1 dim) {
         return reduce("median", tensor, arrayfire_h::af_median, dim, tensor.type()).build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, U, D3>> median(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D2 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, U, D3>> median(
+        Tensor<T, S> tensor, arrayfire.D2 dim) {
         return reduce("median", tensor, arrayfire_h::af_median, dim, tensor.type()).build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, D2, U>> median(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D3 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, D2, U>> median(
+        Tensor<T, S> tensor, arrayfire.D3 dim) {
         return reduce("median", tensor, arrayfire_h::af_median, dim, tensor.type()).build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> max(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> max(
+        Tensor<T, S> tensor) {
         return max(tensor, D0);
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> max(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D0 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> max(
+        Tensor<T, S> tensor, arrayfire.D0 dim) {
         return reduce("max", tensor, arrayfire_h::af_max, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, U, D2, D3>> max(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D1 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, U, D2, D3>> max(
+        Tensor<T, S> tensor, arrayfire.D1 dim) {
         return reduce("max", tensor, arrayfire_h::af_max, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, U, D3>> max(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D2 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, U, D3>> max(
+        Tensor<T, S> tensor, arrayfire.D2 dim) {
         return reduce("max", tensor, arrayfire_h::af_max, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, D2, U>> max(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D3 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, D2, U>> max(
+        Tensor<T, S> tensor, arrayfire.D3 dim) {
         return reduce("max", tensor, arrayfire_h::af_max, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> min(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> min(
+        Tensor<T, S> tensor) {
         return min(tensor, D0);
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<U, D1, D2, D3>> min(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D0 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<U, D1, D2, D3>> min(
+        Tensor<T, S> tensor, arrayfire.D0 dim) {
         return reduce("min", tensor, arrayfire_h::af_min, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, U, D2, D3>> min(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D1 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, U, D2, D3>> min(
+        Tensor<T, S> tensor, arrayfire.D1 dim) {
         return reduce("min", tensor, arrayfire_h::af_min, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, U, D3>> min(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D2 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, U, D3>> min(
+        Tensor<T, S> tensor, arrayfire.D2 dim) {
         return reduce("min", tensor, arrayfire_h::af_min, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, D2, U>> min(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, arrayfire.D3 dim) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, Shape<D0, D1, D2, U>> min(
+        Tensor<T, S> tensor, arrayfire.D3 dim) {
         return reduce("min", tensor, arrayfire_h::af_min, dim, tensor.type())
                    .grads((result, grads) -> mul(af.eq(result.tileAs(tensor), tensor).cast(grads.type()),
                        grads.tileAs(tensor)))
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> ImaxResult<T, Shape<U, D1, D2, D3>> imax(
-        Tensor<T, ? extends Shape<?, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<?, D1, D2, D3>> ImaxResult<T, Shape<U, D1, D2, D3>> imax(
+        Tensor<T, S> tensor) {
         var shape = shape(u(), tensor.shape().d1(), tensor.shape().d2(), tensor.shape().d3());
         var pair = operation("imax")
                        .inputs(tensor)
@@ -1174,8 +1185,8 @@ public class ArrayFire {
         return new ImaxResult<>(pair.left(), pair.right());
     }
 
-    public static <T extends DataType<?, ?>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, K extends Num<K>> TopKResult<T, Shape<K, D1, D2, D3>> topk(
-        Tensor<T, Shape<?, D1, D2, D3>> tensor, K k) {
+    public static <T extends DataType<?, ?>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, K extends Num<K>, S extends Shape<?, D1, D2, D3>> TopKResult<T, Shape<K, D1, D2, D3>> topk(
+        Tensor<T, S> tensor, K k) {
         var shape = shape(k, tensor.shape().d1(), tensor.shape().d2(), tensor.shape().d3());
         var pair = operation("topk")
                        .inputs(tensor)
@@ -1187,8 +1198,8 @@ public class ArrayFire {
         return new TopKResult<>(pair.left(), pair.right());
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D0, D2, D3>> diag(
-        Tensor<T, Shape<D0, U, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, U, D2, D3>> Tensor<T, Shape<D0, D0, D2, D3>> diag(
+        Tensor<T, S> tensor) {
         return operation("diag")
                    .inputs(tensor)
                    .outputs(prototype(tensor.type(),
@@ -1199,8 +1210,8 @@ public class ArrayFire {
     }
 
     // https://arrayfire.org/docs/group__blas__func__matmul.htm
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, OD1 extends Num<OD1>> Tensor<T, Shape<D0, OD1, D2, D3>> matmul(
-        Tensor<T, Shape<D0, D1, D2, D3>> left, Tensor<T, Shape<D1, OD1, D2, D3>> right) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, OD1 extends Num<OD1>, SL extends Shape<D0, D1, D2, D3>, SR extends Shape<D1, OD1, D2, D3>> Tensor<T, Shape<D0, OD1, D2, D3>> matmul(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         if (left.shape().d1().size() != right.shape().d0().size()) {
             throw new IllegalArgumentException(
                 String.format("Incompatible shapes for matmul, left: %s right: %s", left.shape(), right.shape()));
@@ -1213,14 +1224,13 @@ public class ArrayFire {
                    .grads((result, grads) -> {
                        var leftGrads = matmul(grads, transpose(right));
                        var rightGrads = matmul(transpose(left), grads);
-                       return new TensorPair<>(leftGrads, rightGrads);
+                       return new TensorPair<>(leftGrads.castshape(left.shape()), rightGrads.castshape(right.shape()));
                    })
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, AD0 extends Num<AD0>, AD1 extends Num<AD1>, BD1 extends Num<BD1>, CD1 extends Num<CD1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<AD0, CD1, D2, D3>> matmul(
-        Tensor<T, Shape<AD0, AD1, D2, D3>> a, Tensor<T, Shape<AD1, BD1, D2, D3>> b,
-        Tensor<T, Shape<BD1, CD1, D2, D3>> c) {
+    public static <T extends DataType<?, ?>, AD0 extends Num<AD0>, AD1 extends Num<AD1>, BD1 extends Num<BD1>, CD1 extends Num<CD1>, D2 extends Num<D2>, D3 extends Num<D3>, SA extends Shape<AD0, AD1, D2, D3>, SB extends Shape<AD1, BD1, D2, D3>, SC extends Shape<BD1, CD1, D2, D3>> Tensor<T, Shape<AD0, CD1, D2, D3>> matmul(
+        Tensor<T, SA> a, Tensor<T, SB> b, Tensor<T, SC> c) {
         if (a.shape().d0().size() * b.shape().d1().size() < b.shape().d0().size() * c.shape().d1().size()) {
             var tmp = matmul(a, b);
             var result = matmul(tmp, c);
@@ -1256,8 +1266,8 @@ public class ArrayFire {
             constant(tensor.type(), Double.POSITIVE_INFINITY).tileAs(tensor));
     }
 
-    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Tensor<B8, S> eq(Tensor<T, S> left,
-                                                                                           Tensor<T, S> right) {
+    public static <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Tensor<B8, SL> eq(
+        Tensor<T, SL> left, Tensor<T, SR> right) {
         return operation("eq")
                    .inputs(left, right)
                    .outputs(prototype(B8, left.shape()))
@@ -1349,8 +1359,8 @@ public class ArrayFire {
                    .build();
     }
 
-    public static <T extends DataType<?, T>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, D2, D3>> softmax(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, T>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, S> softmax(
+        Tensor<T, S> tensor) {
         return softmax(tensor, 1f);
     }
 
@@ -1363,8 +1373,8 @@ public class ArrayFire {
         };
     }
 
-    public static <T extends DataType<?, T>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, D2, D3>> softmax(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, float temperature) {
+    public static <T extends DataType<?, T>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, S> softmax(
+        Tensor<T, S> tensor, float temperature) {
         return operation("softmax").inputs(tensor).outputs(prototype(tensor)).operation(tidyOperation(() -> {
             var max = max(tensor);
             var normalized = sub(tensor, max.tileAs(tensor));
@@ -1465,13 +1475,13 @@ public class ArrayFire {
 
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> List<Tensor<T, Shape<D0, N, U, U>>> batch(
-        Tensor<T, Shape<D0, D1, U, U>> tensor, int batchSize) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> List<Tensor<T, Shape<D0, N, U, U>>> batch(
+        Tensor<T, S> tensor, int batchSize) {
         return batch(tensor, ArrayFire::n, batchSize);
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, BDT extends Num<BDT>> List<Tensor<T, Shape<D0, BDT, U, U>>> batch(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, Function<Integer, BDT> type, int batchSize) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>, BDT extends Num<BDT>> List<Tensor<T, Shape<D0, BDT, U, U>>> batch(
+        Tensor<T, S> tensor, Function<Integer, BDT> type, int batchSize) {
         var results = new ArrayList<Tensor<T, Shape<D0, BDT, U, U>>>();
         var d0Seq = seq(tensor.shape().d0());
         for (int i = 0; i < tensor.shape().d1().size(); i += batchSize) {
@@ -1542,26 +1552,24 @@ public class ArrayFire {
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, Tensor<T, Shape<FD0, FD1, D2, FD3>> filters) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>, S extends Shape<D0, D1, D2, D3>, FS extends Shape<FD0, FD1, D2, FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
+        Tensor<T, S> tensor, Tensor<T, FS> filters) {
         return convolve2(tensor, filters, shape(1, 1), shape(0, 0), shape(1, 1));
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, Tensor<T, Shape<FD0, FD1, D2, FD3>> filters,
-        Shape<?, ?, ?, ?> stride) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>, S extends Shape<D0, D1, D2, D3>, FS extends Shape<FD0, FD1, D2, FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
+        Tensor<T, S> tensor, Tensor<T, FS> filters, Shape<?, ?, ?, ?> stride) {
         return convolve2(tensor, filters, stride, shape(0, 0), shape(1, 1));
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, Tensor<T, Shape<FD0, FD1, D2, FD3>> filters, Shape<?, ?, ?, ?> stride,
-        Shape<?, ?, ?, ?> padding) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>, S extends Shape<D0, D1, D2, D3>, FS extends Shape<FD0, FD1, D2, FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
+        Tensor<T, S> tensor, Tensor<T, FS> filters, Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding) {
         return convolve2(tensor, filters, stride, padding, shape(1, 1));
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor, Tensor<T, Shape<FD0, FD1, D2, FD3>> filters, Shape<?, ?, ?, ?> stride,
-        Shape<?, ?, ?, ?> padding, Shape<?, ?, ?, ?> dilation) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>, S extends Shape<D0, D1, D2, D3>, FS extends Shape<FD0, FD1, D2, FD3>> Tensor<T, Shape<N, N, FD3, D3>> convolve2(
+        Tensor<T, S> tensor, Tensor<T, FS> filters, Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding,
+        Shape<?, ?, ?, ?> dilation) {
         // TODO: CoPilot wrote this, needs tests.
         var computedShape = shape(n((tensor.shape().d0().size() + 2 * padding.d0().size() -
                                          (filters.shape().d0().size() - 1) * dilation.d0().size() - 1) /
@@ -1584,8 +1592,8 @@ public class ArrayFire {
     /**
      * L2 norm.
      */
-    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<ST, Shape<U, D1, D2, D3>> norm(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<ST, Shape<U, D1, D2, D3>> norm(
+        Tensor<T, S> tensor) {
         var mul = mul(tensor, tensor);
         var sum = sum(mul);
         return sqrt(sum);
@@ -1594,22 +1602,22 @@ public class ArrayFire {
     /**
      * Normalize by dividing by the L2 norm.
      */
-    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<ST, Shape<D0, D1, D2, D3>> normalize(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <ST extends DataType<?, ?>, T extends DataType<?, ST>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<ST, S> normalize(
+        Tensor<T, S> tensor) {
         return div(cast(tensor, tensor.type().sumType()), norm(tensor).tileAs(tensor.shape()));
     }
 
     /**
      * Center by subtracting the average.
      */
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Tensor<T, Shape<D0, D1, D2, D3>> center(
-        Tensor<T, Shape<D0, D1, D2, D3>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Tensor<T, S> center(
+        Tensor<T, S> tensor) {
         return sub(tensor, mean(tensor).tileAs(tensor));
     }
 
     // svd
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>> SvdResult<T, D0, D1> svd(
-        Tensor<T, Shape<D0, D1, U, U>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> SvdResult<T, D0, D1> svd(
+        Tensor<T, S> tensor) {
         var trio = operation("svd")
                        .inputs(tensor)
                        .outputs(prototype(tensor.type(), shape(tensor.shape().d0(), tensor.shape().d0())),
@@ -1623,8 +1631,8 @@ public class ArrayFire {
     /**
      * Computes the covariance matrix of the given matrix.
      */
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>> Tensor<T, Shape<D0, D0, U, U>> cov(
-        Tensor<T, Shape<D0, D1, U, U>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> Tensor<T, Shape<D0, D0, U, U>> cov(
+        Tensor<T, S> tensor) {
         return tidy(() -> {
             var subMean = sub(tensor, mean(tensor, D1).tileAs(tensor));
             var matrix = matmul(subMean, transpose(subMean));
@@ -1635,8 +1643,8 @@ public class ArrayFire {
     /**
      * Computes the ZCA whitening matrix of the given matrix.
      */
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>> Tensor<T, Shape<D0, D0, U, U>> zca(
-        Tensor<T, Shape<D0, D1, U, U>> tensor) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> Tensor<T, Shape<D0, D0, U, U>> zca(
+        Tensor<T, S> tensor) {
         return tidy(() -> {
             var cov = cov(tensor);
             var svd = svd(cov);
@@ -1649,8 +1657,8 @@ public class ArrayFire {
     /**
      * Inverts the given matrix.
      */
-    public static <T extends DataType<?, ?>, D extends Num<D>> Tensor<T, Shape<D, D, U, U>> inverse(
-        Tensor<T, Shape<D, D, U, U>> tensor) {
+    public static <T extends DataType<?, ?>, D extends Num<D>, S extends Shape<D, D, U, U>> Tensor<T, S> inverse(
+        Tensor<T, S> tensor) {
         return operation("inverse")
                    .inputs(tensor)
                    .outputs(prototype(tensor))
@@ -1659,8 +1667,8 @@ public class ArrayFire {
     }
 
     // TODO: Add uncropped version.
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>> Tensor<T, Shape<D0, D1, U, U>> rotate(
-        Tensor<T, Shape<D0, D1, U, U>> tensor, float angle, InterpolationType interpolationType) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> Tensor<T, S> rotate(
+        Tensor<T, S> tensor, float angle, InterpolationType interpolationType) {
         return operation("rotate")
                    .inputs(tensor)
                    .outputs(prototype(tensor))
@@ -1670,15 +1678,15 @@ public class ArrayFire {
                    .build();
     }
 
-    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, ND0 extends Num<ND0>, ND1 extends Num<ND1>> Tensor<T, Shape<ND0, ND1, U, U>> scale(
-        Tensor<T, Shape<D0, D1, U, U>> tensor, ND0 nd0, ND1 nd1, InterpolationType interpolationType) {
+    public static <T extends DataType<?, ?>, D0 extends Num<D0>, D1 extends Num<D1>, ND0 extends Num<ND0>, ND1 extends Num<ND1>, S extends Shape<D0, D1, U, U>> Tensor<T, R2<ND0, ND1>> scale(
+        Tensor<T, S> tensor, ND0 nd0, ND1 nd1, InterpolationType interpolationType) {
         return operation("scale")
                    .inputs(tensor)
                    .outputs(prototype(tensor.type(), shape(nd0, nd1)))
                    .operation(ptr -> arrayfire_h.af_scale(ptr, tensor.dereference(),
                        (float) nd0.size() / tensor.shape().d0().size(), (float) nd1.size() / tensor.shape().d1().size(),
                        nd0.size(), nd1.size(), interpolationType.code()))
-                   .grads((result, grads) -> scale(grads, tensor.shape().d0(), tensor.shape().d1(), interpolationType))
+                   .grads((result, grads) -> scale(grads, tensor.shape().d0(), tensor.shape().d1(), interpolationType).castshape(tensor.shape()))
                    .build();
     }
 
@@ -1829,14 +1837,6 @@ public class ArrayFire {
         var result = Status.fromCode((int) res.get());
         if (!Status.AF_SUCCESS.equals(result)) {
             throw new ArrayFireException(result);
-            //      String lastError;
-            //      try {
-            //        lastError = lastError();
-            //
-            //      } catch (Exception e) {
-            //        throw new RuntimeException("ArrayFireError: " + result.name());
-            //      }
-            //      throw new RuntimeException("ArrayFireError: " + result.name() + ": " + lastError);
         }
     }
 
