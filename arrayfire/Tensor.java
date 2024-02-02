@@ -166,7 +166,7 @@ public class Tensor<T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> imple
         return af.tileAs(this, newShape);
     }
 
-    public Tensor<T, Shape<N, U, U, U>> flatten() {
+    public Tensor<T, R1<N>> flatten() {
         return af.flatten(this);
     }
 

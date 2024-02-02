@@ -283,7 +283,7 @@ public class ArrayFireTest {
     public void mulScalar() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.mul(data, af.constant(2).tile());
+            var result = af.mul(data, af.constant(2f).tile());
             assertArrayEquals(new float[]{2, 4, 6, 8}, af.data(result).java(), 1E-5f);
         });
     }
@@ -466,7 +466,7 @@ public class ArrayFireTest {
     public void ge() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.ge(data, af.constant(2).tileAs(data.shape()));
+            var result = af.ge(data, af.constant(2f).tileAs(data.shape()));
             assertArrayEquals(new boolean[]{false, true, true, true}, af.data(result).java());
         });
     }
@@ -475,7 +475,7 @@ public class ArrayFireTest {
     public void maxof() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.maxof(data, af.constant(2).tileAs(data.shape()));
+            var result = af.maxof(data, af.constant(2f).tileAs(data.shape()));
             assertArrayEquals(new float[]{2, 2, 3, 4}, af.data(result).java(), 1E-5f);
         });
     }
@@ -484,7 +484,7 @@ public class ArrayFireTest {
     public void minof() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.minof(data, af.constant(2).tileAs(data.shape()));
+            var result = af.minof(data, af.constant(2f).tileAs(data.shape()));
             assertArrayEquals(new float[]{1, 2, 2, 2}, af.data(result).java(), 1E-5f);
         });
     }
@@ -613,7 +613,7 @@ public class ArrayFireTest {
             for (int i = 0; i < 50 && latestLoss >= 1E-10; i++) {
                 latestLoss = af.tidy(() -> {
                     var mul = af.mul(a, b);
-                    var loss = af.pow(af.sub(af.sum(mul), af.constant(5)), 2);
+                    var loss = af.pow(af.sub(af.sum(mul), af.constant(5f)), 2);
                     af.optimize(loss);
                     return af.data(loss).java()[0];
                 });

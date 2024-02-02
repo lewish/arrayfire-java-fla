@@ -23,6 +23,7 @@ public class ArrayFire {
 
     public static final U8 U8 = new U8();
     public static final U64 U64 = new U64();
+    public static final S64 S64 = new S64();
     public static final U32 U32 = new U32();
     public static final F32 F32 = new F32();
     public static final F16 F16 = new F16();
@@ -267,6 +268,28 @@ public class ArrayFire {
     public static Tensor<F64, R0> constant(double value) {
         return constant(F64, value);
     }
+
+    /**
+     * Creates a constant scalar {@link U8} device tensor from the given byte value.
+     */
+    public static Tensor<U8, R0> constant(byte value) {
+        return constant(U8, value);
+    }
+
+    /**
+     * Creates a constant scalar {@link S32} device tensor from the given int value.
+     */
+    public static Tensor<S32, R0> constant(int value) {
+        return constant(S32, value);
+    }
+
+    /**
+     * Creates a constant scalar {@link S64} device tensor from the given long value.
+     */
+    public static Tensor<S64, R0> constant(long value) {
+        return constant(S64, value);
+    }
+
 
     /**
      * Creates a constant scalar device tensor from the given type and double value.
@@ -1539,7 +1562,7 @@ public class ArrayFire {
         return reshape(((Tensor<ST, ?>) result), newShape);
     }
 
-    public static <T extends DataType<?, ?>> Tensor<T, Shape<N, U, U, U>> flatten(Tensor<T, ?> tensor) {
+    public static <T extends DataType<?, ?>> Tensor<T, R1<N>> flatten(Tensor<T, ?> tensor) {
         return reshape(tensor, shape(tensor.shape().capacity()));
     }
 
