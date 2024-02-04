@@ -56,7 +56,7 @@ public class Shape<D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D
             return true;
         if (obj == null || obj.getClass() != this.getClass())
             return false;
-        var that = (Shape) obj;
+        var that = (Shape<? ,? ,? ,?>) obj;
         return Objects.equals(this.d0, that.d0) && Objects.equals(this.d1, that.d1) && Objects.equals(this.d2, that.d2) &&
                    Objects.equals(this.d3, that.d3);
     }

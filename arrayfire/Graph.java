@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 @SuppressWarnings("rawtypes")
 public class Graph {
 
-    private final IdentityHashMap<Tensor, Operation> nodesByOutput = new IdentityHashMap<>();
-    private final IdentityHashMap<Tensor, List<Operation>> dependentsByInput = new IdentityHashMap<>();
+    private final IdentityHashMap<Array, Operation> nodesByOutput = new IdentityHashMap<>();
+    private final IdentityHashMap<Array, List<Operation>> dependentsByInput = new IdentityHashMap<>();
     private final Set<Params> inputParams = IdentityHashSet.create();
 
     public Graph(List<Operation> operations) {
@@ -32,10 +32,10 @@ public class Graph {
 
     }
 
-    public Set<Tensor> dependents(Tensor tensor) {
-        if (dependentsByInput.containsKey(tensor)) {
+    public Set<Array> dependents(Array array) {
+        if (dependentsByInput.containsKey(array)) {
             return dependentsByInput
-                       .get(tensor)
+                       .get(array)
                        .stream()
                        .flatMap(node -> node.outputs().stream())
                        .collect(Collectors.toUnmodifiableSet());
@@ -43,17 +43,17 @@ public class Graph {
         return Collections.emptySet();
     }
 
-    public Set<Tensor> dependencies(Tensor tensor) {
-        if (nodesByOutput.containsKey(tensor)) {
-            return nodesByOutput.get(tensor).inputs().stream().collect(Collectors.toUnmodifiableSet());
+    public Set<Array> dependencies(Array array) {
+        if (nodesByOutput.containsKey(array)) {
+            return nodesByOutput.get(array).inputs().stream().collect(Collectors.toUnmodifiableSet());
         }
         return Collections.emptySet();
     }
 
-    public Collection<Tensor> transitiveDependents(Tensor tensor) {
+    public Collection<Array> transitiveDependents(Array array) {
         // This is an identity hash set.
-        var queue = new ArrayDeque<>(List.of(tensor));
-        var set = Collections.newSetFromMap(new IdentityHashMap<Tensor, Boolean>());
+        var queue = new ArrayDeque<>(List.of(array));
+        var set = Collections.newSetFromMap(new IdentityHashMap<Array, Boolean>());
         while (!queue.isEmpty()) {
             var current = queue.poll();
             if (set.contains(current)) {
@@ -66,28 +66,28 @@ public class Graph {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public void optimize(Tensor loss) {
+    public void optimize(Array loss) {
         var paramsToTensor = inputParams.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
-        var grads = grads(loss, paramsToTensor.values().toArray(Tensor[]::new));
+        var grads = grads(loss, paramsToTensor.values().toArray(Array[]::new));
         for (var params : inputParams) {
             params.optimize(grads.get(paramsToTensor.get(params)));
         }
     }
 
-    public <T extends Tensor<?, ?>> T grads(Tensor loss, T tensor) {
-        var grads = grads(loss, new Tensor[]{tensor});
+    public <T extends Array<?, ?>> T grads(Array loss, T tensor) {
+        var grads = grads(loss, new Array[]{tensor});
         return grads.get(tensor);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public Grads grads(Tensor loss, Tensor... tensors) {
-        var pruned = prune(loss, tensors);
+    public Grads grads(Array loss, Array... arrays) {
+        var pruned = prune(loss, arrays);
         var queue = new ArrayDeque<>(pruned);
-        var processedNodeOutputs = IdentityHashSet.<Tensor>create();
-        var gradsByOutput = new IdentityHashMap<Tensor, Tensor>();
+        var processedNodeOutputs = IdentityHashSet.<Array>create();
+        var gradsByOutput = new IdentityHashMap<Array, Array>();
 
         // We insert a sentinel value to ensure that we don't try to compute the gradient of the loss.
-        gradsByOutput.put(loss, ArrayFire.constant(loss.type(), 1).tileAs((Tensor) loss));
+        gradsByOutput.put(loss, ArrayFire.constant(loss.type(), 1).tileAs((Array) loss));
         while (!queue.isEmpty()) {
             var current = queue.poll();
             // We can compute the gradient of this node if it was constructed from a gradable function.
@@ -113,25 +113,25 @@ public class Graph {
                 if (!gradsByOutput.containsKey(input)) {
                     gradsByOutput.put(input, inputGrad);
                 } else {
-                    gradsByOutput.put(input, ArrayFire.add((Tensor) gradsByOutput.get(input), (Tensor) (inputGrad)));
+                    gradsByOutput.put(input, ArrayFire.add((Array) gradsByOutput.get(input), (Array) (inputGrad)));
                 }
             }
             processedNodeOutputs.add(current);
         }
 
         Grads grads = new Grads();
-        for (var tensor : tensors) {
+        for (var tensor : arrays) {
             grads.put(tensor, gradsByOutput.get(tensor));
         }
         return grads;
     }
 
     /**
-     * Prunes the graph to only include the nodes that are required to compute the gradients of the given tensors back from the given loss.
+     * Prunes the graph to only include the nodes that are required to compute the gradients of the given arrays back from the given loss.
      */
-    public Set<Tensor> prune(Tensor loss, Tensor... tensors) {
-        var set = IdentityHashSet.<Tensor>create();
-        for (var tensor : tensors) {
+    public Set<Array> prune(Array loss, Array... arrays) {
+        var set = IdentityHashSet.<Array>create();
+        for (var tensor : arrays) {
             var transitiveDependents = transitiveDependents(tensor);
             if (!transitiveDependents.contains(loss)) {
                 throw new IllegalStateException(
@@ -146,14 +146,14 @@ public class Graph {
     }
 
     public static class Grads {
-        private final Map<Tensor, Tensor> gradsByTensor = new IdentityHashMap<>();
+        private final Map<Array, Array> gradsByTensor = new IdentityHashMap<>();
 
-        void put(Tensor tensor, Tensor grads) {
-            gradsByTensor.put(tensor, grads);
+        void put(Array array, Array grads) {
+            gradsByTensor.put(array, grads);
         }
 
         @SuppressWarnings("unchecked")
-        public <T extends Tensor<?, ?>> T get(T tensor) {
+        public <T extends Array<?, ?>> T get(T tensor) {
             return (T) gradsByTensor.get(tensor);
         }
     }

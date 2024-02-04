@@ -1,6 +1,5 @@
 package arrayfire;
 
-import arrayfire.numbers.Num;
 import arrayfire.optimizers.OptimizerProvider;
 
 /**
@@ -15,7 +14,7 @@ public class Params<T extends DataType<?>, S extends Shape<?, ? ,? ,?>> extends 
         this.optimizer = optimizerProvider.get();
     }
 
-    public void optimize(Tensor<T, S> gradients) {
+    public void optimize(Array<T, S> gradients) {
         if (optimizer == null) {
             throw new IllegalStateException("Attempting to optimize params but no optimizer is provided.");
         }

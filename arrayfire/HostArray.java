@@ -43,7 +43,6 @@ public class HostArray<DT extends DataType<? extends DataType.Meta<?, JT, ?>>, J
         return shape.capacity();
     }
 
-
     public JT get(int index) {
         return type.meta().get(segment, index);
     }

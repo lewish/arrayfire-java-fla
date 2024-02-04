@@ -1,7 +1,6 @@
 package arrayfire.optimizers;
 
 import arrayfire.*;
-import arrayfire.numbers.Num;
 
 public class SGD implements OptimizerProvider {
 
@@ -23,7 +22,7 @@ public class SGD implements OptimizerProvider {
     public class SGDOptimizer<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implements Optimizer<T, S> {
 
         @Override
-        public void optimize(Params<T, S> params, Tensor<T, S> gradients) {
+        public void optimize(Params<T, S> params, Array<T, S> gradients) {
             params.set(af.sub(params, af.mul(gradients, learningRate)));
         }
     }

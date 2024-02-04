@@ -194,11 +194,11 @@ public class ArrayFireTest {
             var b = af.b(3);
             var matrix = af.create(F32, new float[]{1, 2, 3, 4, 5, 6}).reshape(a, b);
             var svd = af.svd(matrix);
-            var u = svd.u(); // Tensor<F32, A, A, U, U>
-            var s = svd.s(); // Tensor<F32, A, U, U, U>
-            var vt = svd.vt(); // Tensor<F32, B, B, U, U>
+            var u = svd.u(); // Array<F32, A, A, U, U>
+            var s = svd.s(); // Array<F32, A, U, U, U>
+            var vt = svd.vt(); // Array<F32, B, B, U, U>
             // Recreate the matrix from the SVD.
-            var recreated = af.matmul(u, af.diag(s), af.index(vt, af.seq(a))); // Tensor<F32, A, B, U, U>
+            var recreated = af.matmul(u, af.diag(s), af.index(vt, af.seq(a))); // Array<F32, A, B, U, U>
             assertArrayEquals(new float[]{1, 2, 3, 4, 5, 6}, data(recreated), 1E-5);
         });
     }
@@ -367,7 +367,7 @@ public class ArrayFireTest {
             var data = af
                            .create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})
                            .reshape(2, 2, 2, 2);
-            Tensor<F32, Shape<A, B, C, D>> result = af.index(data, af.seq(af.create(0).reshape(af.a(1))),
+            Array<F32, Shape<A, B, C, D>> result = af.index(data, af.seq(af.create(0).reshape(af.a(1))),
                 af.seq(af.create(1).reshape(af.b(1))), af.seq(af.create(0).reshape(af.c(1))),
                 af.seq(af.create(1).reshape(af.d(1))));
             assertArrayEquals(new float[]{11}, af.data(result));

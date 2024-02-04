@@ -10,7 +10,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 
-public class Tensor<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implements MemoryContainer {
+public class Array<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implements MemoryContainer {
 
     // Contains a single device pointer.
     public static final AddressLayout LAYOUT = ValueLayout.ADDRESS;
@@ -18,11 +18,11 @@ public class Tensor<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implemen
     private final S shape;
     private final MemorySegment segment;
 
-    public Tensor(Prototype<T, S> prototype) {
+    public Array(Prototype<T, S> prototype) {
         this(prototype.type(), prototype.shape());
     }
 
-    Tensor(T type, S shape) {
+    Array(T type, S shape) {
         this.type = type;
         this.shape = shape;
         this.segment = Arena.ofAuto().allocate(LAYOUT);
@@ -62,46 +62,46 @@ public class Tensor<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implemen
     }
 
 
-    public Tensor<T, Shape<N, U, U, U>> reshape(int d0) {
+    public Array<T, Shape<N, U, U, U>> reshape(int d0) {
         return af.reshape(this, af.shape(d0));
     }
 
-    public Tensor<T, Shape<N, N, U, U>> reshape(int d0, int d1) {
+    public Array<T, Shape<N, N, U, U>> reshape(int d0, int d1) {
         return af.reshape(this, af.shape(d0, d1));
     }
 
-    public Tensor<T, Shape<N, N, N, U>> reshape(int d0, int d1, int d2) {
+    public Array<T, Shape<N, N, N, U>> reshape(int d0, int d1, int d2) {
         return af.reshape(this, af.shape(d0, d1, d2));
     }
 
-    public Tensor<T, Shape<N, N, N, N>> reshape(int d0, int d1, int d2, int d3) {
+    public Array<T, Shape<N, N, N, N>> reshape(int d0, int d1, int d2, int d3) {
         return af.reshape(this, af.shape(d0, d1, d2, d3));
     }
 
-    public <OD0 extends Num<OD0>> Tensor<T, Shape<OD0, U, U, U>> reshape(OD0 d0) {
+    public <OD0 extends Num<OD0>> Array<T, Shape<OD0, U, U, U>> reshape(OD0 d0) {
         return af.reshape(this, af.shape(d0));
     }
 
-    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>> Tensor<T, Shape<OD0, OD1, U, U>> reshape(OD0 d0, OD1 d1) {
+    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>> Array<T, Shape<OD0, OD1, U, U>> reshape(OD0 d0, OD1 d1) {
         return af.reshape(this, af.shape(d0, d1));
     }
 
-    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>, OD2 extends Num<OD2>> Tensor<T, Shape<OD0, OD1, OD2, U>> reshape(
+    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>, OD2 extends Num<OD2>> Array<T, Shape<OD0, OD1, OD2, U>> reshape(
         OD0 d0, OD1 d1, OD2 d2) {
         return af.reshape(this, af.shape(d0, d1, d2));
     }
 
-    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>, OD2 extends Num<OD2>, OD3 extends Num<OD3>> Tensor<T, Shape<OD0, OD1, OD2, OD3>> reshape(
+    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>, OD2 extends Num<OD2>, OD3 extends Num<OD3>> Array<T, Shape<OD0, OD1, OD2, OD3>> reshape(
         OD0 d0, OD1 d1, OD2 d2, OD3 d3) {
         return af.reshape(this, af.shape(d0, d1, d2, d3));
     }
 
-    public <NS extends Shape<?, ? ,? ,?>> Tensor<T, NS> reshape(
+    public <NS extends Shape<?, ? ,? ,?>> Array<T, NS> reshape(
         NS newShape) {
         return af.reshape(this, newShape);
     }
 
-    public <NS extends Shape<?, ? ,? ,?>> Tensor<T, NS> castshape(
+    public <NS extends Shape<?, ? ,? ,?>> Array<T, NS> castshape(
         NS newShape) {
         if (!Arrays.equals(shape.dims(), newShape.dims())) {
             throw new IllegalArgumentException("Cannot cast shape " + shape + " to " + newShape);
@@ -113,44 +113,44 @@ public class Tensor<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implemen
         af.release(this);
     }
 
-    Tensor<T, S> retain() {
+    Array<T, S> retain() {
         return af.retain(this);
     }
 
 
-    public Tensor<T, S> eval() {
+    public Array<T, S> eval() {
         return af.eval(this);
     }
 
-    public Tensor<T, S> clamp(Tensor<T, S> lo, Tensor<T, S> hi) {
+    public Array<T, S> clamp(Array<T, S> lo, Array<T, S> hi) {
         return af.clamp(this, lo, hi);
     }
 
-    public Tensor<T, S> relu() {
+    public Array<T, S> relu() {
         return af.relu(this);
     }
 
-    public Tensor<T, S> negate() {
+    public Array<T, S> negate() {
         return af.negate(this);
     }
 
-    public Tensor<T, S> exp() {
+    public Array<T, S> exp() {
         return af.exp(this);
     }
 
-    public Tensor<T, S> abs() {
+    public Array<T, S> abs() {
         return af.abs(this);
     }
 
-    public Tensor<T, S> sqrt() {
+    public Array<T, S> sqrt() {
         return af.sqrt(this);
     }
 
-    public Tensor<T, S> sigmoid() {
+    public Array<T, S> sigmoid() {
         return af.sigmoid(this);
     }
 
-    public Tensor<T, S> sparse(Storage storage) {
+    public Array<T, S> sparse(Storage storage) {
         return af.sparse(this, storage);
     }
 
@@ -158,29 +158,29 @@ public class Tensor<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implemen
         return new Tileable<>(this);
     }
 
-    public <NS extends Shape<?, ?, ?, ?>> Tensor<T, NS> tileAs(Tensor<T, NS> newShapeTensor) {
-        return af.tileAs(this, newShapeTensor.shape());
+    public <NS extends Shape<?, ?, ?, ?>> Array<T, NS> tileAs(Array<T, NS> newShapeArray) {
+        return af.tileAs(this, newShapeArray.shape());
     }
 
-    public <NS extends Shape<?, ?, ?, ?>> Tensor<T, NS> tileAs(NS newShape) {
+    public <NS extends Shape<?, ?, ?, ?>> Array<T, NS> tileAs(NS newShape) {
         return af.tileAs(this, newShape);
     }
 
-    public Tensor<T, R1<N>> flatten() {
+    public Array<T, R1<N>> flatten() {
         return af.flatten(this);
     }
 
-    public Tensor<T, S> flip() {
+    public Array<T, S> flip() {
         return af.flip(this);
 
     }
 
-    public Tensor<T, S> move(Scope scope) {
+    public Array<T, S> move(Scope scope) {
         Scope.move(this, scope);
         return this;
     }
 
-    public <TN extends DataType<?>> Tensor<TN, S> cast(TN t) {
+    public <TN extends DataType<?>> Array<TN, S> cast(TN t) {
         return af.cast(this, t);
     }
 
