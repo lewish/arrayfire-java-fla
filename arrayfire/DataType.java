@@ -1,14 +1,26 @@
 package arrayfire;
 
-import arrayfire.containers.NativeArray;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 
-public interface DataType<Container extends NativeArray<?, ?, ?>, SumType extends DataType<? ,?>> {
+public interface DataType<DTM extends DataType.Meta<?, ?, ?>> {
+
+    DTM meta();
 
     int code();
 
-    SumType sumType();
+    interface Meta<SumType extends DataType<?>, JavaType, JavaArrayType> {
 
-    Container create(int length);
+        public SumType sumType();
+
+        public ValueLayout layout();
+
+        public JavaType get(MemorySegment segment, int index);
+
+        public void set(MemorySegment segment, int index, JavaType value);
+
+        public JavaArrayType createHeapArray(int length);
+    }
 }
 
 

@@ -1,19 +1,20 @@
 package arrayfire;
 
-import arrayfire.containers.F32Array;
 import arrayfire.numbers.A;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;
 import arrayfire.numbers.D;
 import arrayfire.optimizers.SGD;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.Arrays;
 import java.util.Set;
 
 import static arrayfire.ArrayFire.*;
@@ -46,8 +47,8 @@ public class ArrayFireTest {
             var arr = af.randu(af.F64, af.shape(4));
             var data = af.data(arr);
             assertArrayEquals(
-                new double[]{0.6009535291510355, 0.027758798477684365, 0.9805505775568435, 0.2126322292221926},
-                data.java(), 1E-5);
+                createHost(F64, 0.6009535291510355, 0.027758798477684365, 0.9805505775568435, 0.2126322292221926),
+                data);
 
         });
     }
@@ -57,10 +58,9 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.randn(af.F64, af.shape(4));
             var data = af.data(arr);
-            System.out.println(Arrays.toString(data.java()));
             assertArrayEquals(
-                new double[]{0.46430344880342067, -0.6310730997345986, -1.056124304288019, 0.1600451392361099},
-                data.java(), 1E-5);
+                createHost(F64, 0.46430344880342067, -0.6310730997345986, -1.056124304288019, 0.1600451392361099),
+                data);
 
         });
     }
@@ -70,7 +70,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.range(4);
             var data = af.data(arr);
-            assertArrayEquals(new int[]{0, 1, 2, 3}, data.java());
+            assertArrayEquals(af.createHost(U32, 0, 1, 2, 3), data);
         });
     }
 
@@ -79,7 +79,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.range(af.F32, 4);
             var data = af.data(arr);
-            assertArrayEquals(new float[]{0, 1, 2, 3}, data.java(), 1E-5f);
+            assertArrayEquals(new float[]{0, 1, 2, 3}, data);
         });
     }
 
@@ -95,7 +95,7 @@ public class ArrayFireTest {
     public void createWithType() {
         af.tidy(() -> {
             var arr = af.create(F32, 1f, 2f);
-            assertArrayEquals(new float[]{1, 2}, af.data(arr).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2}, af.data(arr));
         });
     }
 
@@ -103,7 +103,7 @@ public class ArrayFireTest {
     public void createDouble() {
         af.tidy(() -> {
             var arr = af.create(1.0, 2.0);
-            assertArrayEquals(new double[]{1, 2}, af.data(arr).java(), 1E-5f);
+            assertArrayEquals(new double[]{1, 2}, af.data(arr));
         });
     }
 
@@ -112,7 +112,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{4, 2, 1, 3});
             var sorted = af.sort(arr);
-            assertArrayEquals(new float[]{1, 2, 3, 4}, af.data(sorted).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2, 3, 4}, af.data(sorted));
         });
     }
 
@@ -123,8 +123,8 @@ public class ArrayFireTest {
             var sorted = af.sortIndex(arr, af.D1);
             var values = af.data(sorted.values());
             var indices = af.data(sorted.indices());
-            assertArrayEquals(new float[]{1.0f, 11.0f, 2.0f, 22.0f, 3.0f, 33.0f, 4.0f, 44.0f}, values.java(), 1E-5f);
-            assertArrayEquals(new int[]{3, 3, 2, 2, 1, 1, 0, 0}, indices.java());
+            assertArrayEquals(new float[]{1.0f, 11.0f, 2.0f, 22.0f, 3.0f, 33.0f, 4.0f, 44.0f}, values);
+            assertArrayEquals(af.createHost(U32, shape(2, 4), 3, 3, 2, 2, 1, 1, 0, 0), indices);
         });
     }
 
@@ -135,7 +135,7 @@ public class ArrayFireTest {
             var permutation = af.permutation(arr.shape().d1());
             var shuffled = af.index(arr, af.span(), permutation);
             var data = af.data(shuffled);
-            assertArrayEquals(new int[]{5, 6, 1, 2, 7, 8, 3, 4}, data.java());
+            assertArrayEquals(new int[]{5, 6, 1, 2, 7, 8, 3, 4}, data);
         });
     }
 
@@ -144,7 +144,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var transpose = af.transpose(arr);
-            assertArrayEquals(new float[]{1, 3, 2, 4}, af.data(transpose).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 3, 2, 4}, af.data(transpose));
         });
     }
 
@@ -154,7 +154,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{92, 80, 60, 30, 100, 70}).reshape(2, 3);
             var cov = af.cov(arr);
-            assertArrayEquals(new float[]{448, 520, 520, 700}, af.data(cov).java(), 1E-5f);
+            assertArrayEquals(new float[]{448, 520, 520, 700}, af.data(cov));
         });
     }
 
@@ -163,7 +163,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var inverse = af.inverse(arr);
-            assertArrayEquals(new float[]{-2, 1, 1.5f, -0.5f}, af.data(inverse).java(), 1E-5f);
+            assertArrayEquals(new float[]{-2, 1, 1.5f, -0.5f}, af.data(inverse));
         });
     }
 
@@ -173,7 +173,7 @@ public class ArrayFireTest {
             var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
             var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
             var result = af.matmul(af.transpose(left), right);
-            assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, data(result));
         });
     }
 
@@ -183,7 +183,7 @@ public class ArrayFireTest {
             var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
             var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
             var result = af.matmul(af.transpose(left), right);
-            assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{5, 11, 11, 25, 17, 39}, data(result));
         });
     }
 
@@ -199,23 +199,7 @@ public class ArrayFireTest {
             var vt = svd.vt(); // Tensor<F32, B, B, U, U>
             // Recreate the matrix from the SVD.
             var recreated = af.matmul(u, af.diag(s), af.index(vt, af.seq(a))); // Tensor<F32, A, B, U, U>
-            assertArrayEquals(new float[]{1, 2, 3, 4, 5, 6}, data(recreated).java(), 1E-5f);
-        });
-    }
-
-    @Test
-    public void svdSimp() {
-        af.tidy(() -> {
-            var a = af.a(2);
-            var b = af.b(3);
-            var matrix = af.create(F32, new float[]{1, 2, 3, 4, 5, 6}).reshape(a, b);
-            var svd = af.svd(matrix);
-            var u = svd.u(); // Tensor<F32, A, A, U, U>
-            var s = svd.s(); // Tensor<F32, A, U, U, U>
-            var vt = svd.vt(); // Tensor<F32, B, B, U, U>
-            af.diag(s);
-            af.seq(a);
-            af.index(vt, af.seq(a));
+            assertArrayEquals(new float[]{1, 2, 3, 4, 5, 6}, data(recreated), 1E-5);
         });
     }
 
@@ -225,7 +209,7 @@ public class ArrayFireTest {
             var data = af.create(new float[]{1, 2});
             var tile = af.create(new float[]{1, 2});
             var result = af.mul(data, tile);
-            assertArrayEquals(new float[]{1, 4}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 4}, af.data(result));
         });
     }
 
@@ -244,7 +228,7 @@ public class ArrayFireTest {
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var tile = af.create(new float[]{1, 2});
             var result = af.mul(data, tile.tile());
-            assertArrayEquals(new float[]{1, 4, 3, 8}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 4, 3, 8}, af.data(result));
         });
     }
 
@@ -262,9 +246,9 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{0, 1});
             var result = af.exp(data);
-            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(result));
             var gradient = af.grads(result, data);
-            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(gradient).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2.7182817f}, af.data(gradient));
         });
     }
 
@@ -273,9 +257,9 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{-1, 2});
             var result = af.abs(data);
-            assertArrayEquals(new float[]{1, 2}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2}, af.data(result));
             var gradient = af.grads(result, data);
-            assertArrayEquals(new float[]{-1, 1}, af.data(gradient).java(), 1E-5f);
+            assertArrayEquals(new float[]{-1, 1}, af.data(gradient));
         });
     }
 
@@ -284,7 +268,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
             var result = af.mul(data, af.constant(2f).tile());
-            assertArrayEquals(new float[]{2, 4, 6, 8}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{2, 4, 6, 8}, af.data(result));
         });
     }
 
@@ -293,7 +277,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{-5, 12, 0, 1});
             var result = af.min(data);
-            assertArrayEquals(new float[]{-5}, af.data(result).java(), 1e-5f);
+            assertArrayEquals(new float[]{-5}, af.data(result));
         });
     }
 
@@ -302,7 +286,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{-5, 12, 0, 1});
             var result = af.imax(data).indices();
-            assertArrayEquals(new int[]{1}, af.data(result).java());
+            assertArrayEquals(new int[]{1}, af.data(result.cast(S32)));
         });
     }
 
@@ -311,7 +295,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 4, 3}).reshape(2, 2);
             var result = af.imax(data).indices();
-            assertArrayEquals(new int[]{1, 0}, af.data(result).java());
+            assertArrayEquals(new int[]{1, 0}, af.data(result.cast(S32)));
         });
     }
 
@@ -321,10 +305,10 @@ public class ArrayFireTest {
             var data = af
                            .create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})
                            .reshape(2, 2, 2, 2);
-            assertArrayEquals(new float[]{3, 7, 11, 15, 19, 23, 27, 31}, af.data(af.sum(data)).java(), 1E-5f);
-            assertArrayEquals(new float[]{4, 6, 12, 14, 20, 22, 28, 30}, af.data(af.sum(data, af.D1)).java(), 1E-5f);
-            assertArrayEquals(new float[]{6, 8, 10, 12, 22, 24, 26, 28}, af.data(af.sum(data, af.D2)).java(), 1E-5f);
-            assertArrayEquals(new float[]{10, 12, 14, 16, 18, 20, 22, 24}, af.data(af.sum(data, af.D3)).java(), 1E-5f);
+            assertArrayEquals(new float[]{3, 7, 11, 15, 19, 23, 27, 31}, af.data(af.sum(data)));
+            assertArrayEquals(new float[]{4, 6, 12, 14, 20, 22, 28, 30}, af.data(af.sum(data, af.D1)));
+            assertArrayEquals(new float[]{6, 8, 10, 12, 22, 24, 26, 28}, af.data(af.sum(data, af.D2)));
+            assertArrayEquals(new float[]{10, 12, 14, 16, 18, 20, 22, 24}, af.data(af.sum(data, af.D3)));
         });
     }
 
@@ -333,7 +317,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(U8, new byte[]{1, 2, 3, 4}).reshape(2, 2);
             var sum = af.sum(data);
-            assertArrayEquals(new int[]{3, 7}, af.data(sum).java());
+            assertArrayEquals(new int[]{3, 7}, af.data(sum.cast(S32)));
         });
     }
 
@@ -344,11 +328,10 @@ public class ArrayFireTest {
                            .create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16})
                            .reshape(2, 2, 2, 2);
 
-            assertArrayEquals(new float[]{1.5f, 3.5f, 5.5f, 7.5f, 9.5f, 11.5f, 13.5f, 15.5f},
-                af.data(af.mean(data)).java(), 1E-5f);
-            assertArrayEquals(new float[]{2, 3, 6, 7, 10, 11, 14, 15}, af.data(af.mean(data, af.D1)).java(), 1E-5f);
-            assertArrayEquals(new float[]{3, 4, 5, 6, 11, 12, 13, 14}, af.data(af.mean(data, af.D2)).java(), 1E-5f);
-            assertArrayEquals(new float[]{5, 6, 7, 8, 9, 10, 11, 12}, af.data(af.mean(data, af.D3)).java(), 1E-5f);
+            assertArrayEquals(new float[]{1.5f, 3.5f, 5.5f, 7.5f, 9.5f, 11.5f, 13.5f, 15.5f}, af.data(af.mean(data)));
+            assertArrayEquals(new float[]{2, 3, 6, 7, 10, 11, 14, 15}, af.data(af.mean(data, af.D1)));
+            assertArrayEquals(new float[]{3, 4, 5, 6, 11, 12, 13, 14}, af.data(af.mean(data, af.D2)));
+            assertArrayEquals(new float[]{5, 6, 7, 8, 9, 10, 11, 12}, af.data(af.mean(data, af.D3)));
         });
     }
 
@@ -358,11 +341,11 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var rowResult = af.index(data, af.seq(0, 1), af.seq(1, 1));
-            assertArrayEquals(new float[]{3, 4}, af.data(rowResult).java(), 1E-5f);
+            assertArrayEquals(new float[]{3, 4}, af.data(rowResult));
             var columnResult = af.index(data, af.seq(0, 0), af.seq(0, 1));
-            assertArrayEquals(new float[]{1, 3}, af.data(columnResult).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 3}, af.data(columnResult));
             var reverseResult = af.index(data, af.seq(1, 0, -1), af.seq(1, 0, -1));
-            assertArrayEquals(new float[]{4, 3, 2, 1}, af.data(reverseResult).java(), 1E-5f);
+            assertArrayEquals(new float[]{4, 3, 2, 1}, af.data(reverseResult));
         });
     }
 
@@ -372,9 +355,9 @@ public class ArrayFireTest {
             var indexArray = af.create(af.U64, new long[]{1, 0}).reshape(2);
             var data = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var resultRows = af.index(data, af.seq(indexArray), af.seq(0, 1));
-            assertArrayEquals(new float[]{2, 1, 4, 3}, af.data(resultRows).java(), 1E-5f);
+            assertArrayEquals(new float[]{2, 1, 4, 3}, af.data(resultRows));
             var resultCols = af.index(data, af.seq(0, 1), af.seq(indexArray));
-            assertArrayEquals(new float[]{3, 4, 1, 2}, af.data(resultCols).java(), 1E-5f);
+            assertArrayEquals(new float[]{3, 4, 1, 2}, af.data(resultCols));
         });
     }
 
@@ -387,7 +370,7 @@ public class ArrayFireTest {
             Tensor<F32, Shape<A, B, C, D>> result = af.index(data, af.seq(af.create(0).reshape(af.a(1))),
                 af.seq(af.create(1).reshape(af.b(1))), af.seq(af.create(0).reshape(af.c(1))),
                 af.seq(af.create(1).reshape(af.d(1))));
-            assertArrayEquals(new float[]{11}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{11}, af.data(result));
         });
     }
 
@@ -397,7 +380,7 @@ public class ArrayFireTest {
             var a = af.a(2);
             var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8}).reshape(a, a, a);
             var result = af.index(data, af.span(), af.seq(0, 0), af.seq(af.create(U32, new int[]{1})));
-            assertArrayEquals(new float[]{5, 6}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{5, 6}, af.data(result));
         });
     }
 
@@ -406,7 +389,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8}).reshape(2, 2, 2);
             var result = af.index(data, af.span(), af.seq(0, 0), af.seq(0, 0));
-            assertArrayEquals(new float[]{1, 2}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2}, af.data(result));
         });
     }
 
@@ -414,7 +397,7 @@ public class ArrayFireTest {
     public void zeros() {
         af.tidy(() -> {
             var data = af.zeros(F32, af.shape(2, 2));
-            assertArrayEquals(new float[]{0, 0, 0, 0}, af.data(data).java(), 1E-5f);
+            assertArrayEquals(new float[]{0, 0, 0, 0}, af.data(data));
         });
     }
 
@@ -423,12 +406,12 @@ public class ArrayFireTest {
         af.tidy(() -> {
             af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_MERSENNE_GP11213);
             var data = af.randu(af.F64, af.shape(1));
-            assertArrayEquals(new double[]{0.4446248512515619}, af.data(data).java(), 1E-5);
+            assertArrayEquals(new double[]{0.4446248512515619}, af.data(data));
         });
         af.tidy(() -> {
             af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_THREEFRY_2X32_16);
             var data = af.randu(af.F64, af.shape(1));
-            assertArrayEquals(new double[]{0.21128287646002053}, af.data(data).java(), 1E-5);
+            assertArrayEquals(new double[]{0.21128287646002053}, af.data(data));
         });
     }
 
@@ -467,7 +450,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
             var result = af.ge(data, af.constant(2f).tileAs(data.shape()));
-            assertArrayEquals(new boolean[]{false, true, true, true}, af.data(result).java());
+            assertArrayEquals(new boolean[]{false, true, true, true}, af.data(result));
         });
     }
 
@@ -476,7 +459,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
             var result = af.maxof(data, af.constant(2f).tileAs(data.shape()));
-            assertArrayEquals(new float[]{2, 2, 3, 4}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{2, 2, 3, 4}, af.data(result));
         });
     }
 
@@ -485,7 +468,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
             var result = af.minof(data, af.constant(2f).tileAs(data.shape()));
-            assertArrayEquals(new float[]{1, 2, 2, 2}, af.data(result).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2, 2, 2}, af.data(result));
         });
     }
 
@@ -496,16 +479,16 @@ public class ArrayFireTest {
             var data2 = af.create(2).reshape(1, 1, 1, 1);
             var join0 = af.join(data1, data2);
             assertEquals(join0.shape(), af.shape(2, 1, 1, 1));
-            assertArrayEquals(new int[]{1, 2}, af.data(join0).java());
+            assertArrayEquals(new int[]{1, 2}, af.data(join0));
             var join1 = af.join(data1, data2, af.D1);
             assertEquals(join1.shape(), af.shape(1, 2, 1, 1));
-            assertArrayEquals(new int[]{1, 2}, af.data(join1).java());
+            assertArrayEquals(new int[]{1, 2}, af.data(join1));
             var join2 = af.join(data1, data2, af.D2);
             assertEquals(join2.shape(), af.shape(1, 1, 2, 1));
-            assertArrayEquals(new int[]{1, 2}, af.data(join2).java());
+            assertArrayEquals(new int[]{1, 2}, af.data(join2));
             var join3 = af.join(data1, data2, af.D3);
             assertEquals(join3.shape(), af.shape(1, 1, 1, 2));
-            assertArrayEquals(new int[]{1, 2}, af.data(join3).java());
+            assertArrayEquals(new int[]{1, 2}, af.data(join3));
         });
     }
 
@@ -514,8 +497,8 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4, 5}).reshape(1, 5);
             var batches = af.batch(data, 2);
-            assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0)).java(), 1E-5f);
-            assertArrayEquals(new float[]{5}, af.data(batches.get(2)).java(), 1E-5f);
+            assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0)));
+            assertArrayEquals(new float[]{5}, af.data(batches.get(2)));
         });
     }
 
@@ -525,8 +508,7 @@ public class ArrayFireTest {
             var input = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9}).reshape(3, 3, 1, 1);
             var filters = af.create(new float[]{4, 3, 2, 1, 8, 6, 4, 2}).reshape(2, 2, 1, 2);
             var convolved = af.convolve2(input, filters);
-            assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2}, af.data(convolved).java(),
-                1E-5f);
+            assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2}, af.data(convolved));
         });
     }
 
@@ -535,7 +517,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var rotated = af.rotate(input, (float) Math.PI / 2.0f, InterpolationType.NEAREST);
-            assertArrayEquals(new float[]{3, 1, 4, 2}, af.data(rotated).java(), 1E-5f);
+            assertArrayEquals(new float[]{3, 1, 4, 2}, af.data(rotated));
         });
     }
 
@@ -544,8 +526,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
             var scaled = af.scale(input, af.n(3), af.n(3), InterpolationType.BILINEAR);
-            assertArrayEquals(new float[]{1, 5 / 3f, 2, 7 / 3f, 3f, 10 / 3f, 3, 11 / 3f, 4}, af.data(scaled).java(),
-                1E-5f);
+            assertArrayEquals(new float[]{1, 5 / 3f, 2, 7 / 3f, 3f, 10 / 3f, 3, 11 / 3f, 4}, af.data(scaled), 1E-5);
         });
     }
 
@@ -589,7 +570,7 @@ public class ArrayFireTest {
             var negated = af.negate(start);
             var loss = af.sum(negated);
             var startGrads = af.grads(loss, start);
-            assertArrayEquals(new float[]{-1, -1}, af.data(startGrads).java(), 0);
+            assertArrayEquals(new float[]{-1, -1}, data(startGrads));
         });
     }
 
@@ -600,7 +581,7 @@ public class ArrayFireTest {
             var negated = af.negate(start);
             var added = af.add(start, negated);
             var startGrads = af.grads(added, start);
-            assertArrayEquals(new float[]{0, 0}, af.data(startGrads).java(), 0);
+            assertArrayEquals(new float[]{0, 0}, af.data(startGrads));
         });
     }
 
@@ -615,7 +596,7 @@ public class ArrayFireTest {
                     var mul = af.mul(a, b);
                     var loss = af.pow(af.sub(af.sum(mul), af.constant(5f)), 2);
                     af.optimize(loss);
-                    return af.data(loss).java()[0];
+                    return af.data(loss).get(0);
                 });
             }
             assertEquals(0, latestLoss, 1E-10);
@@ -640,7 +621,7 @@ public class ArrayFireTest {
             var pow4 = af.pow(pow2, 2);
             pow2.release();
             // Can still use pow4 after release.
-            assertEquals(16, af.data(pow4).java()[0], 0);
+            assertEquals(16, af.data(pow4).get(0), 0);
             // Throws.
             af.data(pow2);
         });
@@ -654,17 +635,8 @@ public class ArrayFireTest {
                 var arr2 = af.create(new float[]{1, 2, 3}).reshape(3);
                 var squared = af.mul(arr1, arr2);
                 var squaredData = af.data(squared);
-                assertArrayEquals(new float[]{1, 4, 9}, squaredData.java(), 1E-5f);
+                assertArrayEquals(new float[]{1, 4, 9}, squaredData);
             });
-        });
-    }
-
-    @Test
-    public void decodeEncodeF16() {
-        var values = new float[]{0.0f, 1.0f, -1f, 100.0f, -50f, Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY};
-        af.tidy(() -> {
-            var result = af.data(af.create(af.F16, values)).java();
-            Assert.assertArrayEquals(values, result, 1E-5f);
         });
     }
 
@@ -672,17 +644,65 @@ public class ArrayFireTest {
     public void decodeEncodeU32() {
         var values = new int[]{0, 1, 2, Integer.MAX_VALUE};
         af.tidy(() -> {
-            var result = af.data(af.create(af.U32, values)).java();
-            Assert.assertArrayEquals(values, result);
+            var result = af.data(af.create(af.S32, values));
+            assertArrayEquals(values, result);
         });
     }
 
-    @Test
-    public void allocPinned() {
-        af.tidy(() -> {
-            var f32 = new F32Array(1, true);
-            f32.set(0, 3f);
-            assertEquals(3f, af.data(af.create(f32)).java()[0], 0);
-        });
+    public static <S extends Shape<?, ?, ?, ?>, HA extends HostArray<B8, Boolean, S>> void assertArrayEquals(
+        boolean[] expected, HA actual) {
+        assertArrayEquals(af.createHost(B8, actual.shape(), false, expected), actual, 0);
+    }
+
+    public static <S extends Shape<?, ?, ?, ?>, HA extends HostArray<S32, Integer, S>> void assertArrayEquals(
+        int[] expected, HA actual) {
+        assertArrayEquals(af.createHost(S32, actual.shape(), false, expected), actual, 0);
+    }
+
+    public static <S extends Shape<?, ?, ?, ?>, HA extends HostArray<F32, Float, S>> void assertArrayEquals(
+        float[] expected, HA actual) {
+        assertArrayEquals(af.createHost(F32, actual.shape(), false, expected), actual, 0);
+    }
+
+    public static <S extends Shape<?, ?, ?, ?>, HA extends HostArray<F64, Double, S>> void assertArrayEquals(
+        double[] expected, HA actual) {
+        assertArrayEquals(af.createHost(F64, actual.shape(), false, expected), actual, 0);
+    }
+
+    public static <S extends Shape<?, ?, ?, ?>, HA extends HostArray<F32, Float, S>> void assertArrayEquals(
+        float[] expected, HA actual, double epsilon) {
+        assertArrayEquals(af.createHost(F32, actual.shape(), false, expected), actual, epsilon);
+    }
+
+    public static <S extends Shape<?, ?, ?, ?>, HA extends HostArray<F64, Double, S>> void assertArrayEquals(
+        double[] expected, HA actual, double epsilon) {
+        assertArrayEquals(af.createHost(F64, actual.shape(), false, expected), actual, epsilon);
+    }
+
+    public static <JAT, DTM extends DataType.Meta<?, ?, JAT>, DT extends DataType<DTM>, HA extends HostArray<DT, ?, ?>> void assertArrayEquals(
+        HA expected, HA actual) {
+        assertArrayEquals(expected, actual, 0);
+    }
+
+    public static <JAT, DTM extends DataType.Meta<?, ?, JAT>, DT extends DataType<DTM>, HA extends HostArray<DT, ?, ?>> void assertArrayEquals(
+        HA expected, HA actual, double epsilon) {
+        if (!expected.shape().equals(actual.shape())) {
+            throw new AssertionError("Shapes differ: " + expected.shape() + " != " + actual.shape());
+        }
+        if (expected.length() != actual.length()) {
+            throw new AssertionError("Lengths differ: " + expected.length() + " != " + actual.length());
+        }
+        for (int i = 0; i < expected.length(); i++) {
+            if (expected.get(i) instanceof Boolean) {
+                if (expected.get(i) != actual.get(i)) {
+                    throw new AssertionError("Element " + i + " differs: " + expected.get(i) + " != " + actual.get(i));
+                }
+            } else {
+                if (Math.abs(((Number) expected.get(i)).doubleValue() - ((Number) actual.get(i)).doubleValue()) >
+                        epsilon) {
+                    throw new AssertionError("Element " + i + " differs: " + expected.get(i) + " != " + actual.get(i));
+                }
+            }
+        }
     }
 }

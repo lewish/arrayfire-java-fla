@@ -10,7 +10,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 
-public class Tensor<T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> implements MemoryContainer {
+public class Tensor<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implements MemoryContainer {
 
     // Contains a single device pointer.
     public static final AddressLayout LAYOUT = ValueLayout.ADDRESS;
@@ -180,7 +180,7 @@ public class Tensor<T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> imple
         return this;
     }
 
-    public <TN extends DataType<?, ?>> Tensor<TN, S> cast(TN t) {
+    public <TN extends DataType<?>> Tensor<TN, S> cast(TN t) {
         return af.cast(this, t);
     }
 

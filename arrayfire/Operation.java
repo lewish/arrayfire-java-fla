@@ -60,7 +60,7 @@ public class Operation {
             return new Unary<>();
         }
 
-        public <I0T extends DataType<?, ?>, I0S extends Shape<?, ?, ?, ?>, I1T extends DataType<?, ?>, I1S extends Shape<?, ?, ?, ?>> Binary<Tensor<I0T, I0S>, Tensor<I1T, I1S>> inputs(
+        public <I0T extends DataType<?>, I0S extends Shape<?, ?, ?, ?>, I1T extends DataType<?>, I1S extends Shape<?, ?, ?, ?>> Binary<Tensor<I0T, I0S>, Tensor<I1T, I1S>> inputs(
             Tensor<I0T, I0S> left, Tensor<I1T, I1S> right) {
             operation.inputs.add(left);
             operation.inputs.add(right);
@@ -69,7 +69,7 @@ public class Operation {
 
         public class Nullary {
 
-            public <OT extends DataType<?, ?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
+            public <OT extends DataType<?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
                 Prototype<OT, OS> prototype) {
                 operation.outputs.add(new Tensor<>(prototype));
                 return new Single<>();
@@ -96,20 +96,20 @@ public class Operation {
                 return new None();
             }
 
-            public <OT extends DataType<?, ?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
+            public <OT extends DataType<?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
                 Prototype<OT, OS> prototype) {
                 operation.outputs.add(new Tensor<>(prototype));
                 return new Single<>();
             }
 
-            public <O0T extends DataType<?, ?>, O0S extends Shape<?, ?, ?, ?>, O1T extends DataType<?, ?>, O1S extends Shape<?, ?, ?, ?>> Pair<Tensor<O0T, O0S>, Tensor<O1T, O1S>> outputs(
+            public <O0T extends DataType<?>, O0S extends Shape<?, ?, ?, ?>, O1T extends DataType<?>, O1S extends Shape<?, ?, ?, ?>> Pair<Tensor<O0T, O0S>, Tensor<O1T, O1S>> outputs(
                 Prototype<O0T, O0S> left, Prototype<O1T, O1S> right) {
                 operation.outputs.add(new Tensor<>(left));
                 operation.outputs.add(new Tensor<>(right));
                 return new Pair<>();
             }
 
-            public <O0T extends DataType<?, ?>, O0S extends Shape<?, ?, ?, ?>, O1T extends DataType<?, ?>, O1S extends Shape<?, ?, ?, ?>, O2T extends DataType<?, ?>, O2S extends Shape<?, ?, ?, ?>> Trio<Tensor<O0T, O0S>, Tensor<O1T, O1S>, Tensor<O2T, O2S>> outputs(
+            public <O0T extends DataType<?>, O0S extends Shape<?, ?, ?, ?>, O1T extends DataType<?>, O1S extends Shape<?, ?, ?, ?>, O2T extends DataType<?>, O2S extends Shape<?, ?, ?, ?>> Trio<Tensor<O0T, O0S>, Tensor<O1T, O1S>, Tensor<O2T, O2S>> outputs(
                 Prototype<O0T, O0S> left, Prototype<O1T, O1S> middle, Prototype<O2T, O2S> right) {
                 operation.outputs.add(new Tensor<>(left));
                 operation.outputs.add(new Tensor<>(middle));
@@ -189,7 +189,7 @@ public class Operation {
 
         public class Binary<I0T extends Tensor<?, ?>, I1T extends Tensor<?, ?>> {
 
-            public <OT extends DataType<?, ?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
+            public <OT extends DataType<?>, OS extends Shape<?, ?, ?, ?>> Single<Tensor<OT, OS>> outputs(
                 Prototype<OT, OS> prototype) {
                 operation.outputs.add(new Tensor<>(prototype));
                 return new Single<>();

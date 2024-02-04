@@ -16,11 +16,11 @@ public class SGD implements OptimizerProvider {
         return this;
     }
 
-    public <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Optimizer<T, S> get() {
+    public <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Optimizer<T, S> get() {
         return new SGDOptimizer<>();
     }
 
-    public class SGDOptimizer<T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> implements Optimizer<T, S> {
+    public class SGDOptimizer<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implements Optimizer<T, S> {
 
         @Override
         public void optimize(Params<T, S> params, Tensor<T, S> gradients) {

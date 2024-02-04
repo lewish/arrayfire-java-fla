@@ -5,5 +5,5 @@ import arrayfire.Optimizer;
 import arrayfire.Shape;
 
 public interface OptimizerProvider {
-    <T extends DataType<?, ?>, S extends Shape<?, ?, ?, ?>> Optimizer<T, S> get();
+    <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Optimizer<T, S> get();
 }

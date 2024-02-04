@@ -6,7 +6,7 @@ import arrayfire.optimizers.OptimizerProvider;
 /**
  * A variable with an optimizer.
  */
-public class Params<T extends DataType<?, ?>, S extends Shape<?, ? ,? ,?>> extends Variable<T, S> {
+public class Params<T extends DataType<?>, S extends Shape<?, ? ,? ,?>> extends Variable<T, S> {
 
     private final Optimizer<T, S> optimizer;
 

@@ -1,23 +1,49 @@
 package arrayfire;
 
-import arrayfire.containers.F16Array;
-import static arrayfire.af.F16;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 
-public class F16 implements DataType<F16Array, F16> {
+import static arrayfire.ArrayFire.F16;
 
-  @Override
-  public int code() {
-    return DataTypeEnum.F16.code();
-  }
+public class F16 implements DataType<F16.Meta> {
 
-  @Override
-  public F16 sumType() {
-    return F16;
-  }
+    public static final Meta META = new Meta();
 
-  @Override
-  public F16Array create(int length) {
-    return new F16Array(length);
-  }
+    @Override
+    public Meta meta() {
+        return META;
+    }
 
+    @Override
+    public int code() {
+        return DataTypeEnum.F16.code();
+    }
+
+    public static class Meta implements DataType.Meta<F16, Short, short[]> {
+
+        @Override
+        public ValueLayout.OfShort layout() {
+            return ValueLayout.JAVA_SHORT;
+        }
+
+        @Override
+        public F16 sumType() {
+            return F16;
+        }
+
+        @Override
+        public Short get(MemorySegment segment, int index) {
+            return segment.getAtIndex(layout(), index);
+        }
+
+        @Override
+        public void set(MemorySegment segment, int index, Short value) {
+            segment.setAtIndex(layout(), index, value);
+        }
+
+        @Override
+        public short[] createHeapArray(int length) {
+            return new short[length];
+        }
+    }
 }
