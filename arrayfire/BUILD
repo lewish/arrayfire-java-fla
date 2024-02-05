@@ -1,5 +1,3 @@
-load("//bazel:java.bzl", "java_library_auto", "java_test_auto")
-
 package(default_visibility = ["//visibility:public"])
 
 genrule(
@@ -33,13 +31,22 @@ java_import(
     ],
 )
 
-java_library_auto(
-    recursive = True,
+java_library(
+    name = "arrayfire",
+    srcs = glob(
+        ["**/*.java"],
+        exclude = ["**/*Test.java"],
+    ),
     deps = [
         ":capi",
     ],
 )
 
-java_test_auto(
-    recursive = True,
+java_test(
+    name = "ArrayFireTest",
+    srcs = ["ArrayFireTest.java"],
+    test_class = "arrayfire.ArrayFireTest",
+    deps = [
+        ":arrayfire",
+    ],
 )
