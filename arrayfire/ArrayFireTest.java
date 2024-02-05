@@ -5,10 +5,7 @@ import arrayfire.numbers.B;
 import arrayfire.numbers.C;
 import arrayfire.numbers.D;
 import arrayfire.optimizers.SGD;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -39,6 +36,47 @@ public class ArrayFireTest {
     @After
     public void validateMemory() {
         assertEquals(0, Scope.trackedContainers());
+    }
+
+    @Test
+    public void constants() {
+        af.tidy(() -> {
+            assertEquals((byte) 5, (byte) af.data(af.constant((byte) 5)).get(0));
+            assertEquals(5, (int) af.data(af.constant(5)).get(0));
+            assertEquals(5, (long) af.data(af.constant(5L)).get(0));
+            assertEquals(5f, af.data(af.constant(5f)).get(0), 0);
+            assertEquals(5, af.data(af.constant(5.0)).get(0), 0);
+        });
+    }
+
+    @Test
+    public void hostArrayEmpty() {
+        af.tidy(() -> {
+            var arr = af.createHost(F32, shape(n(1)));
+            arr.set(0, 5f);
+            Assert.assertArrayEquals(new float[]{5}, heap(arr), 1E-5f);
+        });
+    }
+
+    @Test
+    public void hostArrayLiterals() {
+        af.tidy(() -> {
+            Assert.assertArrayEquals(new int[]{1, 2}, heap(createHost(1, 2)));
+            Assert.assertArrayEquals(new float[]{1, 2}, heap(createHost(1f, 2f)), 1E-5f);
+            Assert.assertArrayEquals(new double[]{1, 2}, heap(createHost(1.0, 2.0)), 1E-5f);
+        });
+    }
+
+    @Test
+    public void castShapes() {
+        af.tidy(() -> {
+            var arr = af.create(new float[]{1, 2, 3, 4});
+            assertEquals(af.shape(af.a(4)), arr.castshape(af::a).shape());
+            assertEquals(af.shape(af.a(4), af.b(1)), arr.castshape(af::a, af::b).shape());
+            assertEquals(af.shape(af.a(4), af.b(1), af.c(1)), arr.castshape(af::a, af::b, af::c).shape());
+            assertEquals(af.shape(af.a(4), af.b(1), af.c(1), af.d(1)),
+                arr.castshape(af::a, af::b, af::c, af::d).shape());
+        });
     }
 
     @Test
@@ -159,6 +197,24 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void zca() {
+        af.tidy(() -> {
+            var arr = af.create(new float[]{92, 80, 60, 30, 100, 70}).reshape(2, 3);
+            var zca = af.zca(arr);
+            assertArrayEquals(new float[]{0.11045734f, -0.06326824f, -0.06326824f, 0.0797966f}, af.data(zca));
+        });
+    }
+
+    @Test
+    public void deviceMemInfo() {
+        af.tidy(() -> {
+            af.range(2048);
+            var info = af.deviceMemInfo();
+            assertEquals(2048 * 4, info.allocBytes());
+        });
+    }
+
+    @Test
     public void inverse() {
         af.tidy(() -> {
             var arr = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
@@ -213,7 +269,7 @@ public class ArrayFireTest {
         });
     }
 
-    @Test(expected = ArrayFireException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void mulMismatched() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2});
@@ -296,6 +352,16 @@ public class ArrayFireTest {
             var data = af.create(new float[]{1, 2, 4, 3}).reshape(2, 2);
             var result = af.imax(data).indices();
             assertArrayEquals(new int[]{1, 0}, af.data(result.cast(S32)));
+        });
+    }
+
+    @Test
+    public void topk() {
+        af.tidy(() -> {
+            var data = af.create(new float[]{1, 2, 4, 3});
+            var result = af.topk(data, af.k(2));
+            assertArrayEquals(new float[]{4, 3}, af.data(result.values()));
+            assertArrayEquals(new int[]{2, 3}, af.data(result.indices().cast(S32)));
         });
     }
 
@@ -449,7 +515,7 @@ public class ArrayFireTest {
     public void ge() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.ge(data, af.constant(2f).tileAs(data.shape()));
+            var result = af.ge(data, 2f);
             assertArrayEquals(new boolean[]{false, true, true, true}, af.data(result));
         });
     }
@@ -458,7 +524,7 @@ public class ArrayFireTest {
     public void maxof() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.maxof(data, af.constant(2f).tileAs(data.shape()));
+            var result = af.maxof(data, 2f);
             assertArrayEquals(new float[]{2, 2, 3, 4}, af.data(result));
         });
     }
@@ -467,7 +533,7 @@ public class ArrayFireTest {
     public void minof() {
         af.tidy(() -> {
             var data = af.create(new float[]{1, 2, 3, 4});
-            var result = af.minof(data, af.constant(2f).tileAs(data.shape()));
+            var result = af.minof(data, 2f);
             assertArrayEquals(new float[]{1, 2, 2, 2}, af.data(result));
         });
     }
@@ -505,10 +571,30 @@ public class ArrayFireTest {
     @Test
     public void convolve2() {
         af.tidy(() -> {
-            var input = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9}).reshape(3, 3, 1, 1);
+            var input = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9}).reshape(3, 3, 1);
             var filters = af.create(new float[]{4, 3, 2, 1, 8, 6, 4, 2}).reshape(2, 2, 1, 2);
             var convolved = af.convolve2(input, filters);
             assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2}, af.data(convolved));
+        });
+    }
+
+    @Test
+    public void convolve2Padding() {
+        af.tidy(() -> {
+            var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2, 1);
+            var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
+            var convolved = af.convolve2(input, filters, shape(1, 1), shape(1, 1));
+            assertArrayEquals(new float[]{4, 11, 6, 14, 30, 14, 6, 11, 4}, af.data(convolved));
+        });
+    }
+
+    @Test
+    public void convolve2Stride() {
+        af.tidy(() -> {
+            var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2, 1);
+            var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
+            var convolved = af.convolve2(input, filters, shape(2, 2), shape(1, 1));
+            assertArrayEquals(new float[]{4, 6, 6, 4}, af.data(convolved));
         });
     }
 
@@ -531,22 +617,31 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void softmax() {
+        af.tidy(() -> {
+            var input = af.create(new float[]{1, 2, 3, 4});
+            var softmax = af.softmax(input);
+            assertArrayEquals(new float[]{0.0320586f, 0.08714432f, 0.23688284f, 0.6439143f}, af.data(softmax), 1E-5);
+        });
+    }
+
+    @Test
     public void graph() {
         af.tidy(() -> {
             var left = af.create(new float[]{1, 2, 3, 4}).reshape(a(2), b(2));
             var right = af.create(new float[]{1, 2, 3, 4, 5, 6}).reshape(a(2), c(3));
             var leftT = af.transpose(left);
             var matmul = af.matmul(leftT, right);
-            var softmax = af.softmax(matmul);
+            var log = af.log(matmul);
             var sum = af.sum(matmul);
             var graph = new Graph(af.scope().operations());
             assertEquals(Set.of(left), graph.dependencies(leftT));
             assertEquals(Set.of(leftT, right), graph.dependencies(matmul));
-            assertEquals(Set.of(matmul), graph.dependencies(softmax));
+            assertEquals(Set.of(matmul), graph.dependencies(log));
             assertEquals(Set.of(matmul), graph.dependencies(sum));
 
             assertEquals(Set.of(leftT), graph.dependents(left));
-            assertEquals(Set.of(softmax, sum), graph.dependents(matmul));
+            assertEquals(Set.of(log, sum), graph.dependents(matmul));
         });
     }
 

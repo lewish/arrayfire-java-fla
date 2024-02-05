@@ -34,6 +34,10 @@ public class Index<D extends Num<D>> {
         this.generator = generator;
     }
 
+    public D createDim() {
+        return generator.apply(size());
+    }
+
     public D createDim(int size) {
         return generator.apply(size);
     }

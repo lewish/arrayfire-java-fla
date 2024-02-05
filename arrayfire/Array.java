@@ -9,6 +9,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
+import java.util.function.Function;
 
 public class Array<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implements MemoryContainer {
 
@@ -96,17 +97,39 @@ public class Array<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implement
         return af.reshape(this, af.shape(d0, d1, d2, d3));
     }
 
-    public <NS extends Shape<?, ? ,? ,?>> Array<T, NS> reshape(
-        NS newShape) {
+    public <NS extends Shape<?, ?, ?, ?>> Array<T, NS> reshape(NS newShape) {
         return af.reshape(this, newShape);
     }
 
-    public <NS extends Shape<?, ? ,? ,?>> Array<T, NS> castshape(
-        NS newShape) {
-        if (!Arrays.equals(shape.dims(), newShape.dims())) {
-            throw new IllegalArgumentException("Cannot cast shape " + shape + " to " + newShape);
-        }
-        return af.reshape(this, newShape);
+    /**
+     * Change the type of the array's D0 dimension to the given type variable provider.
+     */
+    public <OD0 extends Num<OD0>> Array<T, Shape<OD0, U, U, U>> castshape(Function<Integer, OD0> d0) {
+        return af.castshape(this, d0, af::u, af::u, af::u);
+    }
+
+    /**
+     * Change the type of the array's D0, D1 dimensions to the given type variable providers.
+     */
+    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>> Array<T, Shape<OD0, OD1, U, U>> castshape(
+        Function<Integer, OD0> d0, Function<Integer, OD1> d1) {
+        return af.castshape(this, d0, d1, af::u, af::u);
+    }
+
+    /**
+     * Change the type of the array's D0, D1, D2 dimensions to the given type variable providers.
+     */
+    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>, OD2 extends Num<OD2>> Array<T, Shape<OD0, OD1, OD2, U>> castshape(
+        Function<Integer, OD0> d0, Function<Integer, OD1> d1, Function<Integer, OD2> d2) {
+        return af.castshape(this, d0, d1, d2, af::u);
+    }
+
+    /**
+     * Change the type of the array's dimensions to the given type variable providers.
+     */
+    public <OD0 extends Num<OD0>, OD1 extends Num<OD1>, OD2 extends Num<OD2>, OD3 extends Num<OD3>> Array<T, Shape<OD0, OD1, OD2, OD3>> castshape(
+        Function<Integer, OD0> d0, Function<Integer, OD1> d1, Function<Integer, OD2> d2, Function<Integer, OD3> d3) {
+        return af.castshape(this, d0, d1, d2, d3);
     }
 
     public void release() {
@@ -166,7 +189,7 @@ public class Array<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implement
         return af.tileAs(this, newShape);
     }
 
-    public Array<T, R1<N>> flatten() {
+    public Array<T, Shape<N, U, U, U>> flatten() {
         return af.flatten(this);
     }
 

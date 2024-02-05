@@ -61,4 +61,21 @@ public class HostArray<DT extends DataType<? extends DataType.Meta<?, JT, ?>>, J
             }
         }
     }
+
+    public String toString() {
+        var limit = Math.min(1000, length());
+        var sb = new StringBuilder();
+        sb.append("[");
+        for (int i = 0; i < limit; i++) {
+            sb.append(get(i));
+            if (i < limit - 1) {
+                sb.append(", ");
+            }
+        }
+        if (limit < length()) {
+            sb.append("...");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
 }
