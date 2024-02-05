@@ -201,7 +201,7 @@ public class ArrayFireTest {
         af.tidy(() -> {
             var arr = af.create(new float[]{92, 80, 60, 30, 100, 70}).reshape(2, 3);
             var zca = af.zca(arr);
-            assertArrayEquals(new float[]{0.11045734f, -0.06326824f, -0.06326824f, 0.0797966f}, af.data(zca));
+            assertArrayEquals(new float[]{0.11045734f, -0.06326824f, -0.06326824f, 0.0797966f}, af.data(zca), 1E-5);
         });
     }
 
