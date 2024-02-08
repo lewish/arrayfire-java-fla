@@ -24,7 +24,6 @@ public class HostArray<DT extends DataType<? extends DataType.Meta<?, JT, ?>>, J
             this.segment = arena.allocateArray(type.meta().layout(), shape.capacity());
 
         }
-        Scope.current().register(this);
     }
 
     public DT type() {

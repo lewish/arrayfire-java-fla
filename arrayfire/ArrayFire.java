@@ -292,7 +292,9 @@ public class ArrayFire {
 
     public static <JT, DTM extends DataType.Meta<?, JT, ?>, DT extends DataType<DTM>, S extends Shape<?, ?, ?, ?>> HostArray<DT, JT, S> createHost(
         DT type, S shape, boolean pinned) {
-        return new HostArray<>(type, shape, pinned);
+        var result = new HostArray<>(type, shape, pinned);
+        scope().register(result);
+        return result;
     }
 
     @SafeVarargs
@@ -326,7 +328,7 @@ public class ArrayFire {
                     java.lang.reflect.Array.getLength(values)));
         }
         var length = java.lang.reflect.Array.getLength(values);
-        var array = new HostArray<>(type, shape, pinned);
+        var array = createHost(type, shape, pinned);
         for (int i = 0; i < length; i++) {
             array.set(i, (JT) java.lang.reflect.Array.get(values, i));
         }
@@ -609,9 +611,9 @@ public class ArrayFire {
     /**
      * Pull data from the device to the host, returning a native array.
      */
-    public static <JT, T extends DataType<? extends DataType.Meta<?, JT, ?>>, S extends Shape<?, ?, ?, ?>> HostArray<T, JT, S> data(
+    public static <JT, DTM extends DataType.Meta<?, JT, ?>, T extends DataType<DTM>, S extends Shape<?, ?, ?, ?>> HostArray<T, JT, S> data(
         Array<T, S> a) {
-        var result = new HostArray<>(a.type(), a.shape(), false);
+        var result = createHost(a.type(), a.shape(), false);
         handleStatus(() -> arrayfire_h.af_get_data_ptr(result.segment(), a.dereference()));
         return result;
     }
