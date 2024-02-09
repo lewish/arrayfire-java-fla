@@ -618,6 +618,13 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void oneHot() {
+        var indices = af.create(new int[]{0, 1, 2}).reshape(u(), af.b(3));
+        var oneHot = af.oneHot(indices, af.a(3));
+        assertArrayEquals(new float[]{1, 0, 0, 0, 1, 0, 0, 0, 1}, af.data(oneHot));
+    }
+
+    @Test
     public void evalMultiple() {
         var random = af.randu(F32, shape(n(1_000_000)));
         var transform1 = af.exp(random);

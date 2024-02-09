@@ -368,8 +368,7 @@ public class ArrayFire {
         return operation("constant")
                    .inputs()
                    .outputs(prototype(type, shape))
-                   .operation(
-                       ptr -> arrayfire_h.af_constant(ptr, value, shape.ndims(), nativeDims(shape), type.code()))
+                   .operation(ptr -> arrayfire_h.af_constant(ptr, value, shape.ndims(), nativeDims(shape), type.code()))
                    .build();
 
     }
@@ -782,8 +781,8 @@ public class ArrayFire {
         return operation("reshape")
                    .inputs(array)
                    .outputs(prototype(array.type(), newShape))
-                   .operation(ptr -> arrayfire_h.af_moddims(ptr, array.dereference(), newShape.ndims(),
-                       nativeDims(newShape)))
+                   .operation(
+                       ptr -> arrayfire_h.af_moddims(ptr, array.dereference(), newShape.ndims(), nativeDims(newShape)))
                    .grads((result, grads) -> reshape(grads, array.shape()))
                    .build();
     }
@@ -1911,6 +1910,17 @@ public class ArrayFire {
                    .grads((result, grads) -> scale(grads, array.shape().d0(), array.shape().d1(),
                        interpolationType).reshape(array.shape()))
                    .build();
+    }
+
+    public static <D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Array<F32, Shape<D0, D1, D2, D3>> oneHot(
+        Array<S32, Shape<U, D1, D2, D3>> array, D0 classes) {
+        var shape = shape(classes, array.shape().d1(), array.shape().d2(), array.shape().d3());
+        return operation("one_hot").inputs(array).outputs(prototype(F32, shape)).operation(tidyOperation(() -> {
+            var compressedShape = shape(classes, n(array.shape().capacity()));
+            var values = af.constant(F32, array.shape(), 1);
+            var d1Indices = af.range(S32, compressedShape.d1().size());
+            return dense(sparse(values.flatten(), array.flatten(), d1Indices, compressedShape)).reshape(shape);
+        })).build();
     }
 
     public static void printMeminfo() {
