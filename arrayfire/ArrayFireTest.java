@@ -356,10 +356,12 @@ public class ArrayFireTest {
     @Test
     public void topk() {
         af.tidy(() -> {
-            var data = af.create(new float[]{1, 2, 4, 3});
+            var data = af.create(new float[]{1, 2, 4, 3, 8, 6, 7, 5}).reshape(4, 2);
             var result = af.topk(data, af.k(2));
-            assertArrayEquals(new float[]{4, 3}, af.data(result.values()));
-            assertArrayEquals(new int[]{2, 3}, af.data(result.indices().cast(S32)));
+            assertArrayEquals(new float[]{4, 3, 8, 7}, af.data(result.values()));
+            assertArrayEquals(new int[]{2, 3, 0, 2}, af.data(result.indices().cast(S32)));
+            var grads = af.grads(result.values(), data);
+            assertArrayEquals(new float[]{0, 0, 1, 1, 1, 0, 1, 0}, af.data(grads));
         });
     }
 
@@ -693,6 +695,26 @@ public class ArrayFireTest {
                 });
             }
             assertEquals(0, latestLoss, 1E-10);
+        });
+    }
+
+    @Test
+    public void sparseFromIndices() {
+        af.tidy(() -> {
+            var values = af.create(new float[]{1, 2, 3, 4});
+            var d0indices = af.create(2, 3, 0, 2);
+            var d1indices = af.create(0, 0, 1, 1);
+            var sparse = af.sparse(values, d0indices, d1indices, shape(4, 2));
+            assertArrayEquals(new float[]{0, 0, 1, 2, 3, 0, 4, 0}, af.data(dense(sparse)));
+        });
+    }
+
+    @Test
+    public void sparse() {
+        af.tidy(() -> {
+            var values = af.create(new float[]{1, 2, 0, 0}).reshape(2, 2);
+            var sparse = af.sparse(values, Storage.COO);
+            assertArrayEquals(new float[]{1, 2, 0, 0}, af.data(dense(sparse)));
         });
     }
 

@@ -140,7 +140,7 @@ public class Operation {
                 @SuppressWarnings("unchecked")
                 public Single<OT> grads(GradFunction.Unary<OT, IT> unaryGradFunction) {
                     operation.grads = (grads) -> {
-                        var inputGrad = unaryGradFunction.grads((OT) operation.outputs.getFirst(), (OT) grads);
+                        var inputGrad = unaryGradFunction.grads((OT) operation.outputs.getFirst(), (OT) grads.getFirst());
                         return List.of(inputGrad);
                     };
                     return this;
@@ -158,6 +158,15 @@ public class Operation {
                 public Pair<O0T, O1T> operation(Functions.Function2<MemorySegment, MemorySegment, Integer> function) {
                     operation.apply = (outputs) -> af.handleStatus(
                         () -> function.apply(outputs.getFirst().segment(), outputs.get(1).segment()));
+                    return this;
+                }
+
+                @SuppressWarnings("unchecked")
+                public Pair<O0T, O1T> grads(GradFunction.UnaryPair<O0T, O1T, IT> unaryGradFunction) {
+                    operation.grads = (grads) -> {
+                        var inputGrad = unaryGradFunction.grads(new ArrayPair<>((O0T) operation.outputs.getFirst(), (O1T) operation.outputs.get(1)), new ArrayPair<>((O0T) grads.getFirst(), (O1T) grads.get(1)));
+                        return List.of(inputGrad);
+                    };
                     return this;
                 }
 
@@ -205,7 +214,7 @@ public class Operation {
                 @SuppressWarnings("unchecked")
                 public Single<OT> grads(GradFunction.Binary<OT, I0T, I1T> binaryGradFunction) {
                     operation.grads = (grads) -> {
-                        var inputGrad = binaryGradFunction.grads((OT) operation.outputs.getFirst(), (OT) grads);
+                        var inputGrad = binaryGradFunction.grads((OT) operation.outputs.getFirst(), (OT) grads.getFirst());
                         return List.of(inputGrad.left(), inputGrad.right());
                     };
                     return this;

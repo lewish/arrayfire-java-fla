@@ -106,7 +106,8 @@ public class Graph {
                     "Attempting to compute the gradient of through a '%s' operation, but it does not support gradient propagation.",
                     node.name()));
             }
-            var inputGrads = node.grads().grads(gradsByOutput.get(current));
+            var outputGrads = node.outputs().stream().map(gradsByOutput::get).toList();
+            var inputGrads = node.grads().grads(outputGrads);
             for (var i = 0; i < node.inputs().size(); i++) {
                 var input = node.inputs().get(i);
                 var inputGrad = inputGrads.get(i);

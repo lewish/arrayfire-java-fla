@@ -1387,19 +1387,42 @@ public class ArrayFire {
                        .inputs(array)
                        .outputs(prototype(array.type(), shape), prototype(U32, shape))
                        .operation((leftPtr, rightPtr) -> arrayfire_h.af_imax(leftPtr, rightPtr, array.dereference(), 0))
+                       .grads(
+                           (results, grads) -> mul(af.eq(results.left().tileAs(array), array).cast(grads.left().type()),
+                               grads.left().tileAs(array)))
                        .build();
         return new ImaxResult<>(pair.left(), pair.right());
     }
 
-    public static <T extends DataType<?>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, K extends Num<K>, S extends Shape<?, D1, D2, D3>> TopKResult<T, Shape<K, D1, D2, D3>> topk(
+    // create_sparse_array
+    public static <T extends DataType<?>, D0 extends Num<D0>, S extends Shape<?, ?, U, U>> Array<T, S> sparse(
+        Array<T, ? extends Shape<?, U, U, U>> values, Array<S32, ? extends Shape<D0, U, U, U>> d0Indices,
+        Array<S32, ? extends Shape<D0, U, U, U>> d1Indices, S shape) {
+        return operation("sparse")
+                   .inputs(values)
+                   .outputs(prototype(values.type(), shape))
+                   .operation(ptr -> arrayfire_h.af_create_sparse_array(ptr, shape.d0().size(), shape.d1().size(),
+                       values.dereference(), d0Indices.dereference(), d1Indices.dereference(), Storage.COO.code()))
+                   .build();
+    }
+
+    public static <T extends DataType<?>, D1 extends Num<D1>, K extends Num<K>, S extends Shape<?, D1, U, U>> TopKResult<T, Shape<K, D1, U, U>> topk(
         Array<T, S> array, K k) {
-        var shape = shape(k, array.shape().d1(), array.shape().d2(), array.shape().d3());
+        var shape = shape(k, array.shape().d1());
         var pair = operation("topk")
                        .inputs(array)
                        .outputs(prototype(array.type(), shape), prototype(U32, shape))
                        .operation(
                            (leftPtr, rightPtr) -> arrayfire_h.af_topk(leftPtr, rightPtr, array.dereference(), k.size(),
                                0, 0))
+                       .grads((results, grads) -> {
+                           var values = grads.left();
+                           var d0Indices = results.right();
+                           var d1Indices = transpose(af.range(values.shape().d1().size())).tileAs(values.shape());
+                           return dense(
+                               sparse(values.flatten(), d0Indices.cast(S32).flatten(), d1Indices.cast(S32).flatten(),
+                                   array.shape()));
+                       })
                        .build();
         return new TopKResult<>(pair.left(), pair.right());
     }
@@ -1411,7 +1434,18 @@ public class ArrayFire {
                    .outputs(prototype(array.type(),
                        shape(array.shape().d0(), array.shape().d0(), array.shape().d2(), array.shape().d3())))
                    .operation(ptr -> arrayfire_h.af_diag_create(ptr, array.dereference(), 0))
-                   // TODO: Implement grad function.
+                   .grads((result, grads) -> diagExtract(grads).reshape(array.shape()))
+                   .build();
+    }
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>, SI extends Shape<D0, D0, D2, D3>> Array<T, Shape<D0, U, D2, D3>> diagExtract(
+        Array<T, SI> array) {
+        return operation("diag_extract")
+                   .inputs(array)
+                   .outputs(prototype(array.type(),
+                       shape(array.shape().d0(), af.u(), array.shape().d2(), array.shape().d3())))
+                   .operation(ptr -> arrayfire_h.af_diag_extract(ptr, array.dereference(), 0))
+                   .grads((result, grads) -> diag(grads).reshape(array.shape()))
                    .build();
     }
 
@@ -1525,6 +1559,7 @@ public class ArrayFire {
                    .inputs(array)
                    .outputs(array.prototype())
                    .operation(ptr -> arrayfire_h.af_sign(ptr, array.dereference()))
+                   .grads((result, grads) -> constant(array.type(), array.shape(), 0))
                    .build();
     }
 
@@ -1537,6 +1572,7 @@ public class ArrayFire {
                    .outputs(array.prototype())
                    .operation(tidyOperation(() -> sub(af.constant(array.type(), array.shape(), 1),
                        mul(af.constant(array.type(), array.shape(), 2), signbit(array)))))
+                   .grads((result, grads) -> constant(array.type(), array.shape(), 0))
                    .build();
     }
 
@@ -1598,11 +1634,20 @@ public class ArrayFire {
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> sparse(Array<T, S> array,
                                                                                           Storage storage) {
-        return operation("sparse")
+        return operation("sparse_from_dense")
                    .inputs(array)
                    .outputs(prototype(array.type(), array.shape()))
                    .operation(
                        ptr -> arrayfire_h.af_create_sparse_array_from_dense(ptr, array.dereference(), storage.code()))
+                   .grads((result, grads) -> dense(grads))
+                   .build();
+    }
+
+    public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> dense(Array<T, S> array) {
+        return operation("dense_from_sparse")
+                   .inputs(array)
+                   .outputs(prototype(array.type(), array.shape()))
+                   .operation(ptr -> arrayfire_h.af_sparse_to_dense(ptr, array.dereference()))
                    .grads((result, grads) -> grads)
                    .build();
     }
@@ -1789,7 +1834,7 @@ public class ArrayFire {
      */
     public static <ST extends DataType<?>, T extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, Shape<U, D1, D2, D3>> norm(
         Array<T, S> array) {
-        var mul = mul(array, array);
+        var mul = pow(array, array);
         var sum = sum(mul);
         return sqrt(sum);
     }
