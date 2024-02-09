@@ -40,11 +40,14 @@ public class ArrayFireTest {
 
     @After
     public void validateScope() {
-        // Validate shapes.
-        Scope.trackedArrays().forEach(ArrayFireTest::checkDims);
-        // Close the scope.
-        Scope.threadScope.get().dispose();
-        Scope.threadScope.remove();
+        try {
+            // Validate shapes.
+            Scope.trackedArrays().forEach(ArrayFireTest::checkDims);
+        } finally {
+            // Close the scope.
+            Scope.threadScope.get().dispose();
+            Scope.threadScope.remove();
+        }
         // Check there are no tracked containers or scopes left.
         assertEquals(0, Scope.trackedContainers().size());
         assertEquals(0, Scope.trackedScopes().size());
@@ -59,7 +62,8 @@ public class ArrayFireTest {
             var trueDims = dims.toArray(ValueLayout.JAVA_LONG);
             var expectedDims = array.shape().dims();
             for (int i = 0; i < trueDims.length; i++) {
-                if (trueDims[i] != expectedDims[i]) {
+                var expectedDim = i >= array.shape().ndims() ? 1 : expectedDims[i];
+                if (trueDims[i] != expectedDim) {
                     throw new RuntimeException(
                         String.format("Native dimensions %s do not match Java dims %s", Arrays.toString(expectedDims),
                             Arrays.toString(trueDims)));

@@ -1,11 +1,10 @@
 package arrayfire;
 
 import arrayfire.numbers.Num;
-import arrayfire.numbers.N;
+import arrayfire.numbers.U;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Function;
 
 
 public class Shape<D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> {
@@ -14,19 +13,34 @@ public class Shape<D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D
     private final D2 d2;
     private final D3 d3;
 
+    private final long[] dims;
+
     public Shape(D0 d0, D1 d1, D2 d2, D3 d3) {
         this.d0 = d0;
         this.d1 = d1;
         this.d2 = d2;
         this.d3 = d3;
+        if (!(d3 instanceof U)) {
+            dims = new long[]{d0.size(), d1.size(), d2.size(), d3.size()};
+        } else if (!(d2 instanceof U)) {
+            dims = new long[]{d0.size(), d1.size(), d2.size()};
+        } else if (!(d1 instanceof U)) {
+            dims = new long[]{d0.size(), d1.size()};
+        } else {
+            dims = new long[]{d0.size()};
+        }
     }
 
     public int capacity() {
         return d0.size() * d1.size() * d2.size() * d3.size();
     }
 
+    public int ndims() {
+        return dims.length;
+    }
+
     public long[] dims() {
-        return new long[]{d0.size(), d1.size(), d2.size(), d3.size()};
+        return dims;
     }
 
     @Override
@@ -56,9 +70,9 @@ public class Shape<D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D
             return true;
         if (obj == null || obj.getClass() != this.getClass())
             return false;
-        var that = (Shape<? ,? ,? ,?>) obj;
-        return Objects.equals(this.d0, that.d0) && Objects.equals(this.d1, that.d1) && Objects.equals(this.d2, that.d2) &&
-                   Objects.equals(this.d3, that.d3);
+        var that = (Shape<?, ?, ?, ?>) obj;
+        return Objects.equals(this.d0, that.d0) && Objects.equals(this.d1, that.d1) &&
+                   Objects.equals(this.d2, that.d2) && Objects.equals(this.d3, that.d3);
     }
 
     @Override

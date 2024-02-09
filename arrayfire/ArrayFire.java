@@ -183,7 +183,7 @@ public class ArrayFire {
         return operation("create")
                    .inputs()
                    .outputs(prototype(array.type(), array.shape()))
-                   .operation(ptr -> arrayfire_h.af_create_array(ptr, array.segment(), array.shape().dims().length,
+                   .operation(ptr -> arrayfire_h.af_create_array(ptr, array.segment(), array.shape().ndims(),
                        nativeDims(array.shape()), array.type().code()))
                    .build();
     }
@@ -369,7 +369,7 @@ public class ArrayFire {
                    .inputs()
                    .outputs(prototype(type, shape))
                    .operation(
-                       ptr -> arrayfire_h.af_constant(ptr, value, shape.dims().length, nativeDims(shape), type.code()))
+                       ptr -> arrayfire_h.af_constant(ptr, value, shape.ndims(), nativeDims(shape), type.code()))
                    .build();
 
     }
@@ -560,7 +560,7 @@ public class ArrayFire {
         return operation("randu")
                    .inputs()
                    .outputs(prototype(type, shape))
-                   .operation(ptr -> arrayfire_h.af_randu(ptr, shape.dims().length, nativeDims(shape), type.code()))
+                   .operation(ptr -> arrayfire_h.af_randu(ptr, shape.ndims(), nativeDims(shape), type.code()))
                    .build();
     }
 
@@ -571,7 +571,7 @@ public class ArrayFire {
         return operation("randn")
                    .inputs()
                    .outputs(prototype(type, shape))
-                   .operation(ptr -> arrayfire_h.af_randn(ptr, shape.dims().length, nativeDims(shape), type.code()))
+                   .operation(ptr -> arrayfire_h.af_randn(ptr, shape.ndims(), nativeDims(shape), type.code()))
                    .build();
     }
 
@@ -590,7 +590,7 @@ public class ArrayFire {
         return operation("range")
                    .inputs()
                    .outputs(prototype(type, shape))
-                   .operation(ptr -> arrayfire_h.af_range(ptr, shape.dims().length, nativeDims(shape), 0, type.code()))
+                   .operation(ptr -> arrayfire_h.af_range(ptr, shape.ndims(), nativeDims(shape), 0, type.code()))
                    .build();
     }
 
@@ -782,7 +782,7 @@ public class ArrayFire {
         return operation("reshape")
                    .inputs(array)
                    .outputs(prototype(array.type(), newShape))
-                   .operation(ptr -> arrayfire_h.af_moddims(ptr, array.dereference(), newShape.dims().length,
+                   .operation(ptr -> arrayfire_h.af_moddims(ptr, array.dereference(), newShape.ndims(),
                        nativeDims(newShape)))
                    .grads((result, grads) -> reshape(grads, array.shape()))
                    .build();
