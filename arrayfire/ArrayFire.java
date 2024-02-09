@@ -1792,6 +1792,19 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>, S extends Shape<D0, D1, D2, D3>, FS extends Shape<FD0, FD1, D2, FD3>> Array<T, Shape<N, N, FD3, D3>> convolve2(
         Array<T, S> array, Array<T, FS> filters, Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding,
         Shape<?, ?, ?, ?> dilation) {
+        if (array.shape().d2().size() != filters.shape().d2().size()) {
+            throw new IllegalArgumentException(
+                String.format("D2 for input %s and filters %s must match", array.shape(), filters.shape()));
+        }
+        if (stride.ndims() != 2) {
+            throw new IllegalArgumentException(String.format("Stride must be have 2 dims but was %s", stride));
+        }
+        if (padding.ndims() != 2) {
+            throw new IllegalArgumentException(String.format("Padding must be have 2 dims but was %s", padding));
+        }
+        if (dilation.ndims() != 2) {
+            throw new IllegalArgumentException(String.format("Dilation must be have 2 dims but was %s", dilation));
+        }
         var computedShape = shape(n((array.shape().d0().size() + 2 * padding.d0().size() -
                                          (filters.shape().d0().size() - 1) * dilation.d0().size() - 1) /
                                         stride.d0().size() + 1),
@@ -1806,6 +1819,9 @@ public class ArrayFire {
                            () -> arrayfire_h.af_convolve2_nn(ptr, array.dereference(), filters.dereference(), 2,
                                nativeDims(stride), 2, nativeDims(padding), 2, nativeDims(dilation))));
                        return Status.AF_SUCCESS.code();
+                   })
+                   .grads((result, grads) -> {
+                       var filterGrads = convolve2(array, grads, stride, padding, dilation);
                    })
                    .build();
     }
