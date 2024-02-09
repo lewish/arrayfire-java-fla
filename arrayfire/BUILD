@@ -48,5 +48,6 @@ java_test(
     test_class = "arrayfire.ArrayFireTest",
     deps = [
         ":arrayfire",
+        ":capi",
     ],
 )

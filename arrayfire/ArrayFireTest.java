@@ -1,5 +1,6 @@
 package arrayfire;
 
+import arrayfire.capi.arrayfire_h;
 import arrayfire.numbers.A;
 import arrayfire.numbers.B;
 import arrayfire.numbers.C;
@@ -12,6 +13,9 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.ValueLayout;
+import java.util.Arrays;
 import java.util.Set;
 
 import static arrayfire.ArrayFire.*;
@@ -31,11 +35,37 @@ public class ArrayFireTest {
         af.setBackend(Backend.CPU);
         af.setRandomEngineType(RandomEngineType.AF_RANDOM_ENGINE_PHILOX_4X32_10);
         af.setSeed(0);
+        Scope.threadScope.set(new Scope());
     }
 
     @After
-    public void validateMemory() {
-        assertEquals(0, Scope.trackedContainers());
+    public void validateScope() {
+        // Validate shapes.
+        Scope.trackedArrays().forEach(ArrayFireTest::checkDims);
+        // Close the scope.
+        Scope.threadScope.get().dispose();
+        Scope.threadScope.remove();
+        // Check there are no tracked containers or scopes left.
+        assertEquals(0, Scope.trackedContainers().size());
+        assertEquals(0, Scope.trackedScopes().size());
+    }
+
+    private static void checkDims(Array<?, ?> array) {
+        try (Arena arena = Arena.ofConfined()) {
+            var dims = arena.allocateArray(ValueLayout.JAVA_LONG, 4);
+            handleStatus(
+                () -> arrayfire_h.af_get_dims(dims.asSlice(0), dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
+                    array.dereference()));
+            var trueDims = dims.toArray(ValueLayout.JAVA_LONG);
+            var expectedDims = array.shape().dims();
+            for (int i = 0; i < trueDims.length; i++) {
+                if (trueDims[i] != expectedDims[i]) {
+                    throw new RuntimeException(
+                        String.format("Native dimensions %s do not match Java dims %s", Arrays.toString(expectedDims),
+                            Arrays.toString(trueDims)));
+                }
+            }
+        }
     }
 
     @Test

@@ -3,9 +3,10 @@ package arrayfire;
 import arrayfire.utils.IdentityHashSet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Scope {
-    private static final ThreadLocal<Scope> threadScope = ThreadLocal.withInitial(() -> null);
+    static final ThreadLocal<Scope> threadScope = ThreadLocal.withInitial(() -> null);
     private static final IdentityHashMap<MemoryContainer, Scope> containerScopes = new IdentityHashMap<>();
     private static final IdentityHashMap<Scope, Set<MemoryContainer>> scopeContainers = new IdentityHashMap<>();
     private final List<Operation> operations = new ArrayList<>();
@@ -44,13 +45,29 @@ public class Scope {
         scopeContainers.computeIfAbsent(scope, k -> IdentityHashSet.create()).add(memoryContainer);
     }
 
-    public static int trackedContainers() {
-        return scopeContainers.keySet().size();
+    public static Set<MemoryContainer> trackedContainers() {
+        return containerScopes.keySet();
+    }
+
+    public static Set<Scope> trackedScopes() {
+        return scopeContainers.keySet();
+    }
+
+    public static List<Array<?, ?>> trackedArrays() {
+        return containerScopes
+                   .keySet()
+                   .stream()
+                   .filter(mc -> mc instanceof Array)
+                   .map(mc -> (Array<?, ?>) mc)
+                   .collect(Collectors.toList());
     }
 
     public void dispose() {
         // Copy first to avoid concurrent modification exceptions.
-        List.copyOf(scopeContainers.getOrDefault(this, Set.of())).forEach(MemoryContainer::dispose);
+        List.copyOf(scopeContainers.getOrDefault(this, Set.of())).forEach(mc -> {
+            mc.dispose();
+            containerScopes.remove(mc);
+        });
         scopeContainers.remove(this);
     }
 

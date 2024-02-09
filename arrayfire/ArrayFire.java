@@ -628,24 +628,6 @@ public class ArrayFire {
         return heapArray;
     }
 
-    private static void checkDims(Array<?, ?> array) {
-        try (Arena arena = Arena.ofConfined()) {
-            var dims = arena.allocateArray(ValueLayout.JAVA_LONG, 4);
-            handleStatus(
-                () -> arrayfire_h.af_get_dims(dims.asSlice(0), dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
-                    array.dereference()));
-            var trueDims = dims.toArray(ValueLayout.JAVA_LONG);
-            var expectedDims = array.shape().dims();
-            for (int i = 0; i < trueDims.length; i++) {
-                if (trueDims[i] != expectedDims[i]) {
-                    throw new RuntimeException(
-                        String.format("Native dimensions %s do not match Java dims %s", Arrays.toString(expectedDims),
-                            Arrays.toString(trueDims)));
-                }
-            }
-        }
-    }
-
     /**
      * Return the current version of arrayfire.
      */
