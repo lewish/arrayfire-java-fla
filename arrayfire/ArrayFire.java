@@ -730,16 +730,26 @@ public class ArrayFire {
                    .build();
     }
 
-    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D3, D2>> reorder(
-        Array<T, S> array, arrayfire.D0 d0, arrayfire.D1 d1, arrayfire.D3 d2, arrayfire.D2 d3) {
-        return operation("reorder")
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D2, D1, D3>> transpose(
+        Array<T, S> array, arrayfire.D1 d1, arrayfire.D2 d2) {
+        return operation("transpose_D1_D2")
+                   .inputs(array)
+                   .outputs(prototype(array.type(),
+                       shape(array.shape().d0(), array.shape().d2(), array.shape().d1(), array.shape().d3())))
+                   .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 2, 1, 3))
+                   .grads((result, grads) -> transpose(grads, d1, d2).reshape(array.shape()))
+                   .build();
+    }
+
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D3, D2>> transpose(
+        Array<T, S> array, arrayfire.D2 d2, arrayfire.D3 d3) {
+        return operation("transpose_D2_D3")
                    .inputs(array)
                    .outputs(prototype(array.type(),
                        shape(array.shape().d0(), array.shape().d1(), array.shape().d3(), array.shape().d2())))
-                   .operation(
-                       ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), d0.index(), d1.index(), d2.index(),
-                           d3.index()))
-                   .grads((result, grads) -> reorder(grads, d0, d1, d2, d3).reshape(array.shape()))
+                   .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 1, 3, 2))
+                   .grads((result, grads) -> transpose(grads, d2, d3).reshape(array.shape()))
                    .build();
     }
 
@@ -1841,14 +1851,15 @@ public class ArrayFire {
                    .grads((result, grads) -> {
                        // We can get the filter gradients back by performing a convolution again, reducing over the
                        // image batch as "channels" in reverse.
-                       var inputR = reorder(array, D0, D1, D3, D2);
-                       var gradsR = reorder(grads, D0, D1, D3, D2);
-                       var filterGradsR = convolve2(inputR, gradsR, stride, padding, dilation);
-                       var filterGrads = reorder(filterGradsR, D0, D1, D3, D2);
+                       var inputTranspose = transpose(array, D2, D3);
+                       var gradsTranspose = transpose(grads, D2, D3);
+                       var filterGradsTranspose = convolve2(inputTranspose, gradsTranspose, stride, padding, dilation);
+                       var filterGrads = transpose(filterGradsTranspose, D2, D3);
                        if (!Arrays.equals(filterGrads.shape().dims(), filters.shape().dims())) {
+                           // This shouldn't happen, but I haven't extensively tested convolution variations.
                            throw new IllegalStateException(
                                String.format("Internal: Filter grads shape %s does not match filters shape %s",
-                                   filterGradsR.shape(), filters.shape()));
+                                   filterGradsTranspose.shape(), filters.shape()));
                        }
                        return new ArrayPair<>(new ErrorArray<>(array.type(), array.shape(),
                            "Gradients cannot currently be computed for the input to a convolution"),

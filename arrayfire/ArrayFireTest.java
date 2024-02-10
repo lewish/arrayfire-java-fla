@@ -508,8 +508,8 @@ public class ArrayFireTest {
 
     @Test
     public void convolve2Padding() {
-        var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2, 1);
-        var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
+        var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
+        var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2);
         var convolved = af.convolve2(input, filters, shape(1, 1), shape(1, 1));
         assertArrayEquals(new float[]{4, 11, 6, 14, 30, 14, 6, 11, 4}, af.data(convolved));
         var filterGrads = af.grads(convolved, filters);
@@ -518,8 +518,8 @@ public class ArrayFireTest {
 
     @Test
     public void convolve2Stride() {
-        var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2, 1);
-        var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
+        var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
+        var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2);
         var convolved = af.convolve2(input, filters, shape(2, 2), shape(1, 1));
         assertArrayEquals(new float[]{4, 6, 6, 4}, af.data(convolved));
         var filterGrads = af.grads(convolved, filters);
@@ -528,10 +528,10 @@ public class ArrayFireTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void convolve2InputGrads() {
-        var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2, 1);
-        var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
+        var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
+        var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2);
         var convolved = af.convolve2(input, filters, shape(2, 2), shape(1, 1));
-        var grads = af.grads(convolved, input);
+        af.grads(convolved, input);
     }
 
     @Test
