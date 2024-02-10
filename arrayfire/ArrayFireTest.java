@@ -54,6 +54,9 @@ public class ArrayFireTest {
     }
 
     private static void checkDims(Array<?, ?> array) {
+        if (!array.materialized()) {
+            return;
+        }
         try (Arena arena = Arena.ofConfined()) {
             var dims = arena.allocateArray(ValueLayout.JAVA_LONG, 4);
             handleStatus(
@@ -499,6 +502,8 @@ public class ArrayFireTest {
         var filters = af.create(new float[]{4, 3, 2, 1, 8, 6, 4, 2}).reshape(2, 2, 1, 2);
         var convolved = af.convolve2(input, filters);
         assertArrayEquals(new float[]{37, 47, 67, 77, 37 * 2, 47 * 2, 67 * 2, 77 * 2}, af.data(convolved));
+        var filterGrads = af.grads(convolved, filters);
+        assertArrayEquals(new float[]{12, 16, 24, 28, 12, 16, 24, 28}, af.data(filterGrads));
     }
 
     @Test
@@ -507,6 +512,8 @@ public class ArrayFireTest {
         var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
         var convolved = af.convolve2(input, filters, shape(1, 1), shape(1, 1));
         assertArrayEquals(new float[]{4, 11, 6, 14, 30, 14, 6, 11, 4}, af.data(convolved));
+        var filterGrads = af.grads(convolved, filters);
+        assertArrayEquals(new float[]{10, 10, 10, 10}, af.data(filterGrads));
     }
 
     @Test
@@ -515,6 +522,16 @@ public class ArrayFireTest {
         var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
         var convolved = af.convolve2(input, filters, shape(2, 2), shape(1, 1));
         assertArrayEquals(new float[]{4, 6, 6, 4}, af.data(convolved));
+        var filterGrads = af.grads(convolved, filters);
+        assertArrayEquals(new float[]{1, 2, 3, 4}, af.data(filterGrads));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void convolve2InputGrads() {
+        var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2, 1);
+        var filters = af.create(new float[]{4, 3, 2, 1}).reshape(2, 2, 1, 1);
+        var convolved = af.convolve2(input, filters, shape(2, 2), shape(1, 1));
+        var grads = af.grads(convolved, input);
     }
 
     @Test
