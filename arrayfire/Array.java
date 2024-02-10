@@ -8,7 +8,6 @@ import java.lang.foreign.AddressLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.util.Arrays;
 import java.util.function.Function;
 
 public class Array<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implements MemoryContainer {
@@ -37,9 +36,17 @@ public class Array<T extends DataType<?>, S extends Shape<?, ?, ?, ?>> implement
      * @return the wrapped void* pointer of the C af_array.
      */
     public MemorySegment dereference() {
-        return segment.get(LAYOUT, 0L);
+        var value = segment.get(LAYOUT, 0L);
+        if (MemorySegment.NULL.equals(value)) {
+            throw new IllegalStateException(
+                String.format("Cannot dereference an uninitialized segment (nullptr) %s", shape));
+        }
+        return value;
     }
 
+    public boolean materialized() {
+        return !MemorySegment.NULL.equals(segment.get(LAYOUT, 0L));
+    }
 
     public int capacity() {
         return shape.capacity();

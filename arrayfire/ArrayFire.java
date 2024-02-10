@@ -730,6 +730,30 @@ public class ArrayFire {
                    .build();
     }
 
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D2, D1, D3>> transpose(
+        Array<T, S> array, arrayfire.D1 d1, arrayfire.D2 d2) {
+        return operation("transpose_D1_D2")
+                   .inputs(array)
+                   .outputs(prototype(array.type(),
+                       shape(array.shape().d0(), array.shape().d2(), array.shape().d1(), array.shape().d3())))
+                   .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 2, 1, 3))
+                   .grads((result, grads) -> transpose(grads, d1, d2).reshape(array.shape()))
+                   .build();
+    }
+
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D3, D2>> transpose(
+        Array<T, S> array, arrayfire.D2 d2, arrayfire.D3 d3) {
+        return operation("transpose_D2_D3")
+                   .inputs(array)
+                   .outputs(prototype(array.type(),
+                       shape(array.shape().d0(), array.shape().d1(), array.shape().d3(), array.shape().d2())))
+                   .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 1, 3, 2))
+                   .grads((result, grads) -> transpose(grads, d2, d3).reshape(array.shape()))
+                   .build();
+    }
+
+
     /**
      * Change the type of the array's D0 dimension to the given type variable provider.
      */
@@ -791,6 +815,9 @@ public class ArrayFire {
      * Release the memory of the given array on the device.
      */
     public static void release(Array<?, ?> array) {
+        if (!array.materialized()) {
+            return;
+        }
         handleStatus(() -> arrayfire_h.af_release_array(array.dereference()));
         Scope.untrack(array);
     }
@@ -1792,6 +1819,19 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>, S extends Shape<D0, D1, D2, D3>, FS extends Shape<FD0, FD1, D2, FD3>> Array<T, Shape<N, N, FD3, D3>> convolve2(
         Array<T, S> array, Array<T, FS> filters, Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding,
         Shape<?, ?, ?, ?> dilation) {
+        if (array.shape().d2().size() != filters.shape().d2().size()) {
+            throw new IllegalArgumentException(
+                String.format("D2 for input %s and filters %s must match", array.shape(), filters.shape()));
+        }
+        if (stride.ndims() != 2) {
+            throw new IllegalArgumentException(String.format("Stride must be have 2 dims but was %s", stride));
+        }
+        if (padding.ndims() != 2) {
+            throw new IllegalArgumentException(String.format("Padding must be have 2 dims but was %s", padding));
+        }
+        if (dilation.ndims() != 2) {
+            throw new IllegalArgumentException(String.format("Dilation must be have 2 dims but was %s", dilation));
+        }
         var computedShape = shape(n((array.shape().d0().size() + 2 * padding.d0().size() -
                                          (filters.shape().d0().size() - 1) * dilation.d0().size() - 1) /
                                         stride.d0().size() + 1),
@@ -1802,10 +1842,28 @@ public class ArrayFire {
                    .inputs(array, filters)
                    .outputs(prototype(array.type(), computedShape))
                    .operation(ptr -> {
+                       // Potentially retry after GC due to https://github.com/arrayfire/arrayfire/issues/3402
                        retryWithGc(() -> handleStatus(
                            () -> arrayfire_h.af_convolve2_nn(ptr, array.dereference(), filters.dereference(), 2,
                                nativeDims(stride), 2, nativeDims(padding), 2, nativeDims(dilation))));
                        return Status.AF_SUCCESS.code();
+                   })
+                   .grads((result, grads) -> {
+                       // We can get the filter gradients back by performing a convolution again, reducing over the
+                       // image batch as "channels" in reverse.
+                       var inputTranspose = transpose(array, D2, D3);
+                       var gradsTranspose = transpose(grads, D2, D3);
+                       var filterGradsTranspose = convolve2(inputTranspose, gradsTranspose, stride, padding, dilation);
+                       var filterGrads = transpose(filterGradsTranspose, D2, D3);
+                       if (!Arrays.equals(filterGrads.shape().dims(), filters.shape().dims())) {
+                           // This shouldn't happen, but I haven't extensively tested convolution variations.
+                           throw new IllegalStateException(
+                               String.format("Internal: Filter grads shape %s does not match filters shape %s",
+                                   filterGradsTranspose.shape(), filters.shape()));
+                       }
+                       return new ArrayPair<>(new ErrorArray<>(array.type(), array.shape(),
+                           "Gradients cannot currently be computed for the input to a convolution"),
+                           filterGrads.reshape(filters.shape()));
                    })
                    .build();
     }
