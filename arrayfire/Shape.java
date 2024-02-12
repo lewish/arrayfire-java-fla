@@ -64,6 +64,18 @@ public class Shape<D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D
         return d3;
     }
 
+    public int offset(int d0i, int d1i, int d2i, int d3i) {
+        return d3i * d2.size() * d1.size() * d0.size() + d2i * d1.size() * d0.size() + d1i * d0.size() + d0i;
+    }
+
+    public int offset(int d0i, int d1i, int d2i) {
+        return d2i * d1.size() * d0.size() + d1i * d0.size() + d0i;
+    }
+
+    public int offset(int d0i, int d1i) {
+        return d1i * d0.size() + d0i;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this)

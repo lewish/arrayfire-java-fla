@@ -491,9 +491,33 @@ public class ArrayFireTest {
     @Test
     public void batch() {
         var data = af.create(new float[]{1, 2, 3, 4, 5}).reshape(1, 5);
-        var batches = af.batch(data, 2);
-        assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0)));
-        assertArrayEquals(new float[]{5}, af.data(batches.get(2)));
+        var batches = af.batch(data, D1, 2);
+        assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0).get()));
+        assertArrayEquals(new float[]{5}, af.data(batches.get(2).get()));
+    }
+
+    @Test
+    public void batchD1() {
+        var data = af.create(new float[]{1, 2, 3, 4, 5}).reshape(1, 5);
+        var batches = af.batch(data, D1, 2);
+        assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0).get()));
+        assertArrayEquals(new float[]{5}, af.data(batches.get(2).get()));
+    }
+
+    @Test
+    public void batchD2() {
+        var data = af.create(new float[]{1, 2, 3, 4, 5}).reshape(1, 1, 5);
+        var batches = af.batch(data, D2, 2);
+        assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0).get()));
+        assertArrayEquals(new float[]{5}, af.data(batches.get(2).get()));
+    }
+
+    @Test
+    public void batchD3() {
+        var data = af.create(new float[]{1, 2, 3, 4, 5}).reshape(1, 1, 1, 5);
+        var batches = af.batch(data, D3, 2);
+        assertArrayEquals(new float[]{1, 2}, af.data(batches.get(0).get()));
+        assertArrayEquals(new float[]{5}, af.data(batches.get(2).get()));
     }
 
     @Test
