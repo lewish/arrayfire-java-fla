@@ -2,7 +2,7 @@ workspace(
     name = "arrayfire_java_fla",
 )
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 
 RULES_JVM_EXTERNAL_TAG = "5.3"
 
@@ -39,3 +39,27 @@ maven_install(
 load("//:deps.bzl", "arrayfire_java_fla_deps")
 
 arrayfire_java_fla_deps()
+
+http_file(
+    name = "mnist_train_images",
+    sha256 = "440fcabf73cc546fa21475e81ea370265605f56be210a4024d2ca8f203523609",
+    urls = ["https://storage.googleapis.com/cvdf-datasets/mnist/train-images-idx3-ubyte.gz"],
+)
+
+http_file(
+    name = "mnist_train_labels",
+    sha256 = "3552534a0a558bbed6aed32b30c495cca23d567ec52cac8be1a0730e8010255c",
+    urls = ["https://storage.googleapis.com/cvdf-datasets/mnist/train-labels-idx1-ubyte.gz"],
+)
+
+http_file(
+    name = "mnist_test_images",
+    sha256 = "8d422c7b0a1c1c79245a5bcf07fe86e33eeafee792b84584aec276f5a2dbc4e6",
+    urls = ["https://storage.googleapis.com/cvdf-datasets/mnist/t10k-images-idx3-ubyte.gz"],
+)
+
+http_file(
+    name = "mnist_test_labels",
+    sha256 = "f7ae60f92e00ec6debd23a6088c31dbd2371eca3ffa0defaefb259924204aec6",
+    urls = ["https://storage.googleapis.com/cvdf-datasets/mnist/t10k-labels-idx1-ubyte.gz"],
+)

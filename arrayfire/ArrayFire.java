@@ -10,12 +10,12 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 public class ArrayFire {
 
@@ -1724,22 +1724,58 @@ public class ArrayFire {
 
     }
 
-    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> List<Array<T, Shape<D0, N, U, U>>> batch(
-        Array<T, S> array, int batchSize) {
-        return batch(array, ArrayFire::n, batchSize);
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
+        Array<T, S> array, arrayfire.D0 ignored, int batchSize) {
+        return IntStream
+                   .range(0, (int) Math.ceil(array.shape().d0().size() / (double) batchSize))
+                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                       var offset = i * batchSize;
+                       var computedSize = Math.min(batchSize, array.shape().d0().size() - offset);
+                       var dim = array.shape().d0().create(computedSize);
+                       return () -> index(array, seq(offset, dim));
+                   })
+                   .toList();
     }
 
-    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>, BDT extends Num<BDT>> List<Array<T, Shape<D0, BDT, U, U>>> batch(
-        Array<T, S> array, Function<Integer, BDT> type, int batchSize) {
-        var results = new ArrayList<Array<T, Shape<D0, BDT, U, U>>>();
-        var d0Seq = seq(array.shape().d0());
-        for (int i = 0; i < array.shape().d1().size(); i += batchSize) {
-            var computedD1Size = Math.min(batchSize, array.shape().d1().size() - i);
-            var slice = index(array, d0Seq, seq(i, i + computedD1Size - 1));
-            results.add(slice.reshape(shape(array.shape().d0(), type.apply(computedD1Size))));
-        }
-        return results;
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
+        Array<T, S> array, arrayfire.D1 ignored, int batchSize) {
+        return IntStream
+                   .range(0, (int) Math.ceil(array.shape().d1().size() / (double) batchSize))
+                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                       var offset = i * batchSize;
+                       var computedSize = Math.min(batchSize, array.shape().d1().size() - offset);
+                       var dim = array.shape().d1().create(computedSize);
+                       return () -> index(array, span(), seq(offset, dim));
+                   })
+                   .toList();
     }
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
+        Array<T, S> array, arrayfire.D2 ignored, int batchSize) {
+        return IntStream
+                   .range(0, (int) Math.ceil(array.shape().d2().size() / (double) batchSize))
+                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                       var offset = i * batchSize;
+                       var computedSize = Math.min(batchSize, array.shape().d2().size() - offset);
+                       var dim = array.shape().d2().create(computedSize);
+                       return () -> index(array, span(), span(), seq(offset, dim));
+                   })
+                   .toList();
+    }
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
+        Array<T, S> array, arrayfire.D3 ignored, int batchSize) {
+        return IntStream
+                   .range(0, (int) Math.ceil(array.shape().d3().size() / (double) batchSize))
+                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                       var offset = i * batchSize;
+                       var computedSize = Math.min(batchSize, array.shape().d3().size() - offset);
+                       var dim = array.shape().d3().create(computedSize);
+                       return () -> index(array, span(), span(), span(), seq(offset, dim));
+                   })
+                   .toList();
+    }
+
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>, NS extends Shape<?, ?, ?, ?>> Array<T, NS> tileAs(
@@ -1873,7 +1909,7 @@ public class ArrayFire {
      */
     public static <ST extends DataType<?>, T extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, Shape<U, D1, D2, D3>> norm(
         Array<T, S> array) {
-        var mul = pow(array, array);
+        var mul = pow(array, 2);
         var sum = sum(mul);
         return sqrt(sum);
     }
