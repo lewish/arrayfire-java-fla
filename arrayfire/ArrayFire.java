@@ -1177,21 +1177,6 @@ public class ArrayFire {
                    .build();
     }
 
-//    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>,
-//                      D3 extends Num<D3>, SL extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D2, D3>> join(
-//        List<Array<T, SL>> arrays, arrayfire.D1 ignored) {
-//        return operation("join")
-//                   .inputs(lhs, rhs)
-//                   .outputs(prototype(lhs.type(),
-//                       shape(lhs.shape().d0(), n(lhs.shape().d1().size() + rhs.shape().d1().size()), lhs.shape().d2(),
-//                           lhs.shape().d3())))
-//                   .operation(ptr -> arrayfire_h.af_join(ptr, 1, lhs.dereference(), rhs.dereference()))
-//                   .grads((result, grads) -> new ArrayPair<>(
-//                       index(grads, span(), seq(lhs.shape().d1())).reshape(lhs.shape()),
-//                       index(grads, span(), seq(lhs.shape().d1().size(), rhs.shape().d1())).reshape(rhs.shape())))
-//                   .build();
-//    }
-
     public static <T extends DataType<?>, LD2 extends Num<LD2>, RD2 extends Num<RD2>, D0 extends Num<D0>, D1 extends Num<D1>, D3 extends Num<D3>, SL extends Shape<D0, D1, LD2, D3>, SR extends Shape<D0, D1, RD2, D3>> Array<T, Shape<D0, D1, N, D3>> join(
         Array<T, SL> lhs, Array<T, SR> rhs, arrayfire.D2 ignored) {
         if (!(lhs.shape().d0().size() == rhs.shape().d0().size() &&
