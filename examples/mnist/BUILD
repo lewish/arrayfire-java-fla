@@ -17,3 +17,9 @@ java_binary(
     main_class = "examples.mnist.SimpleNN",
     runtime_deps = [":mnist"],
 )
+
+java_binary(
+    name = "ConvNN",
+    main_class = "examples.mnist.ConvNN",
+    runtime_deps = [":mnist"],
+)

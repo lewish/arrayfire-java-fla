@@ -115,10 +115,10 @@ public class ArrayFire {
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> sort(Array<T, S> array, Dim dim,
                                                                                         boolean ascending) {
         return operation("sort")
-                   .inputs(array)
-                   .outputs(array.prototype())
-                   .operation(ptr -> arrayfire_h.af_sort(ptr, array.dereference(), dim.index(), ascending))
-                   .build();
+            .inputs(array)
+            .outputs(array.prototype())
+            .operation(ptr -> arrayfire_h.af_sort(ptr, array.dereference(), dim.index(), ascending))
+            .build();
     }
 
     /**
@@ -157,12 +157,12 @@ public class ArrayFire {
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> SortIndexResult<T, S> sortIndex(
         Array<T, S> array, Dim dim, boolean ascending) {
         var pair = operation("sort_index")
-                       .inputs(array)
-                       .outputs(prototype(array.type(), array.shape()), prototype(U32, array.shape()))
-                       .operation(
-                           (leftPtr, rightPtr) -> arrayfire_h.af_sort_index(leftPtr, rightPtr, array.dereference(),
-                               dim.index(), ascending))
-                       .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), array.shape()), prototype(U32, array.shape()))
+            .operation(
+                (leftPtr, rightPtr) -> arrayfire_h.af_sort_index(leftPtr, rightPtr, array.dereference(), dim.index(),
+                    ascending))
+            .build();
         return new SortIndexResult<>(pair.left(), pair.right());
     }
 
@@ -181,11 +181,11 @@ public class ArrayFire {
     public static <DT extends DataType<? extends DataType.Meta<?, ?, ?>>, S extends Shape<?, ?, ?, ?>, HA extends HostArray<DT, ?, S>> Array<DT, S> create(
         HA array) {
         return operation("create")
-                   .inputs()
-                   .outputs(prototype(array.type(), array.shape()))
-                   .operation(ptr -> arrayfire_h.af_create_array(ptr, array.segment(), array.shape().ndims(),
-                       nativeDims(array.shape()), array.type().code()))
-                   .build();
+            .inputs()
+            .outputs(prototype(array.type(), array.shape()))
+            .operation(ptr -> arrayfire_h.af_create_array(ptr, array.segment(), array.shape().ndims(),
+                nativeDims(array.shape()), array.type().code()))
+            .build();
     }
 
     /**
@@ -366,10 +366,10 @@ public class ArrayFire {
     public static <DT extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<DT, S> constant(DT type, S shape,
                                                                                               double value) {
         return operation("constant")
-                   .inputs()
-                   .outputs(prototype(type, shape))
-                   .operation(ptr -> arrayfire_h.af_constant(ptr, value, shape.ndims(), nativeDims(shape), type.code()))
-                   .build();
+            .inputs()
+            .outputs(prototype(type, shape))
+            .operation(ptr -> arrayfire_h.af_constant(ptr, value, shape.ndims(), nativeDims(shape), type.code()))
+            .build();
 
     }
 
@@ -471,6 +471,11 @@ public class ArrayFire {
         return new Shape<>(d0, d1, d2, d3);
     }
 
+    public static <D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Shape<D0, D1, D2, D3> shape(
+        Shape<D0, D1, U, U> shape, Shape<D2, D3, U, U> shape2) {
+        return new Shape<>(shape.d0(), shape.d1(), shape2.d0(), shape2.d1());
+    }
+
 
     public static <D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Shape<D0, D1, D2, D3> shape(
         Index<D0> d0, Index<D1> d1, Index<D2> d2, Index<D3> d3) {
@@ -481,18 +486,18 @@ public class ArrayFire {
         String name, Array<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
         arrayfire.D0 dim, T resultType) {
         return operation(name)
-                   .inputs(a)
-                   .outputs(prototype(resultType, shape(u(), a.shape().d1(), a.shape().d2(), a.shape().d3())))
-                   .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
+            .inputs(a)
+            .outputs(prototype(resultType, shape(u(), a.shape().d1(), a.shape().d2(), a.shape().d3())))
+            .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
     }
 
     private static <T extends DataType<?>, IT extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Operation.Builder.Unary<Array<IT, S>>.Single<Array<T, Shape<D0, U, D2, D3>>> reduce(
         String name, Array<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
         arrayfire.D1 dim, T resultType) {
         return operation(name)
-                   .inputs(a)
-                   .outputs(prototype(resultType, shape(a.shape().d0(), u(), a.shape().d2(), a.shape().d3())))
-                   .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
+            .inputs(a)
+            .outputs(prototype(resultType, shape(a.shape().d0(), u(), a.shape().d2(), a.shape().d3())))
+            .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
 
     }
 
@@ -500,18 +505,18 @@ public class ArrayFire {
         String name, Array<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
         arrayfire.D2 dim, T resultType) {
         return operation(name)
-                   .inputs(a)
-                   .outputs(prototype(resultType, shape(a.shape().d0(), a.shape().d1(), u(), a.shape().d3())))
-                   .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
+            .inputs(a)
+            .outputs(prototype(resultType, shape(a.shape().d0(), a.shape().d1(), u(), a.shape().d3())))
+            .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
     }
 
     private static <T extends DataType<?>, IT extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Operation.Builder.Unary<Array<IT, S>>.Single<Array<T, Shape<D0, D1, D2, U>>> reduce(
         String name, Array<IT, S> a, Functions.Function3<MemorySegment, MemorySegment, Integer, Integer> method,
         arrayfire.D3 dim, T resultType) {
         return operation(name)
-                   .inputs(a)
-                   .outputs(prototype(resultType, shape(a.shape().d0(), a.shape().d1(), a.shape().d2(), u())))
-                   .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
+            .inputs(a)
+            .outputs(prototype(resultType, shape(a.shape().d0(), a.shape().d1(), a.shape().d2(), u())))
+            .operation(ptr -> method.apply(ptr, a.dereference(), dim.index()));
     }
 
     /**
@@ -524,11 +529,11 @@ public class ArrayFire {
             return (Array<OT, S>) input;
         }
         return operation("cast")
-                   .inputs(input)
-                   .outputs(prototype(type, input.shape()))
-                   .operation(ptr -> arrayfire_h.af_cast(ptr, input.dereference(), type.code()))
-                   .grads((result, grads) -> cast(grads, input.type()))
-                   .build();
+            .inputs(input)
+            .outputs(prototype(type, input.shape()))
+            .operation(ptr -> arrayfire_h.af_cast(ptr, input.dereference(), type.code()))
+            .grads((result, grads) -> cast(grads, input.type()))
+            .build();
     }
 
     /**
@@ -557,10 +562,10 @@ public class ArrayFire {
      */
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> randu(T type, S shape) {
         return operation("randu")
-                   .inputs()
-                   .outputs(prototype(type, shape))
-                   .operation(ptr -> arrayfire_h.af_randu(ptr, shape.ndims(), nativeDims(shape), type.code()))
-                   .build();
+            .inputs()
+            .outputs(prototype(type, shape))
+            .operation(ptr -> arrayfire_h.af_randu(ptr, shape.ndims(), nativeDims(shape), type.code()))
+            .build();
     }
 
     /**
@@ -568,10 +573,10 @@ public class ArrayFire {
      */
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> randn(T type, S shape) {
         return operation("randn")
-                   .inputs()
-                   .outputs(prototype(type, shape))
-                   .operation(ptr -> arrayfire_h.af_randn(ptr, shape.ndims(), nativeDims(shape), type.code()))
-                   .build();
+            .inputs()
+            .outputs(prototype(type, shape))
+            .operation(ptr -> arrayfire_h.af_randn(ptr, shape.ndims(), nativeDims(shape), type.code()))
+            .build();
     }
 
     /**
@@ -587,10 +592,10 @@ public class ArrayFire {
     public static <T extends DataType<?>> Array<T, Shape<N, U, U, U>> range(T type, int n) {
         var shape = shape(n(n));
         return operation("range")
-                   .inputs()
-                   .outputs(prototype(type, shape))
-                   .operation(ptr -> arrayfire_h.af_range(ptr, shape.ndims(), nativeDims(shape), 0, type.code()))
-                   .build();
+            .inputs()
+            .outputs(prototype(type, shape))
+            .operation(ptr -> arrayfire_h.af_range(ptr, shape.ndims(), nativeDims(shape), 0, type.code()))
+            .build();
     }
 
     /**
@@ -722,35 +727,35 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D1, D0, D2, D3>> transpose(
         Array<T, S> array) {
         return operation("transpose")
-                   .inputs(array)
-                   .outputs(prototype(array.type(),
-                       shape(array.shape().d1(), array.shape().d0(), array.shape().d2(), array.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_transpose(ptr, array.dereference(), true))
-                   .grads((result, grads) -> transpose(grads).reshape(array.shape()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(),
+                shape(array.shape().d1(), array.shape().d0(), array.shape().d2(), array.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_transpose(ptr, array.dereference(), true))
+            .grads((result, grads) -> transpose(grads).reshape(array.shape()))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D2, D1, D3>> transpose(
         Array<T, S> array, arrayfire.D1 d1, arrayfire.D2 d2) {
         return operation("transpose_D1_D2")
-                   .inputs(array)
-                   .outputs(prototype(array.type(),
-                       shape(array.shape().d0(), array.shape().d2(), array.shape().d1(), array.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 2, 1, 3))
-                   .grads((result, grads) -> transpose(grads, d1, d2).reshape(array.shape()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(),
+                shape(array.shape().d0(), array.shape().d2(), array.shape().d1(), array.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 2, 1, 3))
+            .grads((result, grads) -> transpose(grads, d1, d2).reshape(array.shape()))
+            .build();
     }
 
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D3, D2>> transpose(
         Array<T, S> array, arrayfire.D2 d2, arrayfire.D3 d3) {
         return operation("transpose_D2_D3")
-                   .inputs(array)
-                   .outputs(prototype(array.type(),
-                       shape(array.shape().d0(), array.shape().d1(), array.shape().d3(), array.shape().d2())))
-                   .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 1, 3, 2))
-                   .grads((result, grads) -> transpose(grads, d2, d3).reshape(array.shape()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(),
+                shape(array.shape().d0(), array.shape().d1(), array.shape().d3(), array.shape().d2())))
+            .operation(ptr -> arrayfire_h.af_reorder(ptr, array.dereference(), 0, 1, 3, 2))
+            .grads((result, grads) -> transpose(grads, d2, d3).reshape(array.shape()))
+            .build();
     }
 
 
@@ -803,12 +808,11 @@ public class ArrayFire {
                 String.format("New shape %s doesn't have same capacity as original shape %s", newShape, array.shape()));
         }
         return operation("reshape")
-                   .inputs(array)
-                   .outputs(prototype(array.type(), newShape))
-                   .operation(
-                       ptr -> arrayfire_h.af_moddims(ptr, array.dereference(), newShape.ndims(), nativeDims(newShape)))
-                   .grads((result, grads) -> reshape(grads, array.shape()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), newShape))
+            .operation(ptr -> arrayfire_h.af_moddims(ptr, array.dereference(), newShape.ndims(), nativeDims(newShape)))
+            .grads((result, grads) -> reshape(grads, array.shape()))
+            .build();
     }
 
     /**
@@ -827,11 +831,11 @@ public class ArrayFire {
      */
     public static <DT extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<DT, S> retain(Array<DT, S> array) {
         return operation("retain")
-                   .inputs(array)
-                   .outputs(prototype(array.type(), array.shape()))
-                   .operation(ptr -> arrayfire_h.af_retain_array(ptr, array.dereference()))
-                   .grads((result, grads) -> grads)
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), array.shape()))
+            .operation(ptr -> arrayfire_h.af_retain_array(ptr, array.dereference()))
+            .grads((result, grads) -> grads)
+            .build();
     }
 
     /**
@@ -892,7 +896,7 @@ public class ArrayFire {
      * Evaluate the arrays, telling the ArrayFire JIT compiler that you want the literal values of the arrays.
      */
     public static void eval(Array<?, ?>... arrays) {
-        try (Arena arena = Arena.ofConfined()) {
+        try (Arena arena = Arena.ofShared()) {
             var array = arena.allocateArray(ValueLayout.ADDRESS, arrays.length);
             for (int i = 0; i < arrays.length; i++) {
                 array.setAtIndex(ValueLayout.ADDRESS, i, arrays[i].dereference());
@@ -907,9 +911,9 @@ public class ArrayFire {
 
     private static void assertTileable(Array<?, ?> array, Tileable<?, ?> tileable) {
         if (array.shape().d0().size() < tileable.array().shape().d0().size() ||
-                array.shape().d1().size() < tileable.array().shape().d1().size() ||
-                array.shape().d2().size() < tileable.array().shape().d2().size() ||
-                array.shape().d3().size() < tileable.array().shape().d3().size()) {
+            array.shape().d1().size() < tileable.array().shape().d1().size() ||
+            array.shape().d2().size() < tileable.array().shape().d2().size() ||
+            array.shape().d3().size() < tileable.array().shape().d3().size()) {
             throw new IllegalArgumentException(
                 String.format("Tileable shape %s is larger than array shape %s", tileable.array().shape(),
                     array.shape()));
@@ -945,11 +949,11 @@ public class ArrayFire {
                                                                                        Array<T, S> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("mul")
-                   .inputs(left, right)
-                   .outputs(prototype(left.type(), left.shape()))
-                   .operation(ptr -> arrayfire_h.af_mul(ptr, left.dereference(), right.dereference(), false))
-                   .grads((result, grads) -> new ArrayPair<>(mul(grads, right), mul(grads, left)))
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(left.type(), left.shape()))
+            .operation(ptr -> arrayfire_h.af_mul(ptr, left.dereference(), right.dereference(), false))
+            .grads((result, grads) -> new ArrayPair<>(mul(grads, right), mul(grads, left)))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> div(double left, Array<T, S> right) {
@@ -976,16 +980,16 @@ public class ArrayFire {
                                                                                        Array<T, S> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("div")
-                   .inputs(left, right)
-                   .outputs(prototype(left.type(), left.shape()))
-                   .operation(ptr -> arrayfire_h.af_div(ptr, left.dereference(), right.dereference(), false))
-                   .grads((result, grads) -> {
-                       var rightReciprocal = div(constant(1f).cast(left.type()).tileAs(right), right);
-                       var leftGrads = mul(rightReciprocal, grads);
-                       var rightGrads = mul(mul(leftGrads, left.negate()), rightReciprocal);
-                       return new ArrayPair<>(leftGrads, rightGrads);
-                   })
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(left.type(), left.shape()))
+            .operation(ptr -> arrayfire_h.af_div(ptr, left.dereference(), right.dereference(), false))
+            .grads((result, grads) -> {
+                var rightReciprocal = div(constant(1f).cast(left.type()).tileAs(right), right);
+                var leftGrads = mul(rightReciprocal, grads);
+                var rightGrads = mul(mul(leftGrads, left.negate()), rightReciprocal);
+                return new ArrayPair<>(leftGrads, rightGrads);
+            })
+            .build();
 
     }
 
@@ -1004,11 +1008,11 @@ public class ArrayFire {
         Array<T, SL> left, Array<T, SR> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("add")
-                   .inputs(left, right)
-                   .outputs(prototype(left.type(), left.shape()))
-                   .operation(ptr -> arrayfire_h.af_add(ptr, left.dereference(), right.dereference(), false))
-                   .grads((result, grads) -> new ArrayPair<>(grads, grads.reshape(right.shape())))
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(left.type(), left.shape()))
+            .operation(ptr -> arrayfire_h.af_add(ptr, left.dereference(), right.dereference(), false))
+            .grads((result, grads) -> new ArrayPair<>(grads, grads.reshape(right.shape())))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> sub(double left, Array<T, S> right) {
@@ -1035,11 +1039,11 @@ public class ArrayFire {
         Array<T, SL> left, Array<T, SR> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("sub")
-                   .inputs(left, right)
-                   .outputs(prototype(left))
-                   .operation(ptr -> arrayfire_h.af_sub(ptr, left.dereference(), right.dereference(), false))
-                   .grads((result, grads) -> new ArrayPair<>(grads, grads.negate().reshape(right.shape())))
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(left))
+            .operation(ptr -> arrayfire_h.af_sub(ptr, left.dereference(), right.dereference(), false))
+            .grads((result, grads) -> new ArrayPair<>(grads, grads.negate().reshape(right.shape())))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<B8, S> ge(Array<T, S> left, double right) {
@@ -1056,10 +1060,10 @@ public class ArrayFire {
         Array<T, SL> left, Array<T, SR> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("ge")
-                   .inputs(left, right)
-                   .outputs(prototype(B8, left.shape()))
-                   .operation(ptr -> arrayfire_h.af_ge(ptr, left.dereference(), right.dereference(), false))
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(B8, left.shape()))
+            .operation(ptr -> arrayfire_h.af_ge(ptr, left.dereference(), right.dereference(), false))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<B8, S> le(Array<T, S> left, double right) {
@@ -1076,20 +1080,20 @@ public class ArrayFire {
         Array<T, SL> left, Array<T, SR> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("le")
-                   .inputs(left, right)
-                   .outputs(prototype(B8, left.shape()))
-                   .operation(ptr -> arrayfire_h.af_le(ptr, left.dereference(), right.dereference(), false))
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(B8, left.shape()))
+            .operation(ptr -> arrayfire_h.af_le(ptr, left.dereference(), right.dereference(), false))
+            .build();
     }
 
     public static <S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Array<B8, SL> and(Array<B8, SL> left,
                                                                                               Array<B8, SR> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("and")
-                   .inputs(left, right)
-                   .outputs(prototype(B8, left.shape()))
-                   .operation(ptr -> arrayfire_h.af_and(ptr, left.dereference(), right.dereference(), false))
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(B8, left.shape()))
+            .operation(ptr -> arrayfire_h.af_and(ptr, left.dereference(), right.dereference(), false))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> maxof(Array<T, S> left,
@@ -1107,15 +1111,15 @@ public class ArrayFire {
         Array<T, SL> left, Array<T, SR> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("maxof")
-                   .inputs(left, right)
-                   .outputs(prototype(left.type(), left.shape()))
-                   .operation(ptr -> arrayfire_h.af_maxof(ptr, left.dereference(), right.dereference(), false))
-                   .grads((result, grads) -> {
-                       var leftIsMax = eq(result, left).cast(left.type());
-                       var rightIsMax = eq(result, right).cast(left.type());
-                       return new ArrayPair<>(mul(leftIsMax, grads), mul(rightIsMax, grads).reshape(right.shape()));
-                   })
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(left.type(), left.shape()))
+            .operation(ptr -> arrayfire_h.af_maxof(ptr, left.dereference(), right.dereference(), false))
+            .grads((result, grads) -> {
+                var leftIsMax = eq(result, left).cast(left.type());
+                var rightIsMax = eq(result, right).cast(left.type());
+                return new ArrayPair<>(mul(leftIsMax, grads), mul(rightIsMax, grads).reshape(right.shape()));
+            })
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> minof(Array<T, S> left,
@@ -1133,89 +1137,84 @@ public class ArrayFire {
         Array<T, SL> left, Array<T, SR> right) {
         assertShapeEquals(left.shape(), right.shape());
         return operation("minof")
-                   .inputs(left, right)
-                   .outputs(prototype(left.type(), left.shape()))
-                   .operation(ptr -> arrayfire_h.af_minof(ptr, left.dereference(), right.dereference(), false))
-                   .grads((result, grads) -> {
-                       var leftIsMin = eq(result, left).cast(left.type());
-                       var rightIsMin = eq(result, right).cast(left.type());
-                       return new ArrayPair<>(mul(leftIsMin, grads), mul(rightIsMin, grads).reshape(right.shape()));
-                   })
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(left.type(), left.shape()))
+            .operation(ptr -> arrayfire_h.af_minof(ptr, left.dereference(), right.dereference(), false))
+            .grads((result, grads) -> {
+                var leftIsMin = eq(result, left).cast(left.type());
+                var rightIsMin = eq(result, right).cast(left.type());
+                return new ArrayPair<>(mul(leftIsMin, grads), mul(rightIsMin, grads).reshape(right.shape()));
+            })
+            .build();
     }
 
     public static <T extends DataType<?>, LD0 extends Num<LD0>, RD0 extends Num<RD0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, SL extends Shape<LD0, D1, D2, D3>, SR extends Shape<RD0, D1, D2, D3>> Array<T, Shape<N, D1, D2, D3>> join(
         Array<T, SL> lhs, Array<T, SR> rhs) {
         return operation("join")
-                   .inputs(lhs, rhs)
-                   .outputs(prototype(lhs.type(),
-                       shape(n(lhs.shape().d0().size() + rhs.shape().d0().size()), lhs.shape().d1(), lhs.shape().d2(),
-                           lhs.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_join(ptr, 0, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new ArrayPair<>(index(grads, seq(lhs.shape().d0())).reshape(lhs.shape()),
-                       index(grads, seq(lhs.shape().d0().size(), rhs.shape().d0())).reshape(rhs.shape())))
-                   .build();
+            .inputs(lhs, rhs)
+            .outputs(prototype(lhs.type(),
+                shape(n(lhs.shape().d0().size() + rhs.shape().d0().size()), lhs.shape().d1(), lhs.shape().d2(),
+                    lhs.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_join(ptr, 0, lhs.dereference(), rhs.dereference()))
+            .grads((result, grads) -> new ArrayPair<>(index(grads, seq(lhs.shape().d0())).reshape(lhs.shape()),
+                index(grads, seq(lhs.shape().d0().size(), rhs.shape().d0())).reshape(rhs.shape())))
+            .build();
     }
 
     public static <T extends DataType<?>, LD1 extends Num<LD1>, RD1 extends Num<RD1>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>, SL extends Shape<D0, LD1, D2, D3>, SR extends Shape<D0, RD1, D2, D3>> Array<T, Shape<D0, N, D2, D3>> join(
         Array<T, SL> lhs, Array<T, SR> rhs, arrayfire.D1 ignored) {
         if (!(lhs.shape().d0().size() == rhs.shape().d0().size() &&
-                  lhs.shape().d2().size() == rhs.shape().d2().size() &&
-                  lhs.shape().d3().size() == rhs.shape().d3().size())) {
+            lhs.shape().d2().size() == rhs.shape().d2().size() && lhs.shape().d3().size() == rhs.shape().d3().size())) {
             throw new IllegalArgumentException(
                 String.format("Incompatible shapes to join along d1: %s, %s", lhs.shape(), rhs.shape()));
         }
         return operation("join")
-                   .inputs(lhs, rhs)
-                   .outputs(prototype(lhs.type(),
-                       shape(lhs.shape().d0(), n(lhs.shape().d1().size() + rhs.shape().d1().size()), lhs.shape().d2(),
-                           lhs.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_join(ptr, 1, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new ArrayPair<>(
-                       index(grads, span(), seq(lhs.shape().d1())).reshape(lhs.shape()),
-                       index(grads, span(), seq(lhs.shape().d1().size(), rhs.shape().d1())).reshape(rhs.shape())))
-                   .build();
+            .inputs(lhs, rhs)
+            .outputs(prototype(lhs.type(),
+                shape(lhs.shape().d0(), n(lhs.shape().d1().size() + rhs.shape().d1().size()), lhs.shape().d2(),
+                    lhs.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_join(ptr, 1, lhs.dereference(), rhs.dereference()))
+            .grads((result, grads) -> new ArrayPair<>(index(grads, span(), seq(lhs.shape().d1())).reshape(lhs.shape()),
+                index(grads, span(), seq(lhs.shape().d1().size(), rhs.shape().d1())).reshape(rhs.shape())))
+            .build();
     }
 
     public static <T extends DataType<?>, LD2 extends Num<LD2>, RD2 extends Num<RD2>, D0 extends Num<D0>, D1 extends Num<D1>, D3 extends Num<D3>, SL extends Shape<D0, D1, LD2, D3>, SR extends Shape<D0, D1, RD2, D3>> Array<T, Shape<D0, D1, N, D3>> join(
         Array<T, SL> lhs, Array<T, SR> rhs, arrayfire.D2 ignored) {
         if (!(lhs.shape().d0().size() == rhs.shape().d0().size() &&
-                  lhs.shape().d1().size() == rhs.shape().d1().size() &&
-                  lhs.shape().d3().size() == rhs.shape().d3().size())) {
+            lhs.shape().d1().size() == rhs.shape().d1().size() && lhs.shape().d3().size() == rhs.shape().d3().size())) {
             throw new IllegalArgumentException(
                 String.format("Incompatible shapes to join along d2: %s, %s", lhs.shape(), rhs.shape()));
         }
         return operation("join")
-                   .inputs(lhs, rhs)
-                   .outputs(prototype(lhs.type(),
-                       shape(lhs.shape().d0(), lhs.shape().d1(), n(lhs.shape().d2().size() + rhs.shape().d2().size()),
-                           lhs.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_join(ptr, 2, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new ArrayPair<>(
-                       index(grads, span(), span(), seq(lhs.shape().d2())).reshape(lhs.shape()),
-                       index(grads, span(), span(), seq(lhs.shape().d2().size(), rhs.shape().d2())).reshape(
-                           rhs.shape())))
-                   .build();
+            .inputs(lhs, rhs)
+            .outputs(prototype(lhs.type(),
+                shape(lhs.shape().d0(), lhs.shape().d1(), n(lhs.shape().d2().size() + rhs.shape().d2().size()),
+                    lhs.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_join(ptr, 2, lhs.dereference(), rhs.dereference()))
+            .grads((result, grads) -> new ArrayPair<>(
+                index(grads, span(), span(), seq(lhs.shape().d2())).reshape(lhs.shape()),
+                index(grads, span(), span(), seq(lhs.shape().d2().size(), rhs.shape().d2())).reshape(rhs.shape())))
+            .build();
     }
 
     public static <T extends DataType<?>, LD3 extends Num<LD3>, RD3 extends Num<RD3>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, SL extends Shape<D0, D1, D2, LD3>, SR extends Shape<D0, D1, D2, RD3>> Array<T, Shape<D0, D1, D2, N>> join(
         Array<T, SL> lhs, Array<T, SR> rhs, arrayfire.D3 ignored) {
         if (!(lhs.shape().d0().size() == rhs.shape().d0().size() &&
-                  lhs.shape().d1().size() == rhs.shape().d1().size() &&
-                  lhs.shape().d2().size() == rhs.shape().d2().size())) {
+            lhs.shape().d1().size() == rhs.shape().d1().size() && lhs.shape().d2().size() == rhs.shape().d2().size())) {
             throw new IllegalArgumentException(
                 String.format("Incompatible shapes to join along d3: %s, %s", lhs.shape(), rhs.shape()));
         }
         return operation("join")
-                   .inputs(lhs, rhs)
-                   .outputs(prototype(lhs.type(), shape(lhs.shape().d0(), lhs.shape().d1(), lhs.shape().d2(),
-                       n(lhs.shape().d3().size() + rhs.shape().d3().size()))))
-                   .operation(ptr -> arrayfire_h.af_join(ptr, 3, lhs.dereference(), rhs.dereference()))
-                   .grads((result, grads) -> new ArrayPair<>(
-                       index(grads, span(), span(), span(), seq(lhs.shape().d3())).reshape(lhs.shape()),
-                       index(grads, span(), span(), span(), seq(lhs.shape().d3().size(), rhs.shape().d3())).reshape(
-                           rhs.shape())))
-                   .build();
+            .inputs(lhs, rhs)
+            .outputs(prototype(lhs.type(), shape(lhs.shape().d0(), lhs.shape().d1(), lhs.shape().d2(),
+                n(lhs.shape().d3().size() + rhs.shape().d3().size()))))
+            .operation(ptr -> arrayfire_h.af_join(ptr, 3, lhs.dereference(), rhs.dereference()))
+            .grads((result, grads) -> new ArrayPair<>(
+                index(grads, span(), span(), span(), seq(lhs.shape().d3())).reshape(lhs.shape()),
+                index(grads, span(), span(), span(), seq(lhs.shape().d3().size(), rhs.shape().d3())).reshape(
+                    rhs.shape())))
+            .build();
     }
 
     public static <ST extends DataType<?>, T extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, Shape<U, D1, D2, D3>> sum(
@@ -1226,30 +1225,30 @@ public class ArrayFire {
     public static <ST extends DataType<?>, T extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, Shape<U, D1, D2, D3>> sum(
         Array<T, S> array, arrayfire.D0 dim) {
         return reduce("sum", array, arrayfire_h::af_sum, dim, array.type().meta().sumType())
-                   .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
-                   .build();
+            .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
+            .build();
 
     }
 
     public static <ST extends DataType<?>, T extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, Shape<D0, U, D2, D3>> sum(
         Array<T, S> array, arrayfire.D1 dim) {
         return reduce("sum", array, arrayfire_h::af_sum, dim, array.type().meta().sumType())
-                   .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
-                   .build();
+            .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
+            .build();
     }
 
     public static <ST extends DataType<?>, T extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, Shape<D0, D1, U, D3>> sum(
         Array<T, S> array, arrayfire.D2 dim) {
         return reduce("sum", array, arrayfire_h::af_sum, dim, array.type().meta().sumType())
-                   .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
-                   .build();
+            .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
+            .build();
     }
 
     public static <ST extends DataType<?>, T extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, Shape<D0, D1, D2, U>> sum(
         Array<T, S> array, arrayfire.D3 dim) {
         return reduce("sum", array, arrayfire_h::af_sum, dim, array.type().meta().sumType())
-                   .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
-                   .build();
+            .grads((result, grads) -> grads.cast(array.type()).tileAs(array))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<U, D1, D2, D3>> mean(
@@ -1260,33 +1259,33 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<U, D1, D2, D3>> mean(
         Array<T, S> array, arrayfire.D0 dim) {
         return reduce("mean", array, arrayfire_h::af_mean, dim, array.type())
-                   .grads((result, grads) -> af.div(grads.tileAs(array),
-                       af.constant(array.type(), array.shape().d0().size()).tile()))
-                   .build();
+            .grads((result, grads) -> af.div(grads.tileAs(array),
+                af.constant(array.type(), array.shape().d0().size()).tile()))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, U, D2, D3>> mean(
         Array<T, S> array, arrayfire.D1 dim) {
         return reduce("mean", array, arrayfire_h::af_mean, dim, array.type())
-                   .grads((result, grads) -> af.div(grads.tileAs(array),
-                       af.constant(array.type(), array.shape().d1().size()).tile()))
-                   .build();
+            .grads((result, grads) -> af.div(grads.tileAs(array),
+                af.constant(array.type(), array.shape().d1().size()).tile()))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, U, D3>> mean(
         Array<T, S> array, arrayfire.D2 dim) {
         return reduce("mean", array, arrayfire_h::af_mean, dim, array.type())
-                   .grads((result, grads) -> af.div(grads.tileAs(array),
-                       af.constant(array.type(), array.shape().d2().size()).tile()))
-                   .build();
+            .grads((result, grads) -> af.div(grads.tileAs(array),
+                af.constant(array.type(), array.shape().d2().size()).tile()))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D2, U>> mean(
         Array<T, S> array, arrayfire.D3 dim) {
         return reduce("mean", array, arrayfire_h::af_mean, dim, array.type())
-                   .grads((result, grads) -> af.div(grads.tileAs(array),
-                       af.constant(array.type(), array.shape().d3().size()).tile()))
-                   .build();
+            .grads((result, grads) -> af.div(grads.tileAs(array),
+                af.constant(array.type(), array.shape().d3().size()).tile()))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<U, D1, D2, D3>> median(
@@ -1322,33 +1321,29 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<U, D1, D2, D3>> max(
         Array<T, S> array, arrayfire.D0 dim) {
         return reduce("max", array, arrayfire_h::af_max, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, U, D2, D3>> max(
         Array<T, S> array, arrayfire.D1 dim) {
         return reduce("max", array, arrayfire_h::af_max, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, U, D3>> max(
         Array<T, S> array, arrayfire.D2 dim) {
         return reduce("max", array, arrayfire_h::af_max, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D2, U>> max(
         Array<T, S> array, arrayfire.D3 dim) {
         return reduce("max", array, arrayfire_h::af_max, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<U, D1, D2, D3>> min(
@@ -1359,46 +1354,41 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<U, D1, D2, D3>> min(
         Array<T, S> array, arrayfire.D0 dim) {
         return reduce("min", array, arrayfire_h::af_min, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, U, D2, D3>> min(
         Array<T, S> array, arrayfire.D1 dim) {
         return reduce("min", array, arrayfire_h::af_min, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, U, D3>> min(
         Array<T, S> array, arrayfire.D2 dim) {
         return reduce("min", array, arrayfire_h::af_min, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<D0, D1, D2, U>> min(
         Array<T, S> array, arrayfire.D3 dim) {
         return reduce("min", array, arrayfire_h::af_min, dim, array.type())
-                   .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()),
-                       grads.tileAs(array)))
-                   .build();
+            .grads((result, grads) -> mul(af.eq(result.tileAs(array), array).cast(grads.type()), grads.tileAs(array)))
+            .build();
     }
 
     public static <T extends DataType<?>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<?, D1, D2, D3>> ImaxResult<T, Shape<U, D1, D2, D3>> imax(
         Array<T, S> array) {
         var shape = shape(u(), array.shape().d1(), array.shape().d2(), array.shape().d3());
         var pair = operation("imax")
-                       .inputs(array)
-                       .outputs(prototype(array.type(), shape), prototype(U32, shape))
-                       .operation((leftPtr, rightPtr) -> arrayfire_h.af_imax(leftPtr, rightPtr, array.dereference(), 0))
-                       .grads(
-                           (results, grads) -> mul(af.eq(results.left().tileAs(array), array).cast(grads.left().type()),
-                               grads.left().tileAs(array)))
-                       .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), shape), prototype(U32, shape))
+            .operation((leftPtr, rightPtr) -> arrayfire_h.af_imax(leftPtr, rightPtr, array.dereference(), 0))
+            .grads((results, grads) -> mul(af.eq(results.left().tileAs(array), array).cast(grads.left().type()),
+                grads.left().tileAs(array)))
+            .build();
         return new ImaxResult<>(pair.left(), pair.right());
     }
 
@@ -1407,54 +1397,51 @@ public class ArrayFire {
         Array<T, ? extends Shape<?, U, U, U>> values, Array<S32, ? extends Shape<D0, U, U, U>> d0Indices,
         Array<S32, ? extends Shape<D0, U, U, U>> d1Indices, S shape) {
         return operation("sparse")
-                   .inputs(values)
-                   .outputs(prototype(values.type(), shape))
-                   .operation(ptr -> arrayfire_h.af_create_sparse_array(ptr, shape.d0().size(), shape.d1().size(),
-                       values.dereference(), d0Indices.dereference(), d1Indices.dereference(), Storage.COO.code()))
-                   .build();
+            .inputs(values)
+            .outputs(prototype(values.type(), shape))
+            .operation(ptr -> arrayfire_h.af_create_sparse_array(ptr, shape.d0().size(), shape.d1().size(),
+                values.dereference(), d0Indices.dereference(), d1Indices.dereference(), Storage.COO.code()))
+            .build();
     }
 
     public static <T extends DataType<?>, D1 extends Num<D1>, K extends Num<K>, S extends Shape<?, D1, U, U>> TopKResult<T, Shape<K, D1, U, U>> topk(
         Array<T, S> array, K k) {
         var shape = shape(k, array.shape().d1());
         var pair = operation("topk")
-                       .inputs(array)
-                       .outputs(prototype(array.type(), shape), prototype(U32, shape))
-                       .operation(
-                           (leftPtr, rightPtr) -> arrayfire_h.af_topk(leftPtr, rightPtr, array.dereference(), k.size(),
-                               0, 0))
-                       .grads((results, grads) -> {
-                           var values = grads.left();
-                           var d0Indices = results.right();
-                           var d1Indices = transpose(af.range(values.shape().d1().size())).tileAs(values.shape());
-                           return dense(
-                               sparse(values.flatten(), d0Indices.cast(S32).flatten(), d1Indices.cast(S32).flatten(),
-                                   array.shape()));
-                       })
-                       .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), shape), prototype(U32, shape))
+            .operation(
+                (leftPtr, rightPtr) -> arrayfire_h.af_topk(leftPtr, rightPtr, array.dereference(), k.size(), 0, 0))
+            .grads((results, grads) -> {
+                var values = grads.left();
+                var d0Indices = results.right();
+                var d1Indices = transpose(af.range(values.shape().d1().size())).tileAs(values.shape());
+                return dense(sparse(values.flatten(), d0Indices.cast(S32).flatten(), d1Indices.cast(S32).flatten(),
+                    array.shape()));
+            })
+            .build();
         return new TopKResult<>(pair.left(), pair.right());
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, U, D2, D3>> Array<T, Shape<D0, D0, D2, D3>> diag(
         Array<T, S> array) {
         return operation("diag")
-                   .inputs(array)
-                   .outputs(prototype(array.type(),
-                       shape(array.shape().d0(), array.shape().d0(), array.shape().d2(), array.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_diag_create(ptr, array.dereference(), 0))
-                   .grads((result, grads) -> diagExtract(grads).reshape(array.shape()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(),
+                shape(array.shape().d0(), array.shape().d0(), array.shape().d2(), array.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_diag_create(ptr, array.dereference(), 0))
+            .grads((result, grads) -> diagExtract(grads).reshape(array.shape()))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D2 extends Num<D2>, D3 extends Num<D3>, SI extends Shape<D0, D0, D2, D3>> Array<T, Shape<D0, U, D2, D3>> diagExtract(
         Array<T, SI> array) {
         return operation("diag_extract")
-                   .inputs(array)
-                   .outputs(prototype(array.type(),
-                       shape(array.shape().d0(), af.u(), array.shape().d2(), array.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_diag_extract(ptr, array.dereference(), 0))
-                   .grads((result, grads) -> diag(grads).reshape(array.shape()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), shape(array.shape().d0(), af.u(), array.shape().d2(), array.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_diag_extract(ptr, array.dereference(), 0))
+            .grads((result, grads) -> diag(grads).reshape(array.shape()))
+            .build();
     }
 
     // https://arrayfire.org/docs/group__blas__func__matmul.htm
@@ -1465,16 +1452,16 @@ public class ArrayFire {
                 String.format("Incompatible shapes for matmul, left: %s right: %s", left.shape(), right.shape()));
         }
         return operation("matmul")
-                   .inputs(left, right)
-                   .outputs(prototype(left.type(),
-                       shape(left.shape().d0(), right.shape().d1(), left.shape().d2(), left.shape().d3())))
-                   .operation(ptr -> arrayfire_h.af_matmul(ptr, left.dereference(), right.dereference(), 0, 0))
-                   .grads((result, grads) -> {
-                       var leftGrads = matmul(grads, transpose(right));
-                       var rightGrads = matmul(transpose(left), grads);
-                       return new ArrayPair<>(leftGrads.reshape(left.shape()), rightGrads.reshape(right.shape()));
-                   })
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(left.type(),
+                shape(left.shape().d0(), right.shape().d1(), left.shape().d2(), left.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_matmul(ptr, left.dereference(), right.dereference(), 0, 0))
+            .grads((result, grads) -> {
+                var leftGrads = matmul(grads, transpose(right));
+                var rightGrads = matmul(transpose(left), grads);
+                return new ArrayPair<>(leftGrads.reshape(left.shape()), rightGrads.reshape(right.shape()));
+            })
+            .build();
     }
 
     public static <T extends DataType<?>, AD0 extends Num<AD0>, AD1 extends Num<AD1>, BD1 extends Num<BD1>, CD1 extends Num<CD1>, D2 extends Num<D2>, D3 extends Num<D3>, SA extends Shape<AD0, AD1, D2, D3>, SB extends Shape<AD1, BD1, D2, D3>, SC extends Shape<BD1, CD1, D2, D3>> Array<T, Shape<AD0, CD1, D2, D3>> matmul(
@@ -1504,16 +1491,15 @@ public class ArrayFire {
                                                                                          Array<T, S> lo,
                                                                                          Array<T, S> hi) {
         return operation("clamp")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(
-                       ptr -> arrayfire_h.af_clamp(ptr, array.dereference(), lo.dereference(), hi.dereference(), true))
-                   .grads((result, grads) -> {
-                       var loMask = ge(array, lo);
-                       var hiMask = le(array, hi);
-                       return mul(grads, and(loMask, hiMask).cast(grads.type()));
-                   })
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_clamp(ptr, array.dereference(), lo.dereference(), hi.dereference(), true))
+            .grads((result, grads) -> {
+                var loMask = ge(array, lo);
+                var hiMask = le(array, hi);
+                return mul(grads, and(loMask, hiMask).cast(grads.type()));
+            })
+            .build();
 
     }
 
@@ -1524,10 +1510,10 @@ public class ArrayFire {
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>, SL extends S, SR extends S> Array<B8, SL> eq(
         Array<T, SL> left, Array<T, SR> right) {
         return operation("eq")
-                   .inputs(left, right)
-                   .outputs(prototype(B8, left.shape()))
-                   .operation(ptr -> arrayfire_h.af_eq(ptr, left.dereference(), right.dereference(), true))
-                   .build();
+            .inputs(left, right)
+            .outputs(prototype(B8, left.shape()))
+            .operation(ptr -> arrayfire_h.af_eq(ptr, left.dereference(), right.dereference(), true))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> negate(Array<T, S> array) {
@@ -1537,11 +1523,11 @@ public class ArrayFire {
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> exp(Array<T, S> array) {
         return operation("exp")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(ptr -> arrayfire_h.af_exp(ptr, array.dereference()))
-                   .grads((result, grads) -> mul(grads, result))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_exp(ptr, array.dereference()))
+            .grads((result, grads) -> mul(grads, result))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> pow(Array<T, S> array, double pow) {
@@ -1551,12 +1537,11 @@ public class ArrayFire {
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> pow(Array<T, S> array,
                                                                                        Array<T, S> pow) {
         return operation("pow")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(ptr -> arrayfire_h.af_pow(ptr, array.dereference(), pow.dereference(), false))
-                   .grads((result, grads) -> mul(mul(grads, pow),
-                       pow(array, sub(pow, constant(pow.type(), pow.shape(), 1)))))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_pow(ptr, array.dereference(), pow.dereference(), false))
+            .grads((result, grads) -> mul(mul(grads, pow), pow(array, sub(pow, constant(pow.type(), pow.shape(), 1)))))
+            .build();
     }
 
     /**
@@ -1564,11 +1549,11 @@ public class ArrayFire {
      */
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> signbit(Array<T, S> array) {
         return operation("signbit")
-                   .inputs(array)
-                   .outputs(array.prototype())
-                   .operation(ptr -> arrayfire_h.af_sign(ptr, array.dereference()))
-                   .grads((result, grads) -> constant(array.type(), array.shape(), 0))
-                   .build();
+            .inputs(array)
+            .outputs(array.prototype())
+            .operation(ptr -> arrayfire_h.af_sign(ptr, array.dereference()))
+            .grads((result, grads) -> constant(array.type(), array.shape(), 0))
+            .build();
     }
 
     /**
@@ -1576,12 +1561,12 @@ public class ArrayFire {
      */
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> signum(Array<T, S> array) {
         return operation("signum")
-                   .inputs(array)
-                   .outputs(array.prototype())
-                   .operation(tidyOperation(() -> sub(af.constant(array.type(), array.shape(), 1),
-                       mul(af.constant(array.type(), array.shape(), 2), signbit(array)))))
-                   .grads((result, grads) -> constant(array.type(), array.shape(), 0))
-                   .build();
+            .inputs(array)
+            .outputs(array.prototype())
+            .operation(tidyOperation(() -> sub(af.constant(array.type(), array.shape(), 1),
+                mul(af.constant(array.type(), array.shape(), 2), signbit(array)))))
+            .grads((result, grads) -> constant(array.type(), array.shape(), 0))
+            .build();
     }
 
     public static Operation.Builder operation(String name) {
@@ -1590,29 +1575,29 @@ public class ArrayFire {
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> log(Array<T, S> array) {
         return operation("log")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(ptr -> arrayfire_h.af_log(ptr, array.dereference()))
-                   .grads((result, grads) -> div(grads, array))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_log(ptr, array.dereference()))
+            .grads((result, grads) -> div(grads, array))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> abs(Array<T, S> input) {
         return operation("abs")
-                   .inputs(input)
-                   .outputs(prototype(input))
-                   .operation(ptr -> arrayfire_h.af_abs(ptr, input.dereference()))
-                   .grads((result, grads) -> mul(grads, signum(input)))
-                   .build();
+            .inputs(input)
+            .outputs(prototype(input))
+            .operation(ptr -> arrayfire_h.af_abs(ptr, input.dereference()))
+            .grads((result, grads) -> mul(grads, signum(input)))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> sqrt(Array<T, S> array) {
         return operation("sqrt")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(ptr -> arrayfire_h.af_sqrt(ptr, array.dereference()))
-                   .grads((result, grads) -> div(grads, mul(constant(array.type(), array.shape(), 2), result)))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_sqrt(ptr, array.dereference()))
+            .grads((result, grads) -> div(grads, mul(constant(array.type(), array.shape(), 2), result)))
+            .build();
     }
 
     public static <ST extends DataType<? extends DataType.Meta<ST, ?, ?>>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<ST, S> softmax(
@@ -1643,21 +1628,20 @@ public class ArrayFire {
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> sparse(Array<T, S> array,
                                                                                           Storage storage) {
         return operation("sparse_from_dense")
-                   .inputs(array)
-                   .outputs(prototype(array.type(), array.shape()))
-                   .operation(
-                       ptr -> arrayfire_h.af_create_sparse_array_from_dense(ptr, array.dereference(), storage.code()))
-                   .grads((result, grads) -> dense(grads))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), array.shape()))
+            .operation(ptr -> arrayfire_h.af_create_sparse_array_from_dense(ptr, array.dereference(), storage.code()))
+            .grads((result, grads) -> dense(grads))
+            .build();
     }
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> dense(Array<T, S> array) {
         return operation("dense_from_sparse")
-                   .inputs(array)
-                   .outputs(prototype(array.type(), array.shape()))
-                   .operation(ptr -> arrayfire_h.af_sparse_to_dense(ptr, array.dereference()))
-                   .grads((result, grads) -> grads)
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), array.shape()))
+            .operation(ptr -> arrayfire_h.af_sparse_to_dense(ptr, array.dereference()))
+            .grads((result, grads) -> grads)
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Array<T, Shape<D0, D1, D2, D3>> index(
@@ -1703,77 +1687,105 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Array<T, Shape<D0, D1, D2, D3>> index(
         Array<T, ?> array, Index<D0> i0, Index<D1> i1, Index<D2> i2, Index<D3> i3) {
         return operation("index")
-                   .inputs(array)
-                   .outputs(
-                       prototype(array.type(), shape(i0.createDim(), i1.createDim(), i2.createDim(), i3.createDim())))
-                   .operation(ptr -> {
-                       var layout = MemoryLayout.sequenceLayout(4, Index.LAYOUT);
-                       var nativeIndexes = Arena.ofAuto().allocateArray(Index.LAYOUT, 4);
-                       i0.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(0)),
-                           Index.LAYOUT.byteSize()));
-                       i1.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(1)),
-                           Index.LAYOUT.byteSize()));
-                       i2.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(2)),
-                           Index.LAYOUT.byteSize()));
-                       i3.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(3)),
-                           Index.LAYOUT.byteSize()));
-                       return arrayfire_h.af_index_gen(ptr, array.dereference(), 4, nativeIndexes);
-                   })
-                   // TODO: Add grads once I work out how to invert and index.
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), shape(i0.createDim(), i1.createDim(), i2.createDim(), i3.createDim())))
+            .operation(ptr -> {
+                var layout = MemoryLayout.sequenceLayout(4, Index.LAYOUT);
+                var nativeIndexes = Arena.ofAuto().allocateArray(Index.LAYOUT, 4);
+                i0.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(0)),
+                    Index.LAYOUT.byteSize()));
+                i1.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(1)),
+                    Index.LAYOUT.byteSize()));
+                i2.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(2)),
+                    Index.LAYOUT.byteSize()));
+                i3.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(3)),
+                    Index.LAYOUT.byteSize()));
+                return arrayfire_h.af_index_gen(ptr, array.dereference(), 4, nativeIndexes);
+            })
+            // TODO: Add grads once I work out how to invert and index.
+            .build();
 
     }
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, S> assign(
+        Array<T, S> initial, Array<T, ?> values, Index<D0> i0, Index<D1> i1, Index<D2> i2, Index<D3> i3) {
+        return operation("assign").inputs(initial, values).outputs(prototype(initial)).operation(ptr -> {
+            var layout = MemoryLayout.sequenceLayout(4, Index.LAYOUT);
+            var nativeIndexes = Arena.ofAuto().allocateArray(Index.LAYOUT, 4);
+            i0.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(0)),
+                Index.LAYOUT.byteSize()));
+            i1.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(1)),
+                Index.LAYOUT.byteSize()));
+            i2.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(2)),
+                Index.LAYOUT.byteSize()));
+            i3.emigrate(nativeIndexes.asSlice(layout.byteOffset(MemoryLayout.PathElement.sequenceElement(3)),
+                Index.LAYOUT.byteSize()));
+            return arrayfire_h.af_assign_gen(ptr, initial.dereference(), 4, nativeIndexes, values.dereference());
+        }).build();
+    }
+
+    // This consistently causes a segfault, but it would be extremely useful to have.
+    //    public static String lastError() {
+    //        Arena arena = Arena.ofAuto();
+    //        var messagePtr = arena.allocate(ValueLayout.ADDRESS);
+    //        var length = arena.allocateArray(ValueLayout.JAVA_LONG);
+    //        arrayfire_h.af_get_last_error(messagePtr, length);
+    //        return new String(messagePtr
+    //            .get(ValueLayout.ADDRESS, 0)
+    //            .asSlice(0, length.get(ValueLayout.JAVA_LONG, 0))
+    //            .toArray(ValueLayout.JAVA_BYTE));
+    //    }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
         Array<T, S> array, arrayfire.D0 ignored, int batchSize) {
         return IntStream
-                   .range(0, (int) Math.ceil(array.shape().d0().size() / (double) batchSize))
-                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
-                       var offset = i * batchSize;
-                       var computedSize = Math.min(batchSize, array.shape().d0().size() - offset);
-                       var dim = array.shape().d0().create(computedSize);
-                       return () -> index(array, seq(offset, dim));
-                   })
-                   .toList();
+            .range(0, (int) Math.ceil(array.shape().d0().size() / (double) batchSize))
+            .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                var offset = i * batchSize;
+                var computedSize = Math.min(batchSize, array.shape().d0().size() - offset);
+                var dim = array.shape().d0().create(computedSize);
+                return () -> index(array, seq(offset, dim));
+            })
+            .toList();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
         Array<T, S> array, arrayfire.D1 ignored, int batchSize) {
         return IntStream
-                   .range(0, (int) Math.ceil(array.shape().d1().size() / (double) batchSize))
-                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
-                       var offset = i * batchSize;
-                       var computedSize = Math.min(batchSize, array.shape().d1().size() - offset);
-                       var dim = array.shape().d1().create(computedSize);
-                       return () -> index(array, span(), seq(offset, dim));
-                   })
-                   .toList();
+            .range(0, (int) Math.ceil(array.shape().d1().size() / (double) batchSize))
+            .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                var offset = i * batchSize;
+                var computedSize = Math.min(batchSize, array.shape().d1().size() - offset);
+                var dim = array.shape().d1().create(computedSize);
+                return () -> index(array, span(), seq(offset, dim));
+            })
+            .toList();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
         Array<T, S> array, arrayfire.D2 ignored, int batchSize) {
         return IntStream
-                   .range(0, (int) Math.ceil(array.shape().d2().size() / (double) batchSize))
-                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
-                       var offset = i * batchSize;
-                       var computedSize = Math.min(batchSize, array.shape().d2().size() - offset);
-                       var dim = array.shape().d2().create(computedSize);
-                       return () -> index(array, span(), span(), seq(offset, dim));
-                   })
-                   .toList();
+            .range(0, (int) Math.ceil(array.shape().d2().size() / (double) batchSize))
+            .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                var offset = i * batchSize;
+                var computedSize = Math.min(batchSize, array.shape().d2().size() - offset);
+                var dim = array.shape().d2().create(computedSize);
+                return () -> index(array, span(), span(), seq(offset, dim));
+            })
+            .toList();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> List<Supplier<Array<T, Shape<D0, D1, D2, D3>>>> batch(
         Array<T, S> array, arrayfire.D3 ignored, int batchSize) {
         return IntStream
-                   .range(0, (int) Math.ceil(array.shape().d3().size() / (double) batchSize))
-                   .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
-                       var offset = i * batchSize;
-                       var computedSize = Math.min(batchSize, array.shape().d3().size() - offset);
-                       var dim = array.shape().d3().create(computedSize);
-                       return () -> index(array, span(), span(), span(), seq(offset, dim));
-                   })
-                   .toList();
+            .range(0, (int) Math.ceil(array.shape().d3().size() / (double) batchSize))
+            .<Supplier<Array<T, Shape<D0, D1, D2, D3>>>>mapToObj(i -> {
+                var offset = i * batchSize;
+                var computedSize = Math.min(batchSize, array.shape().d3().size() - offset);
+                var dim = array.shape().d3().create(computedSize);
+                return () -> index(array, span(), span(), span(), seq(offset, dim));
+            })
+            .toList();
     }
 
 
@@ -1789,11 +1801,11 @@ public class ArrayFire {
         int d2ratio = newShape.d2().size() / array.shape().d2().size();
         int d3ratio = newShape.d3().size() / array.shape().d3().size();
         return operation("tile")
-                   .inputs(array)
-                   .outputs(prototype(array.type(), newShape))
-                   .operation(ptr -> arrayfire_h.af_tile(ptr, array.dereference(), d0ratio, d1ratio, d2ratio, d3ratio))
-                   .grads((result, grads) -> sumAs((Array) grads, array.shape()).cast(array.type()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), newShape))
+            .operation(ptr -> arrayfire_h.af_tile(ptr, array.dereference(), d0ratio, d1ratio, d2ratio, d3ratio))
+            .grads((result, grads) -> sumAs((Array) grads, array.shape()).cast(array.type()))
+            .build();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1830,11 +1842,11 @@ public class ArrayFire {
 
     public static <T extends DataType<?>, S extends Shape<?, ?, ?, ?>> Array<T, S> flip(Array<T, S> array) {
         return operation("flip")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(ptr -> arrayfire_h.af_flip(ptr, array.dereference(), 0))
-                   .grads((result, grads) -> flip(grads))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_flip(ptr, array.dereference(), 0))
+            .grads((result, grads) -> flip(grads))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, FD0 extends Num<FD0>, FD1 extends Num<FD1>, FD3 extends Num<FD3>, S extends Shape<D0, D1, D2, D3>, FS extends Shape<FD0, FD1, D2, FD3>> Array<T, Shape<N, N, FD3, D3>> convolve2(
@@ -1869,39 +1881,107 @@ public class ArrayFire {
             throw new IllegalArgumentException(String.format("Dilation must be have 2 dims but was %s", dilation));
         }
         var computedShape = shape(n((array.shape().d0().size() + 2 * padding.d0().size() -
-                                         (filters.shape().d0().size() - 1) * dilation.d0().size() - 1) /
-                                        stride.d0().size() + 1),
+                (filters.shape().d0().size() - 1) * dilation.d0().size() - 1) / stride.d0().size() + 1),
             n((array.shape().d1().size() + 2 * padding.d1().size() -
-                   (filters.shape().d1().size() - 1) * dilation.d1().size() - 1) / stride.d1().size() + 1),
+                (filters.shape().d1().size() - 1) * dilation.d1().size() - 1) / stride.d1().size() + 1),
             filters.shape().d3(), array.shape().d3());
         return operation("convolve2")
-                   .inputs(array, filters)
-                   .outputs(prototype(array.type(), computedShape))
-                   .operation(ptr -> {
-                       // Potentially retry after GC due to https://github.com/arrayfire/arrayfire/issues/3402
-                       retryWithGc(() -> handleStatus(
-                           () -> arrayfire_h.af_convolve2_nn(ptr, array.dereference(), filters.dereference(), 2,
-                               nativeDims(stride), 2, nativeDims(padding), 2, nativeDims(dilation))));
-                       return Status.AF_SUCCESS.code();
-                   })
-                   .grads((result, grads) -> {
-                       // We can get the filter gradients back by performing a convolution again, reducing over the
-                       // image batch as "channels" in reverse.
-                       var inputTranspose = transpose(array, D2, D3);
-                       var gradsTranspose = transpose(grads, D2, D3);
-                       var filterGradsTranspose = convolve2(inputTranspose, gradsTranspose, stride, padding, dilation);
-                       var filterGrads = transpose(filterGradsTranspose, D2, D3);
-                       if (!Arrays.equals(filterGrads.shape().dims(), filters.shape().dims())) {
-                           // This shouldn't happen, but I haven't extensively tested convolution variations.
-                           throw new IllegalStateException(
-                               String.format("Internal: Filter grads shape %s does not match filters shape %s",
-                                   filterGradsTranspose.shape(), filters.shape()));
-                       }
-                       return new ArrayPair<>(new ErrorArray<>(array.type(), array.shape(),
-                           "Gradients cannot currently be computed for the input to a convolution"),
-                           filterGrads.reshape(filters.shape()));
-                   })
-                   .build();
+            .inputs(array, filters)
+            .outputs(prototype(array.type(), computedShape))
+            .operation(ptr -> {
+                // Potentially retry after GC due to https://github.com/arrayfire/arrayfire/issues/3402
+                retryWithGc(() -> handleStatus(
+                    () -> arrayfire_h.af_convolve2_nn(ptr, array.dereference(), filters.dereference(), 2,
+                        nativeDims(stride), 2, nativeDims(padding), 2, nativeDims(dilation))));
+                return Status.AF_SUCCESS.code();
+            })
+            .grads((result, grads) -> {
+                // We can get the filter gradients back by performing a convolution again, reducing over the
+                // image batch as "channels" in reverse.
+                var inputTranspose = transpose(array, D2, D3);
+                var gradsTranspose = transpose(grads, D2, D3);
+                var filterGradsTranspose = convolve2(inputTranspose, gradsTranspose, stride, padding, dilation);
+                var filterGrads = transpose(filterGradsTranspose, D2, D3);
+                if (!Arrays.equals(filterGrads.shape().dims(), filters.shape().dims())) {
+                    // This shouldn't happen, but I haven't extensively tested convolution variations.
+                    throw new IllegalStateException(
+                        String.format("Internal: Filter grads shape %s does not match filters shape %s",
+                            filterGradsTranspose.shape(), filters.shape()));
+                }
+                return new ArrayPair<>(new ErrorArray<>(array.type(), array.shape(),
+                    "Gradients cannot currently be computed for the input to a convolution"),
+                    filterGrads.reshape(filters.shape()));
+            })
+            .build();
+    }
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<N, N, D2, D3>> unwrap(
+        Array<T, S> array, Shape<?, ?, ?, ?> window, Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding) {
+        var windows = n(
+            (((array.shape().d0().size() + 2 * padding.d0().size() - window.d0().size()) / stride.d0().size() + 1)) *
+                (((array.shape().d1().size() + 2 * padding.d1().size() - window.d0().size()) / stride.d1().size() +
+                    1)));
+        var shape = shape(af.n(window.capacity()), windows, array.shape().d2(), array.shape().d3());
+        return operation("unwrap")
+            .inputs(array)
+            .outputs(prototype(array.type(), shape))
+            .operation(ptr -> arrayfire_h.af_unwrap(ptr, array.dereference(), window.d0().size(), window.d1().size(),
+                stride.d0().size(), stride.d1().size(), padding.d0().size(), padding.d1().size(), true))
+            .grads((result, grads) -> wrap(grads, array.shape(), window, stride, padding).reshape(array.shape()))
+            .build();
+    }
+
+    public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, OD0 extends Num<OD0>, OD1 extends Num<OD1>, S extends Shape<D0, D1, D2, D3>, OS extends Shape<OD0, OD1, D2, D3>> Array<T, Shape<OD0, OD1, D2, D3>> wrap(
+        Array<T, S> array, OS output, Shape<?, ?, ?, ?> window, Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding) {
+        return operation("wrap")
+            .inputs(array)
+            .outputs(prototype(array.type(), shape(output.d0(), output.d1(), array.shape().d2(), array.shape().d3())))
+            .operation(ptr -> arrayfire_h.af_wrap(ptr, array.dereference(), output.d0().size(), output.d1().size(),
+                window.d0().size(), window.d1().size(), stride.d0().size(), stride.d1().size(), padding.d0().size(),
+                padding.d1().size(), true))
+            .grads((result, grads) -> unwrap(grads, window, stride, padding).reshape(array.shape()))
+            .build();
+    }
+
+    public static <DTM extends DataType.Meta<?, ?, ?>, T extends DataType<DTM>, D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>, S extends Shape<D0, D1, D2, D3>> Array<T, Shape<N, N, D2, D3>> meanPool(
+        Array<T, S> array, Shape<?, ?, ?, ?> window, Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding) {
+        var convolve2Shape = convolve2Shape(array.shape(), window, stride, padding, shape(1, 1));
+        var computedShape = af.shape(convolve2Shape.d0(), convolve2Shape.d1(), array.shape().d2(), array.shape().d3());
+        var unwrapped = unwrap(array, window, stride, padding);
+        var mean = mean(unwrapped);
+        return mean.reshape(computedShape);
+    }
+
+    // Return the computed shape of a convolution operation.
+    public static Shape<N, N, U, U> convolve2Shape(Shape<?, ?, ?, ?> input, Shape<?, ?, ?, ?> window,
+                                                   Shape<?, ?, ?, ?> stride, Shape<?, ?, ?, ?> padding,
+                                                   Shape<?, ?, ?, ?> dilation) {
+        return shape(
+            n((input.d0().size() + 2 * padding.d0().size() - (window.d0().size() - 1) * dilation.d0().size() - 1) /
+                stride.d0().size() + 1),
+            n((input.d1().size() + 2 * padding.d1().size() - (window.d1().size() - 1) * dilation.d1().size() - 1) /
+                stride.d1().size() + 1));
+    }
+
+    public static void checkDims(Array<?, ?> array) {
+        if (!array.materialized()) {
+            return;
+        }
+        try (Arena arena = Arena.ofConfined()) {
+            var dims = arena.allocateArray(ValueLayout.JAVA_LONG, 4);
+            handleStatus(
+                () -> arrayfire_h.af_get_dims(dims.asSlice(0), dims.asSlice(8), dims.asSlice(16), dims.asSlice(24),
+                    array.dereference()));
+            var trueDims = dims.toArray(ValueLayout.JAVA_LONG);
+            var expectedDims = array.shape().dims();
+            for (int i = 0; i < trueDims.length; i++) {
+                var expectedDim = i >= array.shape().ndims() ? 1 : expectedDims[i];
+                if (trueDims[i] != expectedDim) {
+                    throw new RuntimeException(String.format("Internal: Native dimensions %s do not match Java dims %s",
+                        Arrays.toString(expectedDims), Arrays.toString(trueDims)));
+                }
+            }
+        }
     }
 
     /**
@@ -1934,12 +2014,12 @@ public class ArrayFire {
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> SvdResult<T, D0, D1> svd(
         Array<T, S> array) {
         var trio = operation("svd")
-                       .inputs(array)
-                       .outputs(prototype(array.type(), shape(array.shape().d0(), array.shape().d0())),
-                           prototype(array.type(), shape(array.shape().d0())),
-                           prototype(array.type(), shape(array.shape().d1(), array.shape().d1())))
-                       .operation((u, s, v) -> arrayfire_h.af_svd(u, s, v, array.dereference()))
-                       .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), shape(array.shape().d0(), array.shape().d0())),
+                prototype(array.type(), shape(array.shape().d0())),
+                prototype(array.type(), shape(array.shape().d1(), array.shape().d1())))
+            .operation((u, s, v) -> arrayfire_h.af_svd(u, s, v, array.dereference()))
+            .build();
         return new SvdResult<>(trio.left(), trio.middle(), trio.right());
     }
 
@@ -1975,40 +2055,40 @@ public class ArrayFire {
     public static <T extends DataType<?>, D extends Num<D>, S extends Shape<D, D, U, U>> Array<T, S> inverse(
         Array<T, S> array) {
         return operation("inverse")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(ptr -> arrayfire_h.af_inverse(ptr, array.dereference(), 0))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_inverse(ptr, array.dereference(), 0))
+            .build();
     }
 
     // TODO: Add uncropped version.
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, S extends Shape<D0, D1, U, U>> Array<T, S> rotate(
         Array<T, S> array, float angle, InterpolationType interpolationType) {
         return operation("rotate")
-                   .inputs(array)
-                   .outputs(prototype(array))
-                   .operation(
-                       ptr -> arrayfire_h.af_rotate(ptr, array.dereference(), angle, true, interpolationType.code()))
-                   .grads((result, grads) -> rotate(grads, -angle, interpolationType))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array))
+            .operation(ptr -> arrayfire_h.af_rotate(ptr, array.dereference(), angle, true, interpolationType.code()))
+            .grads((result, grads) -> rotate(grads, -angle, interpolationType))
+            .build();
     }
 
     public static <T extends DataType<?>, D0 extends Num<D0>, D1 extends Num<D1>, ND0 extends Num<ND0>, ND1 extends Num<ND1>, S extends Shape<D0, D1, U, U>> Array<T, Shape<ND0, ND1, U, U>> scale(
         Array<T, S> array, ND0 nd0, ND1 nd1, InterpolationType interpolationType) {
         return operation("scale")
-                   .inputs(array)
-                   .outputs(prototype(array.type(), shape(nd0, nd1)))
-                   .operation(ptr -> arrayfire_h.af_scale(ptr, array.dereference(),
-                       (float) nd0.size() / array.shape().d0().size(), (float) nd1.size() / array.shape().d1().size(),
-                       nd0.size(), nd1.size(), interpolationType.code()))
-                   .grads((result, grads) -> scale(grads, array.shape().d0(), array.shape().d1(),
-                       interpolationType).reshape(array.shape()))
-                   .build();
+            .inputs(array)
+            .outputs(prototype(array.type(), shape(nd0, nd1)))
+            .operation(
+                ptr -> arrayfire_h.af_scale(ptr, array.dereference(), (float) nd0.size() / array.shape().d0().size(),
+                    (float) nd1.size() / array.shape().d1().size(), nd0.size(), nd1.size(), interpolationType.code()))
+            .grads((result, grads) -> scale(grads, array.shape().d0(), array.shape().d1(), interpolationType).reshape(
+                array.shape()))
+            .build();
     }
 
     public static <D0 extends Num<D0>, D1 extends Num<D1>, D2 extends Num<D2>, D3 extends Num<D3>> Array<F32, Shape<D0, D1, D2, D3>> oneHot(
         Array<S32, Shape<U, D1, D2, D3>> array, D0 classes) {
         var shape = shape(classes, array.shape().d1(), array.shape().d2(), array.shape().d3());
+        // TODO: Replace the sparse hack with af_assign_gen https://arrayfire.org/docs/group__index__func__assign.htm#gsc.tab=0
         return operation("one_hot").inputs(array).outputs(prototype(F32, shape)).operation(tidyOperation(() -> {
             var compressedShape = shape(classes, n(array.shape().capacity()));
             var values = af.constant(F32, array.shape(), 1);
@@ -2016,6 +2096,7 @@ public class ArrayFire {
             return dense(sparse(values.flatten(), array.flatten(), d1Indices, compressedShape)).reshape(shape);
         })).build();
     }
+
 
     public static void printMeminfo() {
         try (Arena arena = Arena.ofConfined()) {

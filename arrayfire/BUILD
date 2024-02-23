@@ -45,6 +45,9 @@ java_library(
 java_test(
     name = "ArrayFireTest",
     srcs = ["ArrayFireTest.java"],
+    env = {
+        "AF_PRINT_ERRORS": "1",
+    },
     test_class = "arrayfire.ArrayFireTest",
     deps = [
         ":arrayfire",

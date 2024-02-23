@@ -67,9 +67,8 @@ public class ArrayFireTest {
             for (int i = 0; i < trueDims.length; i++) {
                 var expectedDim = i >= array.shape().ndims() ? 1 : expectedDims[i];
                 if (trueDims[i] != expectedDim) {
-                    throw new RuntimeException(
-                        String.format("Native dimensions %s do not match Java dims %s", Arrays.toString(expectedDims),
-                            Arrays.toString(trueDims)));
+                    throw new RuntimeException(String.format("Internal: Native dimensions %s do not match Java dims %s",
+                        Arrays.toString(expectedDims), Arrays.toString(trueDims)));
                 }
             }
         }
@@ -559,6 +558,29 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void unwrap() {
+        var input = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9}).reshape(3, 3);
+        var unwrapped = af.unwrap(input, shape(2, 2), shape(1, 1), shape(0, 0));
+        System.out.println(unwrapped.shape());
+        assertArrayEquals(new float[]{1, 2, 4, 5, 2, 3, 5, 6, 4, 5, 7, 8, 5, 6, 8, 9}, af.data(unwrapped));
+    }
+
+    @Test
+    public void unwrapWrap() {
+        var input = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}).reshape(4, 4);
+        var unwrapped = af.unwrap(input, shape(2, 2), shape(2, 2), shape(0, 0));
+        var wrapped = af.wrap(unwrapped, input.shape(), shape(2, 2), shape(2, 2), shape(0, 0));
+        assertArrayEquals(af.data(input), af.data(wrapped));
+    }
+
+    @Test
+    public void meanPool() {
+        var input = af.create(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9}).reshape(3, 3);
+        var pooled = af.meanPool(input, shape(2, 2), shape(1, 1), shape(0, 0));
+        assertArrayEquals(new float[]{3, 4, 6, 7}, af.data(pooled));
+    }
+
+    @Test
     public void rotate() {
         var input = af.create(new float[]{1, 2, 3, 4}).reshape(2, 2);
         var rotated = af.rotate(input, (float) Math.PI / 2.0f, InterpolationType.NEAREST);
@@ -666,6 +688,14 @@ public class ArrayFireTest {
     }
 
     @Test
+    public void assign() {
+        var base = af.create(F32, 0f, 1f).reshape(shape(2, 1, 1, 1));
+        var ones = af.create(F32, 1f).reshape(shape(1));
+        var assigned = af.assign(base, ones, af.seq(0, 0), af.seq(0, 0), af.seq(0, 0), af.seq(0, 0));
+        assertArrayEquals(new float[]{1, 0, 1, 0}, af.data(assigned));
+    }
+
+    @Test
     public void evalMultiple() {
         var random = af.randu(F32, shape(n(1_000_000)));
         var transform1 = af.exp(random);
@@ -753,7 +783,7 @@ public class ArrayFireTest {
                 }
             } else {
                 if (Math.abs(((Number) expected.get(i)).doubleValue() - ((Number) actual.get(i)).doubleValue()) >
-                        epsilon) {
+                    epsilon) {
                     throw new AssertionError("Element " + i + " differs: " + expected.get(i) + " != " + actual.get(i));
                 }
             }
