@@ -5,7 +5,7 @@ def arrayfire_java_fla_deps():
         http_archive,
         name = "jextract",
         sha256 = "83626610b1b074bfe4985bd825d8ba44d906a30b24c42d971b6ac836c7eb0671",
-        urls = ["https://download.java.net/java/early_access/jextract/1/openjdk-21-jextract+1-2_linux-x64_bin.tar.gz"],
+        urls = ["https://download.java.net/java/early_access/jextract/21/1/openjdk-21-jextract+1-2_linux-x64_bin.tar.gz"],
         build_file = "@arrayfire_java_fla//:jextract.BUILD",
         strip_prefix = "jextract-21",
     )
