@@ -1,12 +1,22 @@
-This is an experimental set of Java bindings for the [ArrayFire](https://github.com/arrayfire/arrayfire) general-purpose GPU tensor library.
+This is an experimental set of Java bindings for the [ArrayFire](https://github.com/arrayfire/arrayfire) general-purpose GPU tensor library, with support for automatic reverse mode differentiation, and some limited compile type shape type checking. You can read more about the motivation and goals of this project [here](https://lewish.io/posts/shape-typed-gpu-tensor-library-arrayfire).
 
 The library is built using Java's Foreign Linker API which is currently in preview. This library has been build against JDK 21 and therefore **can only by used with Java 21**.
 
-Currently, the API only supports a subset of functionality of ArrayFire, along with some additional features that are geared towards machine learning applications, including automatic reverse mode differentiation.
+Currently, the API only supports a subset of functionality of the ArrayFire API surface, but enough to build some non-trivial neural networks.
+
+## MNIST example
+
+For a full working example of training a 2-layer neural network on MNIST, see the [SimpleNN.java](https://github.com/lewish/arrayfire-java-fla/blob/main/examples/mnist/SimpleNN.java).
+
+This can be run with the following command, after installing requirements:
+
+```
+bazel run examples/mnist:SimpleNN
+```
 
 ## Basic example
 
-The following example demonstrates usage of the API, including autograd.
+The following simple example demonstrates usage of the API, including autograd.
 
 ```java
 import arrayfire.optimizers.SGD;
